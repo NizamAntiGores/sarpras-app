@@ -1,6 +1,6 @@
-# Sarpras SMK
+# Aplikasi Sarptas
 
-Sistem Peminjaman Sarana dan Prasarana untuk SMK berbasis Laravel.
+Sistem Peminjaman Sarana dan Prasarana berbasis Laravel.
 
 ## Fitur Utama
 
@@ -94,21 +94,6 @@ npm run dev
 
 Akses: [http://localhost:8000](http://localhost:8000)
 
----
-
-## Troubleshooting
-
-### Error: "SQLSTATE[HY000] [1045] Access denied"
-- Pastikan MySQL sudah berjalan (XAMPP/Laragon)
-- Cek username/password di file `.env`
-
-### Error: "Vite manifest not found"
-- Jalankan `npm run dev` di terminal terpisah
-
-### Error: "Class not found"
-- Jalankan `composer dump-autoload`
-
----
 
 ## Teknologi
 
@@ -116,7 +101,3 @@ Akses: [http://localhost:8000](http://localhost:8000)
 - MySQL
 - Vite + Tailwind CSS
 - DomPDF + Simple QR Code
-
-## Lisensi
-
-MIT License

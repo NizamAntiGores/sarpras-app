@@ -13,9 +13,9 @@ Sistem Peminjaman Sarana dan Prasarana berbasis Laravel.
 
 ---
 
-## Cara Setup di Komputer Baru
+## Setup
 
-### Prasyarat
+### Syarat
 
 Pastikan komputer sudah terinstall:
 1. **PHP 8.1+** (cek dengan: `php -v`)
@@ -25,7 +25,7 @@ Pastikan komputer sudah terinstall:
 
 ### Langkah-langkah Instalasi
 
-#### 1. Clone Repository
+#### 1. Clone Repo
 
 ```bash
 git clone https://github.com/USERNAME/sarpras-smk.git

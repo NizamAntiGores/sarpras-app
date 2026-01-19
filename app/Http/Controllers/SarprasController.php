@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Sarpras;
 use App\Models\Kategori;
+use App\Models\Lokasi;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Storage;
 
 class SarprasController extends Controller
 {
@@ -30,8 +32,9 @@ class SarprasController extends Controller
     public function create(): View
     {
         $kategori = Kategori::orderBy('nama_kategori')->get();
+        $lokasi = Lokasi::orderBy('nama_lokasi')->get();
         
-        return view('sarpras.create', compact('kategori'));
+        return view('sarpras.create', compact('kategori', 'lokasi'));
     }
 
     /**
@@ -42,8 +45,9 @@ class SarprasController extends Controller
         $validated = $request->validate([
             'kode_barang' => 'required|string|max:50|unique:sarpras,kode_barang',
             'nama_barang' => 'required|string|max:255',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'kategori_id' => 'required|exists:kategori,id',
-            'lokasi' => 'required|string|max:255',
+            'lokasi_id' => 'required|exists:lokasi,id',
             'stok' => 'required|integer|min:0',
             'stok_rusak' => 'nullable|integer|min:0',
             'kondisi_awal' => 'required|in:baik,rusak',
@@ -51,18 +55,28 @@ class SarprasController extends Controller
             'kode_barang.required' => 'Kode barang wajib diisi.',
             'kode_barang.unique' => 'Kode barang sudah digunakan.',
             'nama_barang.required' => 'Nama barang wajib diisi.',
+            'foto.image' => 'File harus berupa gambar.',
+            'foto.mimes' => 'Format gambar harus JPEG, PNG, JPG, atau WebP.',
+            'foto.max' => 'Ukuran gambar maksimal 2MB.',
             'kategori_id.required' => 'Kategori wajib dipilih.',
-            'lokasi.required' => 'Lokasi wajib diisi.',
+            'lokasi_id.required' => 'Lokasi wajib dipilih.',
             'stok.required' => 'Stok wajib diisi.',
             'stok.min' => 'Stok tidak boleh negatif.',
             'stok_rusak.min' => 'Stok rusak tidak boleh negatif.',
         ]);
 
+        // Handle foto upload
+        $fotoPath = null;
+        if ($request->hasFile('foto')) {
+            $fotoPath = $request->file('foto')->store('sarpras', 'public');
+        }
+
         Sarpras::create([
             'kode_barang' => $validated['kode_barang'],
             'nama_barang' => $validated['nama_barang'],
+            'foto' => $fotoPath,
             'kategori_id' => $validated['kategori_id'],
-            'lokasi' => $validated['lokasi'],
+            'lokasi_id' => $validated['lokasi_id'],
             'stok' => $validated['stok'],
             'stok_rusak' => $validated['stok_rusak'] ?? 0,
             'kondisi_awal' => $validated['kondisi_awal'],
@@ -89,8 +103,9 @@ class SarprasController extends Controller
     public function edit(Sarpras $sarpras): View
     {
         $kategori = Kategori::orderBy('nama_kategori')->get();
+        $lokasi = Lokasi::orderBy('nama_lokasi')->get();
         
-        return view('sarpras.edit', compact('sarpras', 'kategori'));
+        return view('sarpras.edit', compact('sarpras', 'kategori', 'lokasi'));
     }
 
     /**
@@ -101,8 +116,9 @@ class SarprasController extends Controller
         $validated = $request->validate([
             'kode_barang' => 'required|string|max:50|unique:sarpras,kode_barang,' . $sarpras->id,
             'nama_barang' => 'required|string|max:255',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'kategori_id' => 'required|exists:kategori,id',
-            'lokasi' => 'required|string|max:255',
+            'lokasi_id' => 'required|exists:lokasi,id',
             'stok' => 'required|integer|min:0',
             'stok_rusak' => 'nullable|integer|min:0',
             'kondisi_awal' => 'required|in:baik,rusak',
@@ -110,18 +126,40 @@ class SarprasController extends Controller
             'kode_barang.required' => 'Kode barang wajib diisi.',
             'kode_barang.unique' => 'Kode barang sudah digunakan.',
             'nama_barang.required' => 'Nama barang wajib diisi.',
+            'foto.image' => 'File harus berupa gambar.',
+            'foto.mimes' => 'Format gambar harus JPEG, PNG, JPG, atau WebP.',
+            'foto.max' => 'Ukuran gambar maksimal 2MB.',
             'kategori_id.required' => 'Kategori wajib dipilih.',
-            'lokasi.required' => 'Lokasi wajib diisi.',
+            'lokasi_id.required' => 'Lokasi wajib dipilih.',
             'stok.required' => 'Stok wajib diisi.',
             'stok.min' => 'Stok tidak boleh negatif.',
             'stok_rusak.min' => 'Stok rusak tidak boleh negatif.',
         ]);
 
+        // Handle foto upload
+        $fotoPath = $sarpras->foto; // Keep existing photo
+        if ($request->hasFile('foto')) {
+            // Delete old photo if exists
+            if ($sarpras->foto && Storage::disk('public')->exists($sarpras->foto)) {
+                Storage::disk('public')->delete($sarpras->foto);
+            }
+            $fotoPath = $request->file('foto')->store('sarpras', 'public');
+        }
+
+        // Handle foto removal (checkbox checked)
+        if ($request->has('hapus_foto') && $request->hapus_foto) {
+            if ($sarpras->foto && Storage::disk('public')->exists($sarpras->foto)) {
+                Storage::disk('public')->delete($sarpras->foto);
+            }
+            $fotoPath = null;
+        }
+
         $sarpras->update([
             'kode_barang' => $validated['kode_barang'],
             'nama_barang' => $validated['nama_barang'],
+            'foto' => $fotoPath,
             'kategori_id' => $validated['kategori_id'],
-            'lokasi' => $validated['lokasi'],
+            'lokasi_id' => $validated['lokasi_id'],
             'stok' => $validated['stok'],
             'stok_rusak' => $validated['stok_rusak'] ?? 0,
             'kondisi_awal' => $validated['kondisi_awal'],

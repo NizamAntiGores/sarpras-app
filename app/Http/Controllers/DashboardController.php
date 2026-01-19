@@ -31,6 +31,27 @@ class DashboardController extends Controller
 
         if ($user->role === 'admin') {
             // Dashboard Admin: Statistik lengkap
+            
+            // Top 5 Barang Paling Sering Dipinjam
+            $top5Barang = Sarpras::withCount(['peminjaman as total_dipinjam' => function ($query) {
+                    $query->whereIn('status', ['disetujui', 'selesai']);
+                }])
+                ->orderByDesc('total_dipinjam')
+                ->limit(5)
+                ->get(['id', 'nama_barang', 'kode_barang']);
+            
+            // Barang dengan Stok Menipis (stok <= 5)
+            $stokMenipis = Sarpras::with('lokasi')
+                ->where('stok', '<=', 5)
+                ->where('stok', '>', 0)
+                ->orderBy('stok')
+                ->get();
+            
+            // Barang Habis (stok = 0)
+            $stokHabis = Sarpras::with('lokasi')
+                ->where('stok', 0)
+                ->get();
+            
             $data = [
                 // Statistik Inventaris
                 'stokTersedia' => $stokTersedia,
@@ -59,6 +80,11 @@ class DashboardController extends Controller
                     ->orderBy('created_at', 'desc')
                     ->limit(5)
                     ->get(),
+                
+                // Tier 2: Top 5 Barang & Stok Alert
+                'top5Barang' => $top5Barang,
+                'stokMenipis' => $stokMenipis,
+                'stokHabis' => $stokHabis,
             ];
         } elseif ($user->role === 'petugas') {
             // Dashboard Petugas: Fokus pada verifikasi
@@ -84,7 +110,22 @@ class DashboardController extends Controller
                     ->get(),
             ];
         } else {
-            // Dashboard Peminjam/Siswa
+            // Dashboard Peminjam/Siswa - dengan katalog dan riwayat lengkap
+            
+            // Data katalog barang (untuk ditampilkan langsung)
+            $katalogBarang = Sarpras::with(['kategori', 'lokasi'])
+                ->where('stok', '>', 0)
+                ->orderBy('nama_barang')
+                ->limit(8)
+                ->get();
+            
+            // Riwayat peminjaman terbaru (lebih lengkap)
+            $riwayatPeminjaman = Peminjaman::with('sarpras')
+                ->where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get();
+            
             $data = [
                 'totalPeminjamanSaya' => Peminjaman::where('user_id', $user->id)->count(),
                 'peminjamanMenunggu' => Peminjaman::where('user_id', $user->id)
@@ -93,11 +134,13 @@ class DashboardController extends Controller
                     ->where('status', 'disetujui')->count(),
                 'peminjamanSelesai' => Peminjaman::where('user_id', $user->id)
                     ->where('status', 'selesai')->count(),
-                'recentPeminjaman' => Peminjaman::with('sarpras')
-                    ->where('user_id', $user->id)
-                    ->orderBy('created_at', 'desc')
-                    ->limit(5)
-                    ->get(),
+                    
+                // Katalog barang untuk ditampilkan langsung
+                'katalogBarang' => $katalogBarang,
+                'totalKatalog' => Sarpras::where('stok', '>', 0)->count(),
+                
+                // Riwayat peminjaman
+                'riwayatPeminjaman' => $riwayatPeminjaman,
             ];
         }
 

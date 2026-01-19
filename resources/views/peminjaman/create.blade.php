@@ -67,7 +67,7 @@
                                     class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('sarpras_id') border-red-500 @enderror">
                                 <option value="">-- Pilih Barang yang Ingin Dipinjam --</option>
                                 @foreach ($sarpras as $item)
-                                    <option value="{{ $item->id }}" {{ old('sarpras_id') == $item->id ? 'selected' : '' }}
+                                    <option value="{{ $item->id }}" {{ (old('sarpras_id') ?? request('sarpras_id')) == $item->id ? 'selected' : '' }}
                                             data-stok="{{ $item->stok }}">
                                         {{ $item->nama_barang }} ({{ $item->kode_barang }}) - Stok: {{ $item->stok }}
                                     </option>

@@ -49,7 +49,7 @@
                     {{-- Info Tanggal --}}
                     <div class="mt-6 bg-indigo-50 rounded-lg p-4">
                         <h3 class="font-semibold text-gray-800 mb-3 border-b border-indigo-200 pb-2">Info Peminjaman</h3>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
                             <div>
                                 <p class="text-gray-500 text-sm">Tanggal Pinjam</p>
                                 <p class="font-semibold">{{ $peminjaman->tgl_pinjam?->format('d M Y') }}</p>
@@ -62,17 +62,29 @@
                                 <p class="text-gray-500 text-sm">Diproses Oleh</p>
                                 <p class="font-semibold">{{ $peminjaman->petugas->name ?? '-' }}</p>
                             </div>
-                            <div>
-                                <p class="text-gray-500 text-sm">QR Code</p>
-                                <p class="font-mono text-sm">{{ $peminjaman->qr_code ?? '-' }}</p>
-                            </div>
                         </div>
                     </div>
 
+
                     @if ($peminjaman->keterangan)
                         <div class="mt-6 bg-gray-50 rounded-lg p-4">
-                            <h3 class="font-semibold text-gray-800 mb-2">Keterangan</h3>
+                            <h3 class="font-semibold text-gray-800 mb-2">Keterangan dari Peminjam</h3>
                             <p class="text-gray-700">{{ $peminjaman->keterangan }}</p>
+                        </div>
+                    @endif
+
+                    {{-- Catatan Petugas --}}
+                    @if ($peminjaman->catatan_petugas)
+                        <div class="mt-6 rounded-lg p-4 {{ $peminjaman->status === 'ditolak' ? 'bg-red-50 border border-red-200' : 'bg-yellow-50 border border-yellow-200' }}">
+                            <h3 class="font-semibold mb-2 {{ $peminjaman->status === 'ditolak' ? 'text-red-800' : 'text-yellow-800' }}">
+                                {{ $peminjaman->status === 'ditolak' ? '❌ Alasan Penolakan' : '📝 Catatan dari Petugas' }}
+                            </h3>
+                            <p class="{{ $peminjaman->status === 'ditolak' ? 'text-red-700' : 'text-yellow-700' }}">{{ $peminjaman->catatan_petugas }}</p>
+                            @if ($peminjaman->petugas)
+                                <p class="text-sm mt-2 {{ $peminjaman->status === 'ditolak' ? 'text-red-500' : 'text-yellow-600' }}">
+                                    — {{ $peminjaman->petugas->name }}
+                                </p>
+                            @endif
                         </div>
                     @endif
 
@@ -123,16 +135,6 @@
                         <a href="{{ route('peminjaman.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300">Kembali</a>
                         
                         <div class="flex gap-3">
-                            {{-- Tombol Cetak Bukti (muncul jika status disetujui/selesai) --}}
-                            @if (in_array($peminjaman->status, ['disetujui', 'selesai']))
-                                <a href="{{ route('peminjaman.cetak', $peminjaman) }}" target="_blank" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                                    </svg>
-                                    Cetak Bukti
-                                </a>
-                            @endif
-
                             {{-- Tombol Proses Pengembalian (hanya admin/petugas jika status disetujui) --}}
                             @if ($peminjaman->status === 'disetujui' && in_array(auth()->user()->role, ['admin', 'petugas']))
                                 <a href="{{ route('pengembalian.create', $peminjaman) }}" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 flex items-center gap-2">

@@ -31,7 +31,7 @@
                         </p>
                     </div>
 
-                    <form action="{{ route('sarpras.update', $sarpras) }}" method="POST" class="space-y-6">
+                    <form action="{{ route('sarpras.update', $sarpras) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                         @csrf
                         @method('PUT')
 
@@ -48,6 +48,39 @@
                             </div>
                         </div>
 
+                        {{-- FOTO BARANG --}}
+                        <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                            <h4 class="font-semibold text-gray-800 mb-3">Foto Barang</h4>
+                            
+                            @if ($sarpras->foto)
+                                <div class="mb-4">
+                                    <p class="text-sm text-gray-600 mb-2">Foto Saat Ini:</p>
+                                    <img src="{{ Storage::url($sarpras->foto) }}" alt="{{ $sarpras->nama_barang }}" 
+                                         class="max-h-40 rounded-lg border border-gray-200">
+                                    <div class="mt-2">
+                                        <label class="inline-flex items-center text-sm text-red-600 cursor-pointer">
+                                            <input type="checkbox" name="hapus_foto" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+                                            <span class="ml-2">Hapus foto ini</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            @endif
+                            
+                            <div>
+                                <label for="foto" class="block text-sm font-medium text-gray-700 mb-1">
+                                    {{ $sarpras->foto ? 'Ganti Foto' : 'Upload Foto' }}
+                                </label>
+                                <input type="file" name="foto" id="foto" accept="image/jpeg,image/png,image/jpg,image/webp"
+                                       class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                       onchange="previewImage(this)">
+                                <p class="text-xs text-gray-500 mt-1">Format: JPEG, PNG, JPG, WebP. Maksimal 2MB.</p>
+                                <div id="preview-container" class="mt-3 hidden">
+                                    <p class="text-sm text-gray-600 mb-1">Preview foto baru:</p>
+                                    <img id="preview-image" src="" alt="Preview" class="max-h-40 rounded-lg border border-gray-200">
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label for="kategori_id" class="block text-sm font-medium text-gray-700 mb-1">Kategori <span class="text-red-500">*</span></label>
@@ -58,9 +91,12 @@
                                 </select>
                             </div>
                             <div>
-                                <label for="lokasi" class="block text-sm font-medium text-gray-700 mb-1">Lokasi <span class="text-red-500">*</span></label>
-                                <input type="text" name="lokasi" id="lokasi" value="{{ old('lokasi', $sarpras->lokasi) }}"
-                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <label for="lokasi_id" class="block text-sm font-medium text-gray-700 mb-1">Lokasi <span class="text-red-500">*</span></label>
+                                <select name="lokasi_id" id="lokasi_id" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    @foreach ($lokasi as $lok)
+                                        <option value="{{ $lok->id }}" {{ old('lokasi_id', $sarpras->lokasi_id) == $lok->id ? 'selected' : '' }}>{{ $lok->nama_lokasi }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
 
@@ -107,4 +143,22 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function previewImage(input) {
+            const preview = document.getElementById('preview-image');
+            const container = document.getElementById('preview-container');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    container.classList.remove('hidden');
+                }
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+    </script>
 </x-app-layout>

@@ -23,8 +23,9 @@ class Sarpras extends Model
     protected $fillable = [
         'kode_barang',
         'nama_barang',
+        'foto',
         'kategori_id',
-        'lokasi',
+        'lokasi_id',
         'stok',
         'stok_rusak',
         'kondisi_awal',
@@ -57,6 +58,14 @@ class Sarpras extends Model
     }
 
     /**
+     * Get lokasi dari sarpras ini
+     */
+    public function lokasi(): BelongsTo
+    {
+        return $this->belongsTo(Lokasi::class, 'lokasi_id');
+    }
+
+    /**
      * Get all peminjaman untuk sarpras ini
      */
     public function peminjaman(): HasMany
@@ -64,3 +73,4 @@ class Sarpras extends Model
         return $this->hasMany(Peminjaman::class, 'sarpras_id');
     }
 }
+

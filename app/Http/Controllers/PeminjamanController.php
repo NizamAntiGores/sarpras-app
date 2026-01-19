@@ -9,8 +9,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Barryvdh\DomPDF\Facade\Pdf;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PeminjamanController extends Controller
 {
@@ -18,8 +16,9 @@ class PeminjamanController extends Controller
      * Display a listing of the resource.
      * - Jika Peminjam: hanya data dia sendiri
      * - Jika Admin/Petugas: semua data
+     * - Support filter: status, tanggal_mulai, tanggal_selesai
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         $user = auth()->user();
         
@@ -31,9 +30,29 @@ class PeminjamanController extends Controller
             $query->where('user_id', $user->id);
         }
 
-        $peminjaman = $query->paginate(10);
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
-        return view('peminjaman.index', compact('peminjaman'));
+        // Filter by date range (berdasarkan tanggal_pinjam)
+        if ($request->filled('tanggal_mulai')) {
+            $query->whereDate('tanggal_pinjam', '>=', $request->tanggal_mulai);
+        }
+        if ($request->filled('tanggal_selesai')) {
+            $query->whereDate('tanggal_pinjam', '<=', $request->tanggal_selesai);
+        }
+
+        $peminjaman = $query->paginate(10)->withQueryString();
+
+        // Data untuk filter
+        $filters = [
+            'status' => $request->status,
+            'tanggal_mulai' => $request->tanggal_mulai,
+            'tanggal_selesai' => $request->tanggal_selesai,
+        ];
+
+        return view('peminjaman.index', compact('peminjaman', 'filters'));
     }
 
     /**
@@ -124,7 +143,6 @@ class PeminjamanController extends Controller
             'tgl_pinjam' => $validated['tgl_pinjam'],
             'tgl_kembali_rencana' => $validated['tgl_kembali_rencana'],
             'status' => 'menunggu',
-            'qr_code' => null,
             'keterangan' => $validated['keterangan'] ?? null,
         ]);
 
@@ -188,10 +206,11 @@ class PeminjamanController extends Controller
 
         $validated = $request->validate([
             'status' => 'required|in:menunggu,disetujui,selesai,ditolak',
-            'keterangan' => 'nullable|string|max:500',
+            'catatan_petugas' => 'required_if:status,ditolak|nullable|string|max:500',
         ], [
             'status.required' => 'Status wajib dipilih.',
             'status.in' => 'Status tidak valid.',
+            'catatan_petugas.required_if' => 'Catatan/alasan penolakan wajib diisi jika menolak peminjaman.',
         ]);
 
         $oldStatus = $peminjaman->status;
@@ -200,7 +219,7 @@ class PeminjamanController extends Controller
         // Jika status tidak berubah, langsung update dan return
         if ($oldStatus === $newStatus) {
             $peminjaman->update([
-                'keterangan' => $validated['keterangan'] ?? $peminjaman->keterangan,
+                'catatan_petugas' => $validated['catatan_petugas'] ?? $peminjaman->catatan_petugas,
             ]);
 
             return redirect()
@@ -228,9 +247,6 @@ class PeminjamanController extends Controller
 
                 // Kurangi stok
                 $sarpras->decrement('stok', $peminjaman->jumlah_pinjam);
-
-                // Generate QR Code (simple unique string)
-                $peminjaman->qr_code = 'PJM-' . strtoupper(Str::random(8)) . '-' . $peminjaman->id;
             }
 
             // Case 2: Status berubah ke 'selesai' (dari 'disetujui')
@@ -247,17 +263,13 @@ class PeminjamanController extends Controller
             if ($newStatus === 'menunggu' && $oldStatus === 'disetujui') {
                 // Kembalikan stok karena approval dibatalkan
                 $sarpras->increment('stok', $peminjaman->jumlah_pinjam);
-
-                // Hapus QR code
-                $peminjaman->qr_code = null;
             }
 
             // Update peminjaman
             $peminjaman->update([
                 'status' => $newStatus,
                 'petugas_id' => $user->id,
-                'keterangan' => $validated['keterangan'] ?? $peminjaman->keterangan,
-                'qr_code' => $peminjaman->qr_code,
+                'catatan_petugas' => $validated['catatan_petugas'] ?? $peminjaman->catatan_petugas,
             ]);
 
             DB::commit();
@@ -307,37 +319,4 @@ class PeminjamanController extends Controller
             ->route('peminjaman.index')
             ->with('success', 'Data peminjaman berhasil dihapus.');
     }
-
-    /**
-     * Generate PDF bukti pinjam dengan QR Code
-     */
-    public function cetak(Peminjaman $peminjaman)
-    {
-        // Hanya bisa cetak jika status disetujui atau selesai
-        if (!in_array($peminjaman->status, ['disetujui', 'selesai'])) {
-            return redirect()
-                ->back()
-                ->with('error', 'Bukti pinjam hanya tersedia untuk peminjaman yang sudah disetujui.');
-        }
-
-        $peminjaman->load(['user', 'sarpras.kategori', 'petugas']);
-
-        // Generate QR Code sebagai base64 SVG
-        $qrCode = base64_encode(QrCode::format('svg')
-            ->size(150)
-            ->errorCorrection('M')
-            ->generate($peminjaman->qr_code ?? 'PJM-' . $peminjaman->id));
-
-        $pdf = Pdf::loadView('peminjaman.cetak', [
-            'peminjaman' => $peminjaman,
-            'qrCode' => $qrCode,
-        ]);
-
-        $pdf->setPaper('A4', 'portrait');
-
-        $filename = 'Bukti-Pinjam-' . ($peminjaman->qr_code ?? 'PJM-' . $peminjaman->id) . '.pdf';
-
-        return $pdf->download($filename);
-    }
 }
-

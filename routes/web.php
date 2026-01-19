@@ -6,6 +6,11 @@ use App\Http\Controllers\PeminjamanController;
 use App\Http\Controllers\PengembalianController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\KatalogController;
+use App\Http\Controllers\LokasiController;
+use App\Http\Controllers\KategoriController;
+use App\Http\Controllers\BarangHilangController;
+use App\Http\Controllers\BarangRusakController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -21,6 +26,7 @@ Route::get('/', function () {
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
+
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +59,26 @@ Route::middleware('auth')->group(function () {
     // Destroy Sarpras - Hanya Admin
     Route::middleware('role:admin')->group(function () {
         Route::delete('/sarpras/{sarpras}', [SarprasController::class, 'destroy'])->name('sarpras.destroy');
+        
+        // =============================================
+        // LOKASI ROUTES (Admin only)
+        // =============================================
+        Route::get('/lokasi', [LokasiController::class, 'index'])->name('lokasi.index');
+        Route::get('/lokasi/create', [LokasiController::class, 'create'])->name('lokasi.create');
+        Route::post('/lokasi', [LokasiController::class, 'store'])->name('lokasi.store');
+        Route::get('/lokasi/{lokasi}/edit', [LokasiController::class, 'edit'])->name('lokasi.edit');
+        Route::put('/lokasi/{lokasi}', [LokasiController::class, 'update'])->name('lokasi.update');
+        Route::delete('/lokasi/{lokasi}', [LokasiController::class, 'destroy'])->name('lokasi.destroy');
+        
+        // =============================================
+        // KATEGORI ROUTES (Admin only)
+        // =============================================
+        Route::get('/kategori', [KategoriController::class, 'index'])->name('kategori.index');
+        Route::get('/kategori/create', [KategoriController::class, 'create'])->name('kategori.create');
+        Route::post('/kategori', [KategoriController::class, 'store'])->name('kategori.store');
+        Route::get('/kategori/{kategori}/edit', [KategoriController::class, 'edit'])->name('kategori.edit');
+        Route::put('/kategori/{kategori}', [KategoriController::class, 'update'])->name('kategori.update');
+        Route::delete('/kategori/{kategori}', [KategoriController::class, 'destroy'])->name('kategori.destroy');
     });
 
     // =============================================
@@ -61,6 +87,7 @@ Route::middleware('auth')->group(function () {
     
     // Create & Store: Khusus Peminjam (siswa)
     Route::middleware('role:peminjam')->group(function () {
+        Route::get('/katalog', [KatalogController::class, 'index'])->name('katalog.index');
         Route::get('/peminjaman/create', [PeminjamanController::class, 'create'])->name('peminjaman.create');
         Route::post('/peminjaman', [PeminjamanController::class, 'store'])->name('peminjaman.store');
     });
@@ -74,6 +101,19 @@ Route::middleware('auth')->group(function () {
         // Pengembalian Routes
         Route::get('/pengembalian/{peminjaman}/create', [PengembalianController::class, 'create'])->name('pengembalian.create');
         Route::post('/pengembalian/{peminjaman}', [PengembalianController::class, 'store'])->name('pengembalian.store');
+
+        // =============================================
+        // BARANG HILANG ROUTES (Admin & Petugas)
+        // =============================================
+        Route::get('/barang-hilang', [BarangHilangController::class, 'index'])->name('barang-hilang.index');
+        Route::put('/barang-hilang/{barangHilang}', [BarangHilangController::class, 'update'])->name('barang-hilang.update');
+
+        // =============================================
+        // BARANG RUSAK ROUTES (Admin & Petugas)
+        // =============================================
+        Route::get('/barang-rusak', [BarangRusakController::class, 'index'])->name('barang-rusak.index');
+        Route::patch('/barang-rusak/{sarpras}/perbaiki', [BarangRusakController::class, 'perbaiki'])->name('barang-rusak.perbaiki');
+        Route::patch('/barang-rusak/{sarpras}/hapus', [BarangRusakController::class, 'hapus'])->name('barang-rusak.hapus');
     });
     
     // Delete Peminjaman: Khusus Admin only
@@ -84,9 +124,7 @@ Route::middleware('auth')->group(function () {
     // Index & Show: Semua user yang login 
     Route::get('/peminjaman', [PeminjamanController::class, 'index'])->name('peminjaman.index');
     Route::get('/peminjaman/{peminjaman}', [PeminjamanController::class, 'show'])->name('peminjaman.show');
-    
-    // Cetak Bukti Pinjam: Semua user yang login (peminjam bisa cetak bukti pinjamnya sendiri)
-    Route::get('/peminjaman/{peminjaman}/cetak', [PeminjamanController::class, 'cetak'])->name('peminjaman.cetak');
+
 
     // =============================================
     // USER MANAGEMENT ROUTES (Admin only)

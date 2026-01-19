@@ -15,6 +15,25 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {{-- Foto Barang --}}
+                        <div class="md:col-span-2 mb-4">
+                            <div class="flex justify-center">
+                                @if ($sarpras->foto)
+                                    <img src="{{ Storage::url($sarpras->foto) }}" alt="{{ $sarpras->nama_barang }}" 
+                                         class="max-h-64 rounded-xl shadow-lg border border-gray-200">
+                                @else
+                                    <div class="w-64 h-48 bg-gray-100 rounded-xl flex items-center justify-center border border-gray-200">
+                                        <div class="text-center text-gray-400">
+                                            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <p class="mt-2 text-sm">Tidak ada foto</p>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                        
                         <div class="space-y-4">
                             <div>
                                 <label class="text-sm font-medium text-gray-500">Kode Barang</label>
@@ -30,7 +49,7 @@
                             </div>
                             <div>
                                 <label class="text-sm font-medium text-gray-500">Lokasi</label>
-                                <p>{{ $sarpras->lokasi }}</p>
+                                <p>{{ $sarpras->lokasi->nama_lokasi ?? '-' }}</p>
                             </div>
                         </div>
                         <div class="space-y-4">

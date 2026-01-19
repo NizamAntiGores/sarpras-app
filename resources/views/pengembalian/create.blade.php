@@ -135,8 +135,11 @@
 
                             {{-- Keterangan --}}
                             <div>
-                                <label for="keterangan" class="block text-sm font-medium text-gray-700 mb-2">Catatan / Keterangan</label>
-                                <textarea id="keterangan" name="keterangan" rows="3" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Tambahkan catatan jika diperlukan...">{{ old('keterangan') }}</textarea>
+                                <label for="keterangan" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Catatan / Keterangan
+                                    <span id="keterangan-required" class="text-red-500 hidden">* (Wajib diisi)</span>
+                                </label>
+                                <textarea id="keterangan" name="keterangan" rows="3" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Jelaskan kondisi barang (wajib jika rusak/hilang)...">{{ old('keterangan') }}</textarea>
                                 @error('keterangan')
                                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -158,7 +161,7 @@
         </div>
     </div>
 
-    {{-- JavaScript for image preview --}}
+    {{-- JavaScript for image preview and keterangan required toggle --}}
     <script>
         const input = document.getElementById('foto_kondisi');
         const previewContainer = document.getElementById('preview-container');
@@ -181,5 +184,28 @@
             previewContainer.classList.add('hidden');
             previewImage.src = '';
         });
+
+        // Toggle keterangan required based on kondisi
+        const kondisiRadios = document.querySelectorAll('input[name="kondisi_akhir"]');
+        const keteranganRequired = document.getElementById('keterangan-required');
+        const keteranganTextarea = document.getElementById('keterangan');
+
+        function updateKeteranganRequired() {
+            const selected = document.querySelector('input[name="kondisi_akhir"]:checked');
+            if (selected && selected.value !== 'baik') {
+                keteranganRequired.classList.remove('hidden');
+                keteranganTextarea.setAttribute('required', 'required');
+            } else {
+                keteranganRequired.classList.add('hidden');
+                keteranganTextarea.removeAttribute('required');
+            }
+        }
+
+        kondisiRadios.forEach(radio => {
+            radio.addEventListener('change', updateKeteranganRequired);
+        });
+
+        // Initial check
+        updateKeteranganRequired();
     </script>
 </x-app-layout>

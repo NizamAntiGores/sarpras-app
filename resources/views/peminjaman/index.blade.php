@@ -43,6 +43,43 @@
 
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6">
+                    
+                    {{-- FILTER SECTION --}}
+                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                        <form method="GET" action="{{ route('peminjaman.index') }}" class="flex flex-wrap items-end gap-4">
+                            <div class="flex-1 min-w-[150px]">
+                                <label for="status" class="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                                <select name="status" id="status" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="">Semua Status</option>
+                                    <option value="menunggu" {{ ($filters['status'] ?? '') === 'menunggu' ? 'selected' : '' }}>Menunggu</option>
+                                    <option value="disetujui" {{ ($filters['status'] ?? '') === 'disetujui' ? 'selected' : '' }}>Disetujui</option>
+                                    <option value="selesai" {{ ($filters['status'] ?? '') === 'selesai' ? 'selected' : '' }}>Selesai</option>
+                                    <option value="ditolak" {{ ($filters['status'] ?? '') === 'ditolak' ? 'selected' : '' }}>Ditolak</option>
+                                </select>
+                            </div>
+                            <div class="flex-1 min-w-[150px]">
+                                <label for="tanggal_mulai" class="block text-xs font-medium text-gray-700 mb-1">Dari Tanggal</label>
+                                <input type="date" name="tanggal_mulai" id="tanggal_mulai" value="{{ $filters['tanggal_mulai'] ?? '' }}"
+                                       class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            </div>
+                            <div class="flex-1 min-w-[150px]">
+                                <label for="tanggal_selesai" class="block text-xs font-medium text-gray-700 mb-1">Sampai Tanggal</label>
+                                <input type="date" name="tanggal_selesai" id="tanggal_selesai" value="{{ $filters['tanggal_selesai'] ?? '' }}"
+                                       class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            </div>
+                            <div class="flex gap-2">
+                                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
+                                    Filter
+                                </button>
+                                @if (($filters['status'] ?? '') || ($filters['tanggal_mulai'] ?? '') || ($filters['tanggal_selesai'] ?? ''))
+                                    <a href="{{ route('peminjaman.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300">
+                                        Reset
+                                    </a>
+                                @endif
+                            </div>
+                        </form>
+                    </div>
+
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                         <div class="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-lg p-4 text-white">
                             <p class="text-yellow-100 text-sm">Menunggu</p>
@@ -125,19 +162,12 @@
                                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                                             </button>
                                                         </form>
-                                                        <form action="{{ route('peminjaman.update', $pinjam) }}" method="POST" class="inline">
-                                                            @csrf @method('PUT')
-                                                            <input type="hidden" name="status" value="ditolak">
-                                                            <button type="submit" class="text-red-600 hover:text-red-900" title="Tolak" onclick="return confirm('Tolak peminjaman?')">
-                                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                            </button>
-                                                        </form>
+                                                        {{-- Link ke halaman edit untuk menolak dengan alasan --}}
+                                                        <a href="{{ route('peminjaman.edit', $pinjam) }}" class="text-red-600 hover:text-red-900" title="Tolak (dengan alasan)">
+                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                        </a>
                                                     @elseif ($pinjam->status === 'disetujui')
-                                                        <form action="{{ route('peminjaman.update', $pinjam) }}" method="POST" class="inline">
-                                                            @csrf @method('PUT')
-                                                            <input type="hidden" name="status" value="selesai">
-                                                            <button type="submit" class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-md hover:bg-blue-200" onclick="return confirm('Barang sudah dikembalikan?')">Kembali</button>
-                                                        </form>
+                                                        <a href="{{ route('pengembalian.create', $pinjam) }}" class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-md hover:bg-blue-200">Proses Kembali</a>
                                                     @endif
                                                 @endif
                                             </div>

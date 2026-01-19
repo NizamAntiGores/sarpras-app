@@ -44,13 +44,14 @@ class PengembalianController extends Controller
         $validated = $request->validate([
             'kondisi_akhir' => 'required|in:baik,rusak_ringan,rusak_berat,hilang',
             'foto_kondisi' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Max 2MB
-            'keterangan' => 'nullable|string|max:500',
+            'keterangan' => 'required_unless:kondisi_akhir,baik|nullable|string|max:500',
         ], [
             'kondisi_akhir.required' => 'Kondisi akhir barang wajib dipilih.',
             'kondisi_akhir.in' => 'Kondisi akhir tidak valid.',
             'foto_kondisi.image' => 'File harus berupa gambar.',
             'foto_kondisi.mimes' => 'Format gambar harus JPEG, PNG, atau JPG.',
             'foto_kondisi.max' => 'Ukuran gambar maksimal 2MB.',
+            'keterangan.required_unless' => 'Keterangan wajib diisi jika kondisi barang tidak baik.',
         ]);
 
         DB::beginTransaction();

@@ -31,6 +31,7 @@ class Peminjaman extends Model
         'status',
         'qr_code',
         'keterangan',
+        'catatan_petugas',
     ];
 
     /**

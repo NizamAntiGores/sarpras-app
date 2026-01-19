@@ -13,7 +13,7 @@ Sistem Peminjaman Sarana dan Prasarana berbasis Laravel.
 
 ---
 
-## Setup
+///## Setup
 
 ### Syarat
 
@@ -100,4 +100,4 @@ Akses: [http://localhost:8000](http://localhost:8000)
 - Laravel 10
 - MySQL
 - Vite + Tailwind CSS
-- DomPDF + Simple QR Code
+- DomPDF + Simple QR Code///

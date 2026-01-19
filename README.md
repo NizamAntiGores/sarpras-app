@@ -1,4 +1,4 @@
-# Aplikasi Sarptas
+# Aplikasi Sarpras Gweh
 
 Sistem Peminjaman Sarana dan Prasarana berbasis Laravel.
 

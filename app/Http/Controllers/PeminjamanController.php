@@ -163,6 +163,8 @@ class PeminjamanController extends Controller
                 ]);
             }
 
+            \App\Helpers\LogHelper::record('create', "Membuat pengajuan peminjaman baru (ID: {$peminjaman->id}) untuk " . count($validated['unit_ids']) . " unit.");
+
             DB::commit();
 
             $jumlahUnit = count($validated['unit_ids']);
@@ -314,6 +316,8 @@ class PeminjamanController extends Controller
                 'qr_code' => $peminjaman->qr_code,
             ]);
 
+            \App\Helpers\LogHelper::record('update', "Mengubah status peminjaman (ID: {$peminjaman->id}) menjadi: {$newStatus} oleh " . auth()->user()->name);
+
             DB::commit();
 
             $statusMessages = [
@@ -356,6 +360,8 @@ class PeminjamanController extends Controller
         }
 
         $peminjaman->delete();
+        
+        \App\Helpers\LogHelper::record('delete', "Menghapus data peminjaman (ID: {$peminjaman->id})");
 
         return redirect()
             ->route('peminjaman.index')

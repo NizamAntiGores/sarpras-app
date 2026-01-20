@@ -28,6 +28,8 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        
+        \App\Helpers\LogHelper::record('login', 'Pengguna melakukan login ke sistem.');
 
         return redirect()->intended(RouteServiceProvider::HOME);
     }
@@ -37,6 +39,11 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        // Log sebelum logout karena butuh ID user
+        if (Auth::check()) {
+            \App\Helpers\LogHelper::record('logout', 'Pengguna melakukan logout dari sistem.');
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

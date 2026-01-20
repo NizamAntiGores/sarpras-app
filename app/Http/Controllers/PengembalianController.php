@@ -156,6 +156,8 @@ class PengembalianController extends Controller
             $peminjaman->update(['status' => 'selesai']);
 
             DB::commit();
+            
+            \App\Helpers\LogHelper::record('update', "Memproses pengembalian untuk peminjaman ID: {$peminjaman->id}");
 
             $totalDenda = $pengembalian->total_denda;
             $message = 'Pengembalian berhasil dicatat.';

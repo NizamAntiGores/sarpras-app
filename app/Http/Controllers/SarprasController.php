@@ -202,7 +202,10 @@ class SarprasController extends Controller
         $sarpras->units()->update(['status' => SarprasUnit::STATUS_DIHAPUSBUKUKAN]);
         
         // Delete master sarpras (atau bisa juga soft delete jika mau)
+        $namaBarang = $sarpras->nama_barang;
         $sarpras->delete();
+
+        \App\Helpers\LogHelper::record('delete', "Menghapus sarpras: {$namaBarang}");
 
         return redirect()
             ->route('sarpras.index')

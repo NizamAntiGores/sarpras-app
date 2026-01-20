@@ -104,6 +104,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/kategori/{kategori}/edit', [KategoriController::class, 'edit'])->name('kategori.edit');
         Route::put('/kategori/{kategori}', [KategoriController::class, 'update'])->name('kategori.update');
         Route::delete('/kategori/{kategori}', [KategoriController::class, 'destroy'])->name('kategori.destroy');
+        
+        // =============================================
+        // LAPORAN ROUTES
+        // =============================================
+        Route::get('/laporan/asset-health', [App\Http\Controllers\LaporanController::class, 'assetHealth'])->name('laporan.asset-health');
     });
 
     // =============================================
@@ -155,6 +160,18 @@ Route::middleware('auth')->group(function () {
     // USER MANAGEMENT ROUTES (Admin only)
     // =============================================
     Route::middleware('role:admin')->group(function () {
+        // =============================================
+        // ACTIVITY LOGS (Admin only)
+        // =============================================
+        // activity
+        Route::get('/activity-logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs.index');
+
+        // =============================================
+        // TRASH ROUTES (Admin only)
+        // =============================================
+        Route::get('/trash', [App\Http\Controllers\TrashController::class, 'index'])->name('trash.index');
+        Route::patch('/trash/{id}/restore', [App\Http\Controllers\TrashController::class, 'restore'])->name('trash.restore');
+
         Route::resource('users', UserController::class)->except(['show']);
     });
 });

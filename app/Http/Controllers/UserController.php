@@ -61,6 +61,8 @@ class UserController extends Controller
             'email_verified_at' => now(),
         ]);
 
+        \App\Helpers\LogHelper::record('create', "Menambahkan user baru: {$validated['name']} ({$validated['role']})");
+
         return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan.');
     }
 
@@ -102,6 +104,8 @@ class UserController extends Controller
             'kontak' => $validated['kontak'] ?? null,
         ]);
 
+        \App\Helpers\LogHelper::record('update', "Memperbarui data user: {$user->name}");
+
         if (!empty($validated['password'])) {
             $user->update(['password' => Hash::make($validated['password'])]);
         }
@@ -119,7 +123,10 @@ class UserController extends Controller
             return redirect()->route('users.index')->with('error', 'Tidak dapat menghapus akun sendiri.');
         }
 
+        $deletedName = $user->name;
         $user->delete();
+
+        \App\Helpers\LogHelper::record('delete', "Menghapus user: {$deletedName}");
 
         return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
     }

@@ -82,6 +82,8 @@ class SarprasUnitController extends Controller
                 ? "Unit {$unitsCreated[0]} berhasil ditambahkan."
                 : count($unitsCreated) . " unit berhasil ditambahkan ({$unitsCreated[0]} - " . end($unitsCreated) . ").";
 
+            \App\Helpers\LogHelper::record('create', "Menambahkan unit untuk {$sarpras->nama_barang}: " . implode(', ', $unitsCreated));
+
             return redirect()
                 ->route('sarpras.units.index', $sarpras)
                 ->with('success', $message);
@@ -156,6 +158,8 @@ class SarprasUnitController extends Controller
 
         $unit->update($validated);
 
+        \App\Helpers\LogHelper::record('update', "Memperbarui unit {$unit->kode_unit} ({$sarpras->nama_barang})");
+
         return redirect()
             ->route('sarpras.units.index', $sarpras)
             ->with('success', "Unit {$unit->kode_unit} berhasil diperbarui.");
@@ -179,6 +183,8 @@ class SarprasUnitController extends Controller
 
         // Soft delete: ubah status jadi dihapusbukukan
         $unit->update(['status' => SarprasUnit::STATUS_DIHAPUSBUKUKAN]);
+
+        \App\Helpers\LogHelper::record('delete', "Menghapusbukukan unit {$unit->kode_unit} ({$sarpras->nama_barang})");
 
         return redirect()
             ->route('sarpras.units.index', $sarpras)

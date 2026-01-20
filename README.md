@@ -11,8 +11,13 @@ Sistem Peminjaman Sarana dan Prasarana berbasis Laravel.
 - 📄 Cetak bukti peminjaman (PDF + QR Code)
 - 📸 Upload foto kondisi barang
 
----
 
+- Laravel 10
+- MySQL
+- Vite + Tailwind CSS
+- DomPDF + Simple QR Code
+
+<!--- 
 ## Setup
 
 ### Syarat

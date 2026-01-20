@@ -1,0 +1,143 @@
+# TIER 1 – Fitur Minimal (WAJIB)
+**Alokasi Waktu:** 20 jam
+
+## Deskripsi Umum Tier 1
+Tier 1 adalah tingkat dasar yang harus dikerjakan oleh semua siswa. Aplikasi akan memiliki fitur-fitur inti untuk manajemen peminjaman dan pengaduan sarpras dengan 3 level pengguna, fokus pada pencatatan kondisi alat yang komprehensif.
+
+## Tabel Fitur Tier 1
+
+| Fitur | Admin Sarpras | Petugas/Operator | Pengguna Umum |
+| :--- | :---: | :---: | :---: |
+| **Autentikasi & Manajemen Akun** | | | |
+| Login | ✓ | ✓ | ✓ |
+| Logout | ✓ | ✓ | ✓ |
+| CRUD User (Manage User) | ✓ | - | - |
+| Ubah Password (Profil Sendiri) | ✓ | ✓ | ✓ |
+| **Manajemen Data Master (Sarpras)** | | | |
+| CRUD Kategori Sarpras | ✓ | - | - |
+| CRUD Data Alat/Buku (nama, kode, kategori, lokasi, stok, kondisi) | ✓ | - | - |
+| Melihat Daftar Sarpras Tersedia | ✓ | ✓ | ✓ |
+| **Manajemen Peminjaman** | | | |
+| Melihat Daftar Sarpras yang Bisa Dipinjam | - | - | ✓ |
+| Mengajukan Peminjaman (pilih item, tgl pinjam, est. tgl kembali, tujuan) | - | - | ✓ |
+| Melihat Riwayat Peminjaman Sendiri | - | - | ✓ |
+| Menyetujui/Menolak Peminjaman | ✓ | ✓ | - |
+| Melihat Daftar Peminjaman (Status Aktif) | ✓ | ✓ | - |
+| **Manajemen Pengembalian & Kondisi Alat** | | | |
+| Mencatat Pengembalian Sarpras | ✓ | ✓ | - |
+| Inspeksi & Pencatatan Kondisi Alat saat Pengembalian (Baik/Rusak/Hilang) | ✓ | ✓ | - |
+| Input Laporan Kerusakan Detail (deskripsi, foto opsional, kategori kerusakan) | ✓ | ✓ | - |
+| Melihat Riwayat Pengembalian & Kondisi Alat | ✓ | ✓ | - |
+| **Manajemen Pengaduan** | | | |
+| Mengajukan Pengaduan (judul, deskripsi, lokasi, jenis sarpras) | - | - | ✓ |
+| Melihat Riwayat Pengaduan Sendiri | - | - | ✓ |
+| Melihat Daftar Semua Pengaduan | ✓ | ✓ | - |
+| Ubah Status Pengaduan (Menunggu → Diproses → Selesai) | ✓ | ✓ | - |
+| Tambah Catatan/Tindak Lanjut pada Pengaduan | ✓ | ✓ | - |
+| **Laporan & Analitik** | | | |
+| Laporan Peminjaman (filter tgl) | ✓ | - | - |
+| Laporan Pengaduan (filter status) | ✓ | - | - |
+| Laporan Asset Health (kondisi alat, alat yang sering rusak, alat yang perlu maintenance) | ✓ | - | - |
+| **Sistem Umum** | | | |
+| Verifikasi Hak Akses (Privilege Check) | ✓ | ✓ | ✓ |
+| Pencegahan Double Booking (alat tidak bisa dipinjam 2x waktu bersamaan) | ✓ | ✓ | - |
+| Update Stok Otomatis (berkurang saat pinjam, bertambah saat kembali) | ✓ | ✓ | - |
+| Activity Log Dasar (login, peminjaman, pengembalian) | ✓ | - | - |
+
+## Penjelasan Fitur Tier 1 yang Perlu Klarifikasi
+
+### 1. Login & Privilege
+- Setiap user harus login dengan username dan password.
+- Sistem harus mengecek role user (Admin, Petugas, Pengguna) dan hanya menampilkan menu yang sesuai.
+- **Contoh:** Pengguna Umum tidak akan melihat menu “CRUD Alat” atau menu “Manajemen User”.
+
+### 2. CRUD Kategori & Alat
+- **Kategori misalnya:** Alat Lab, Buku, Perangkat TIK, Furniture, Perlengkapan Ruang, dsb.
+- **Alat/Sarpras memiliki atribut minimal:** Kode, Nama, Kategori, Lokasi (ruang tempat disimpan), Jumlah Stok, Kondisi Awal (Baik/Cacat/Rusak).
+- Admin dapat menambah, mengubah, dan menghapus data sarpras.
+
+### 3. Peminjaman
+- Pengguna Umum hanya bisa melihat sarpras dengan stok > 0 (tersedia).
+- Saat mengajukan peminjaman, pengguna memilih: item apa, berapa jumlah, kapan pinjam, kapan kembali, untuk apa/tujuan peminjaman.
+- **Status peminjaman:** “Menunggu Persetujuan” → “Disetujui/Aktif” atau “Ditolak”.
+- Admin/Petugas dapat menyetujui atau menolak peminjaman dengan alasan opsional.
+- Setelah persetujuan selesai, Admin/Petugas mencetak tanda bukti peminjaman, yang memuat informasi peminjaman, dengan kode unik nomor peminjaman (berupa text dan QR Code).
+
+### 4. Pengembalian & Pencatatan Kondisi Alat (FITUR PENGGANTI DENDA)
+**Tujuan:** Melacak kondisi asset setelah peminjaman untuk:
+- Mengidentifikasi alat yang sering rusak.
+- Merencanakan maintenance dan penggantian.
+- Mencatat riwayat kerusakan untuk historical analysis.
+
+**Proses:**
+- Saat pengguna mengembalikan sarpras, Admin/Petugas melakukan inspeksi kondisi alat.
+- **Input data pengembalian:**
+    - Kode Peminjaman (Scan QR Code di tanda bukti peminjaman).
+    - Tanggal actual pengembalian.
+    - **Status Kondisi Alat (pilih dari dropdown):**
+        - ✓ **Baik** (tidak ada kerusakan, dapat digunakan kembali).
+        - ⚠️ **Rusak Ringan** (masih bisa pakai, tapi ada cacat minor).
+        - ❌ **Rusak Berat** (tidak bisa dipakai, perlu perbaikan serius).
+        - ❓ **Hilang** (alat tidak dikembalikan).
+    - **Catatan/Deskripsi Kerusakan** (jika ada): misal “Layar retak”, “Tombol tidak berfungsi”, “Kabel putus”, dsb.
+    - **Foto Pengembalian** (untuk dokumentasi visual).
+
+**Database action:**
+- Update status peminjaman menjadi “Dikembalikan”.
+- Update kondisi alat di master data.
+- Insert record ke tabel riwayat_kondisi_alat atau pengembalian_detail.
+- Jika “Hilang”, trigger sistem untuk membuat pengaduan otomatis atau flag khusus.
+
+**Contoh:**
+- **Peminjaman:** Proyektor untuk acara, 09 Jan 2026
+- **Pengembalian:** 09 Jan 2026
+- **Kondisi saat kembali:** Rusak Ringan
+- **Deskripsi:** Lensa sedikit berdebu, lampu mulai berkedip
+- **Catatan Petugas:** Perlu pembersihan dan penggantian lampu
+- → **Status alat jadi "Butuh Maintenance"**, tetap bisa dipinjam dengan catatan peringatan.
+
+### 5. Pengaduan (Penjelasan lebih detail agar tidak ambigu)
+**Tujuan pengaduan:** Pelaporan kerusakan atau permasalahan sarpras (misal: “Proyektor Lab 1 tidak menyala”, “Kursi di Ruang Kelas 2A patah”, “Jaringan LAN lab RPL tidak stabil”).
+
+**Data pengaduan minimal:**
+- Judul singkat pengaduan.
+- Deskripsi detail masalah.
+- Lokasi sarpras (ruang mana).
+- Jenis sarpras yang bermasalah (pilih dari kategori atau nama alat).
+- Tanggal pengaduan (sistem otomatis set ke hari itu).
+- Nama pelapor (sistem otomatis ambil dari user yang login).
+- Foto/Attachment (opsional).
+
+**Status pengaduan:**
+- “Belum Ditindaklanjuti” → “Sedang Diproses” → “Selesai” atau “Ditutup”.
+
+**Catatan/Progress:** Admin atau Petugas dapat menambah catatan pada pengaduan (misal: “Sudah diperiksa, perlu dikirim bengkel”; “Selesai perbaikan tgl 20 Jan”).
+
+### 6. Laporan Asset Health (FITUR PENGGANTI LAPORAN DENDA)
+**Tujuan:** Memberikan insight tentang kondisi aset sekolah untuk perencanaan maintenance & budgeting.
+
+**Isi Laporan:**
+- **Daftar Alat yang Rusak:** Alat mana saja yang status kondisinya “Rusak Berat” atau “Butuh Maintenance”, sudah berapa lama, lokasi.
+- **Alat yang Sering Rusak:** Top 10 alat dengan jumlah kerusakan/pengembalian rusak terbanyak dalam periode tertentu.
+- **Alat yang Hilang:** Daftar alat yang pernah dilaporkan hilang beserta tanggal, peminjam terakhir.
+- **Maintenance History:** Riwayat kerusakan per alat dalam timeline (kapan rusak, kondisi apa, sudah diperbaiki atau belum).
+- **Rekomendasi:** Alat mana yang sebaiknya diganti, dirawat, atau ditingkatkan stok.
+
+**Output:** Laporan tabel + chart sederhana (alat rusak per kategori, trend kerusakan per bulan).
+
+### 7. Pencegahan Double Booking
+- Jika alat X sudah dipinjam untuk tgl 10-15 Jan, pengguna lain tidak bisa mengajukan peminjaman alat X untuk tanggal yang tumpang tindih.
+- Sistem harus mengecek availability berdasarkan tanggal mulai dan tanggal akhir peminjaman.
+
+### 8. Update Stok Otomatis
+- Setiap kali ada peminjaman yang disetujui, stok alat berkurang.
+- Setiap kali ada pengembalian (apapun kondisinya), stok alat kembali bertambah.
+- **Contoh:** Alat “Proyektor” stok 2 buah. Ada peminjaman 1 buah yang disetujui → stok jadi 1. Setelah dikembalikan (baik/rusak/hilang) → stok jadi 2 lagi.
+
+### 9. Activity Log
+- **Minimal mencatat:** Login, Input Peminjaman, Persetujuan/Penolakan Peminjaman, Pengembalian dengan kondisi, Input Pengaduan.
+- Admin dapat view log ini untuk audit.
+
+### 10. Privilege Check
+- Setiap halaman/aksi diproteksi dengan pengecekan role.
+- Jika user tidak authorized → redirect ke halaman error atau dashboard.

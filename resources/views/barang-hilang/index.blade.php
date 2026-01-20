@@ -39,6 +39,7 @@
                                 <option value="">Semua Status</option>
                                 <option value="belum_diganti" {{ request('status') === 'belum_diganti' ? 'selected' : '' }}>Belum Diganti</option>
                                 <option value="sudah_diganti" {{ request('status') === 'sudah_diganti' ? 'selected' : '' }}>Sudah Diganti</option>
+                                <option value="diputihkan" {{ request('status') === 'diputihkan' ? 'selected' : '' }}>Diputihkan</option>
                             </select>
                         </form>
                     </div>
@@ -56,9 +57,9 @@
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kode Unit</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barang</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Peminjam</th>
-                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Jumlah</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Keterangan</th>
                                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -67,18 +68,24 @@
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
                                     @foreach ($barangHilang as $item)
+                                        @php
+                                            $unit = $item->pengembalianDetail?->sarprasUnit;
+                                            $sarpras = $unit?->sarpras;
+                                        @endphp
                                         <tr class="hover:bg-gray-50">
                                             <td class="px-6 py-4 text-sm text-gray-500">{{ $loop->iteration }}</td>
                                             <td class="px-6 py-4">
-                                                <div class="text-sm font-medium text-gray-900">{{ $item->sarpras->nama_barang ?? '-' }}</div>
-                                                <div class="text-sm text-gray-500">{{ $item->sarpras->kode_barang ?? '-' }}</div>
+                                                <span class="px-2 py-1 text-sm font-mono bg-red-100 text-red-800 rounded font-semibold">
+                                                    {{ $unit->kode_unit ?? '-' }}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div class="text-sm font-medium text-gray-900">{{ $sarpras->nama_barang ?? '-' }}</div>
+                                                <div class="text-sm text-gray-500">{{ $sarpras->kode_barang ?? '-' }}</div>
                                             </td>
                                             <td class="px-6 py-4">
                                                 <div class="text-sm font-medium text-gray-900">{{ $item->user->name ?? '-' }}</div>
                                                 <div class="text-sm text-gray-500">{{ $item->user->email ?? '-' }}</div>
-                                            </td>
-                                            <td class="px-6 py-4 text-center">
-                                                <span class="text-lg font-bold text-red-600">{{ $item->jumlah }}</span>
                                             </td>
                                             <td class="px-6 py-4 text-sm text-gray-500">
                                                 {{ $item->created_at->format('d M Y') }}
@@ -87,28 +94,44 @@
                                                 {{ $item->keterangan ?? '-' }}
                                             </td>
                                             <td class="px-6 py-4 text-center">
-                                                @if ($item->status === 'belum_diganti')
-                                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Belum Diganti</span>
-                                                @else
-                                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Sudah Diganti</span>
-                                                @endif
+                                                @switch($item->status)
+                                                    @case('belum_diganti')
+                                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Belum Diganti</span>
+                                                        @break
+                                                    @case('sudah_diganti')
+                                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Sudah Diganti</span>
+                                                        @break
+                                                    @case('diputihkan')
+                                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Diputihkan</span>
+                                                        @break
+                                                @endswitch
                                             </td>
                                             <td class="px-6 py-4 text-center">
                                                 @if ($item->status === 'belum_diganti')
-                                                    <form action="{{ route('barang-hilang.update', $item) }}" method="POST" class="inline">
-                                                        @csrf
-                                                        @method('PUT')
-                                                        <input type="hidden" name="status" value="sudah_diganti">
-                                                        <button type="submit" class="px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-md hover:bg-green-200" onclick="return confirm('Tandai sebagai sudah diganti?')">
-                                                            ✓ Sudah Diganti
-                                                        </button>
-                                                    </form>
+                                                    <div class="flex gap-1 justify-center">
+                                                        <form action="{{ route('barang-hilang.update', $item) }}" method="POST" class="inline">
+                                                            @csrf
+                                                            @method('PUT')
+                                                            <input type="hidden" name="status" value="sudah_diganti">
+                                                            <button type="submit" class="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-md hover:bg-green-200" onclick="return confirm('Tandai sebagai sudah diganti?')">
+                                                                ✓ Diganti
+                                                            </button>
+                                                        </form>
+                                                        <form action="{{ route('barang-hilang.update', $item) }}" method="POST" class="inline">
+                                                            @csrf
+                                                            @method('PUT')
+                                                            <input type="hidden" name="status" value="diputihkan">
+                                                            <button type="submit" class="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-md hover:bg-gray-200" onclick="return confirm('Putihkan barang ini?')">
+                                                                Putihkan
+                                                            </button>
+                                                        </form>
+                                                    </div>
                                                 @else
                                                     <form action="{{ route('barang-hilang.update', $item) }}" method="POST" class="inline">
                                                         @csrf
                                                         @method('PUT')
                                                         <input type="hidden" name="status" value="belum_diganti">
-                                                        <button type="submit" class="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-md hover:bg-gray-200" onclick="return confirm('Batalkan status sudah diganti?')">
+                                                        <button type="submit" class="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-md hover:bg-gray-200" onclick="return confirm('Batalkan status?')">
                                                             ↩ Batalkan
                                                         </button>
                                                     </form>

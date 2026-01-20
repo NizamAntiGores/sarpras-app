@@ -19,35 +19,40 @@ class BarangHilang extends Model
      * The attributes that are mass assignable.
      */
     protected $fillable = [
-        'pengembalian_id',
-        'sarpras_id',
+        'pengembalian_detail_id',
         'user_id',
-        'jumlah',
         'keterangan',
         'status',
     ];
 
     /**
-     * Get pengembalian terkait
+     * Konstanta untuk status
      */
-    public function pengembalian(): BelongsTo
+    const STATUS_BELUM_DIGANTI = 'belum_diganti';
+    const STATUS_SUDAH_DIGANTI = 'sudah_diganti';
+    const STATUS_DIPUTIHKAN = 'diputihkan';
+
+    /**
+     * Get detail pengembalian terkait
+     */
+    public function pengembalianDetail(): BelongsTo
     {
-        return $this->belongsTo(Pengembalian::class, 'pengembalian_id');
+        return $this->belongsTo(PengembalianDetail::class, 'pengembalian_detail_id');
     }
 
     /**
-     * Get sarpras yang hilang
-     */
-    public function sarpras(): BelongsTo
-    {
-        return $this->belongsTo(Sarpras::class, 'sarpras_id');
-    }
-
-    /**
-     * Get user yang menghilangkan
+     * Get user yang bertanggung jawab
      */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Get unit yang hilang melalui pengembalian detail
+     */
+    public function getSarprasUnitAttribute()
+    {
+        return $this->pengembalianDetail?->sarprasUnit;
     }
 }

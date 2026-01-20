@@ -28,16 +28,16 @@
                             <p class="text-2xl font-bold">{{ $sarpras->total() }}</p>
                         </div>
                         <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-4 text-white">
-                            <p class="text-green-100 text-sm">Stok Tersedia</p>
-                            <p class="text-2xl font-bold">{{ $sarpras->sum('stok') }}</p>
+                            <p class="text-green-100 text-sm">Unit Tersedia</p>
+                            <p class="text-2xl font-bold">{{ $sarpras->sum('tersedia_count') }}</p>
                         </div>
-                        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-4 text-white">
-                            <p class="text-red-100 text-sm">Stok Rusak</p>
-                            <p class="text-2xl font-bold">{{ $sarpras->sum('stok_rusak') }}</p>
+                        <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-4 text-white">
+                            <p class="text-orange-100 text-sm">Dipinjam</p>
+                            <p class="text-2xl font-bold">{{ $sarpras->sum('dipinjam_count') }}</p>
                         </div>
                         <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-4 text-white">
-                            <p class="text-purple-100 text-sm">Total Unit</p>
-                            <p class="text-2xl font-bold">{{ $sarpras->sum('stok') + $sarpras->sum('stok_rusak') }}</p>
+                            <p class="text-purple-100 text-sm">Maintenance</p>
+                            <p class="text-2xl font-bold">{{ $sarpras->sum('maintenance_count') }}</p>
                         </div>
                     </div>
 
@@ -50,18 +50,14 @@
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kode</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Barang</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total Unit</th>
                                     <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Tersedia</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Rusak</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dipinjam Oleh</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Dipinjam</th>
                                     <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse ($sarpras as $item)
-                                    @php
-                                        $activePeminjaman = $item->peminjaman->where('status', 'disetujui');
-                                        $totalDipinjam = $activePeminjaman->sum('jumlah_pinjam');
-                                    @endphp
                                     <tr class="hover:bg-gray-50">
                                         <td class="px-4 py-4">
                                             @if ($item->foto)
@@ -78,35 +74,22 @@
                                         <td class="px-4 py-4"><span class="px-2 py-1 text-xs font-mono bg-gray-100 rounded">{{ $item->kode_barang }}</span></td>
                                         <td class="px-4 py-4">
                                             <div class="text-sm font-medium text-gray-900">{{ $item->nama_barang }}</div>
-                                            <div class="text-xs text-gray-500">{{ $item->lokasi->nama_lokasi ?? '-' }}</div>
                                         </td>
                                         <td class="px-4 py-4"><span class="px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-800">{{ $item->kategori->nama_kategori ?? '-' }}</span></td>
                                         <td class="px-4 py-4 text-center">
-                                            <span class="text-lg font-semibold {{ $item->stok > 0 ? 'text-green-600' : 'text-gray-400' }}">{{ $item->stok }}</span>
+                                            <span class="text-lg font-semibold text-gray-700">{{ $item->total_unit }}</span>
                                         </td>
                                         <td class="px-4 py-4 text-center">
-                                            <span class="text-lg font-semibold {{ $item->stok_rusak > 0 ? 'text-red-600' : 'text-gray-400' }}">{{ $item->stok_rusak }}</span>
+                                            <span class="text-lg font-semibold {{ $item->tersedia_count > 0 ? 'text-green-600' : 'text-gray-400' }}">{{ $item->tersedia_count }}</span>
                                         </td>
-                                        <td class="px-4 py-4">
-                                            @if ($activePeminjaman->count() > 0)
-                                                <div class="space-y-1">
-                                                    @foreach ($activePeminjaman->take(3) as $pinjam)
-                                                        <div class="flex items-center text-xs">
-                                                            <span class="w-2 h-2 bg-orange-400 rounded-full mr-2"></span>
-                                                            <span class="text-gray-700">{{ $pinjam->user->name ?? '-' }}</span>
-                                                            <span class="text-gray-400 ml-1">({{ $pinjam->jumlah_pinjam }})</span>
-                                                        </div>
-                                                    @endforeach
-                                                    @if ($activePeminjaman->count() > 3)
-                                                        <span class="text-xs text-gray-400">+{{ $activePeminjaman->count() - 3 }} lainnya</span>
-                                                    @endif
-                                                </div>
-                                            @else
-                                                <span class="text-xs text-gray-400">-</span>
-                                            @endif
+                                        <td class="px-4 py-4 text-center">
+                                            <span class="text-lg font-semibold {{ $item->dipinjam_count > 0 ? 'text-orange-600' : 'text-gray-400' }}">{{ $item->dipinjam_count }}</span>
                                         </td>
                                         <td class="px-4 py-4 text-center">
                                             <div class="flex items-center justify-center space-x-2">
+                                                <a href="{{ route('sarpras.units.index', $item) }}" class="text-teal-600 hover:text-teal-900" title="Kelola Unit">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                                </a>
                                                 <a href="{{ route('sarpras.show', $item) }}" class="text-gray-600 hover:text-gray-900" title="Detail">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                                 </a>

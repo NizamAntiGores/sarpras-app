@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Sarpras;
+use App\Models\SarprasUnit;
 use App\Models\Peminjaman;
+use App\Models\Maintenance;
 use App\Models\Kategori;
 use Illuminate\View\View;
 
@@ -16,48 +18,63 @@ class DashboardController extends Controller
         $data = [];
 
         // =============================================
-        // PERHITUNGAN STOK (Quantity-based)
+        // PERHITUNGAN STOK (Unit-based)
         // =============================================
         // Rumus:
-        // - Stok Tersedia = Sum stok di tabel sarpras (barang bagus di lemari)
-        // - Stok Rusak = Sum stok_rusak di tabel sarpras
-        // - Sedang Dipinjam = Sum jumlah_pinjam dari peminjaman dengan status 'disetujui'
-        // - Total Inventaris = Stok Tersedia + Stok Rusak + Sedang Dipinjam
+        // - Total Unit = Unit aktif (bukan dihapusbukukan)
+        // - Tersedia = Unit dengan status 'tersedia' dan kondisi bukan rusak_berat
+        // - Dipinjam = Unit dengan status 'dipinjam'
+        // - Maintenance = Unit dengan status 'maintenance'
+        // - Rusak = Unit dengan kondisi != 'baik'
         
-        $stokTersedia = Sarpras::sum('stok');
-        $stokRusak = Sarpras::sum('stok_rusak');
-        $sedangDipinjam = Peminjaman::where('status', 'disetujui')->sum('jumlah_pinjam');
-        $totalInventaris = $stokTersedia + $stokRusak + $sedangDipinjam;
+        $totalUnit = SarprasUnit::aktif()->count();
+        $tersedia = SarprasUnit::bisaDipinjam()->count();
+        $dipinjam = SarprasUnit::where('status', SarprasUnit::STATUS_DIPINJAM)->count();
+        $maintenance = SarprasUnit::where('status', SarprasUnit::STATUS_MAINTENANCE)->count();
+        $rusak = SarprasUnit::aktif()->where('kondisi', '!=', SarprasUnit::KONDISI_BAIK)->count();
 
         if ($user->role === 'admin') {
             // Dashboard Admin: Statistik lengkap
             
-            // Top 5 Barang Paling Sering Dipinjam
-            $top5Barang = Sarpras::withCount(['peminjaman as total_dipinjam' => function ($query) {
-                    $query->whereIn('status', ['disetujui', 'selesai']);
+            // Top 5 Barang Paling Sering Dipinjam (berdasarkan detail count)
+            $top5Barang = Sarpras::withCount(['units as total_dipinjam' => function ($query) {
+                    $query->whereHas('peminjamanDetails.peminjaman', function ($q) {
+                        $q->whereIn('status', ['disetujui', 'selesai']);
+                    });
                 }])
                 ->orderByDesc('total_dipinjam')
                 ->limit(5)
                 ->get(['id', 'nama_barang', 'kode_barang']);
             
-            // Barang dengan Stok Menipis (stok <= 5)
-            $stokMenipis = Sarpras::with('lokasi')
-                ->where('stok', '<=', 5)
-                ->where('stok', '>', 0)
-                ->orderBy('stok')
+            // Barang dengan Stok Menipis (unit tersedia <= 3)
+            $stokMenipis = Sarpras::withCount(['units as available_count' => function ($query) {
+                    $query->bisaDipinjam();
+                }])
+                ->having('available_count', '<=', 3)
+                ->having('available_count', '>', 0)
                 ->get();
             
-            // Barang Habis (stok = 0)
-            $stokHabis = Sarpras::with('lokasi')
-                ->where('stok', 0)
+            // Barang Habis (tidak ada unit tersedia)
+            $stokHabis = Sarpras::withCount(['units as available_count' => function ($query) {
+                    $query->bisaDipinjam();
+                }])
+                ->having('available_count', '=', 0)
+                ->get();
+            
+            // Maintenance aktif
+            $maintenanceAktif = Maintenance::sedangBerlangsung()
+                ->with(['sarprasUnit.sarpras', 'petugas'])
+                ->orderBy('tanggal_mulai', 'desc')
+                ->limit(5)
                 ->get();
             
             $data = [
-                // Statistik Inventaris
-                'stokTersedia' => $stokTersedia,
-                'stokRusak' => $stokRusak,
-                'sedangDipinjam' => $sedangDipinjam,
-                'totalInventaris' => $totalInventaris,
+                // Statistik Inventaris (Unit-based)
+                'totalUnit' => $totalUnit,
+                'tersedia' => $tersedia,
+                'dipinjam' => $dipinjam,
+                'maintenance' => $maintenance,
+                'rusak' => $rusak,
                 
                 // Statistik User
                 'totalUsers' => User::count(),
@@ -76,7 +93,7 @@ class DashboardController extends Controller
                 'peminjamanSelesai' => Peminjaman::where('status', 'selesai')->count(),
                 
                 // Recent Activity
-                'recentPeminjaman' => Peminjaman::with(['user', 'sarpras'])
+                'recentPeminjaman' => Peminjaman::with(['user', 'details.sarprasUnit.sarpras'])
                     ->orderBy('created_at', 'desc')
                     ->limit(5)
                     ->get(),
@@ -85,15 +102,19 @@ class DashboardController extends Controller
                 'top5Barang' => $top5Barang,
                 'stokMenipis' => $stokMenipis,
                 'stokHabis' => $stokHabis,
+                
+                // Maintenance
+                'maintenanceAktif' => $maintenanceAktif,
+                'totalMaintenanceAktif' => Maintenance::sedangBerlangsung()->count(),
             ];
         } elseif ($user->role === 'petugas') {
             // Dashboard Petugas: Fokus pada verifikasi
             $data = [
                 // Statistik Inventaris
-                'stokTersedia' => $stokTersedia,
-                'stokRusak' => $stokRusak,
-                'sedangDipinjam' => $sedangDipinjam,
-                'totalInventaris' => $totalInventaris,
+                'totalUnit' => $totalUnit,
+                'tersedia' => $tersedia,
+                'dipinjam' => $dipinjam,
+                'maintenance' => $maintenance,
                 
                 // Statistik Peminjaman
                 'peminjamanMenunggu' => Peminjaman::where('status', 'menunggu')->count(),
@@ -102,8 +123,11 @@ class DashboardController extends Controller
                     ->count(),
                 'peminjamanDisetujui' => Peminjaman::where('status', 'disetujui')->count(),
                 
+                // Maintenance aktif
+                'totalMaintenanceAktif' => Maintenance::sedangBerlangsung()->count(),
+                
                 // Recent Activity
-                'recentPeminjaman' => Peminjaman::with(['user', 'sarpras'])
+                'recentPeminjaman' => Peminjaman::with(['user', 'details.sarprasUnit.sarpras'])
                     ->where('status', 'menunggu')
                     ->orderBy('created_at', 'desc')
                     ->limit(5)
@@ -113,14 +137,17 @@ class DashboardController extends Controller
             // Dashboard Peminjam/Siswa - dengan katalog dan riwayat lengkap
             
             // Data katalog barang (untuk ditampilkan langsung)
-            $katalogBarang = Sarpras::with(['kategori', 'lokasi'])
-                ->where('stok', '>', 0)
+            $katalogBarang = Sarpras::with(['kategori'])
+                ->withCount(['units as available_count' => function ($query) {
+                    $query->bisaDipinjam();
+                }])
+                ->having('available_count', '>', 0)
                 ->orderBy('nama_barang')
                 ->limit(8)
                 ->get();
             
             // Riwayat peminjaman terbaru (lebih lengkap)
-            $riwayatPeminjaman = Peminjaman::with('sarpras')
+            $riwayatPeminjaman = Peminjaman::with('details.sarprasUnit.sarpras')
                 ->where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
                 ->limit(10)
@@ -137,7 +164,11 @@ class DashboardController extends Controller
                     
                 // Katalog barang untuk ditampilkan langsung
                 'katalogBarang' => $katalogBarang,
-                'totalKatalog' => Sarpras::where('stok', '>', 0)->count(),
+                'totalKatalog' => Sarpras::withCount(['units as available_count' => function ($query) {
+                        $query->bisaDipinjam();
+                    }])
+                    ->having('available_count', '>', 0)
+                    ->count(),
                 
                 // Riwayat peminjaman
                 'riwayatPeminjaman' => $riwayatPeminjaman,

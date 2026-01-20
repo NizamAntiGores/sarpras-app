@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SarprasController;
+use App\Http\Controllers\SarprasUnitController;
 use App\Http\Controllers\PeminjamanController;
 use App\Http\Controllers\PengembalianController;
 use App\Http\Controllers\DashboardController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\LokasiController;
 use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\BarangHilangController;
 use App\Http\Controllers\BarangRusakController;
+use App\Http\Controllers\MaintenanceController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -54,6 +56,29 @@ Route::middleware('auth')->group(function () {
         Route::get('/sarpras/{sarpras}/edit', [SarprasController::class, 'edit'])->name('sarpras.edit');
         Route::put('/sarpras/{sarpras}', [SarprasController::class, 'update'])->name('sarpras.update');
         Route::patch('/sarpras/{sarpras}', [SarprasController::class, 'update']);
+
+        // =============================================
+        // SARPRAS UNIT ROUTES (Nested under Sarpras)
+        // =============================================
+        Route::get('/sarpras/{sarpras}/units', [SarprasUnitController::class, 'index'])->name('sarpras.units.index');
+        Route::get('/sarpras/{sarpras}/units/create', [SarprasUnitController::class, 'create'])->name('sarpras.units.create');
+        Route::post('/sarpras/{sarpras}/units', [SarprasUnitController::class, 'store'])->name('sarpras.units.store');
+        Route::get('/sarpras/{sarpras}/units/{unit}', [SarprasUnitController::class, 'show'])->name('sarpras.units.show');
+        Route::get('/sarpras/{sarpras}/units/{unit}/edit', [SarprasUnitController::class, 'edit'])->name('sarpras.units.edit');
+        Route::put('/sarpras/{sarpras}/units/{unit}', [SarprasUnitController::class, 'update'])->name('sarpras.units.update');
+        Route::delete('/sarpras/{sarpras}/units/{unit}', [SarprasUnitController::class, 'destroy'])->name('sarpras.units.destroy');
+        Route::post('/sarpras/{sarpras}/units/bulk-update-kondisi', [SarprasUnitController::class, 'bulkUpdateKondisi'])->name('sarpras.units.bulk-update-kondisi');
+        
+        // =============================================
+        // MAINTENANCE ROUTES
+        // =============================================
+        Route::get('/maintenance', [MaintenanceController::class, 'index'])->name('maintenance.index');
+        Route::get('/maintenance/create', [MaintenanceController::class, 'create'])->name('maintenance.create');
+        Route::post('/maintenance', [MaintenanceController::class, 'store'])->name('maintenance.store');
+        Route::get('/maintenance/{maintenance}', [MaintenanceController::class, 'show'])->name('maintenance.show');
+        Route::get('/maintenance/{maintenance}/edit', [MaintenanceController::class, 'edit'])->name('maintenance.edit');
+        Route::put('/maintenance/{maintenance}', [MaintenanceController::class, 'update'])->name('maintenance.update');
+        Route::delete('/maintenance/{maintenance}', [MaintenanceController::class, 'destroy'])->name('maintenance.destroy');
     });
 
     // Destroy Sarpras - Hanya Admin

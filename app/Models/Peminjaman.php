@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Peminjaman extends Model
 {
@@ -18,14 +20,10 @@ class Peminjaman extends Model
 
     /**
      * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
      */
     protected $fillable = [
         'user_id',
-        'sarpras_id',
         'petugas_id',
-        'jumlah_pinjam',
         'tgl_pinjam',
         'tgl_kembali_rencana',
         'status',
@@ -36,14 +34,19 @@ class Peminjaman extends Model
 
     /**
      * The attributes that should be cast.
-     *
-     * @var array<string, string>
      */
     protected $casts = [
-        'jumlah_pinjam' => 'integer',
         'tgl_pinjam' => 'date',
         'tgl_kembali_rencana' => 'date',
     ];
+
+    /**
+     * Konstanta untuk status
+     */
+    const STATUS_MENUNGGU = 'menunggu';
+    const STATUS_DISETUJUI = 'disetujui';
+    const STATUS_SELESAI = 'selesai';
+    const STATUS_DITOLAK = 'ditolak';
 
     /**
      * Get user peminjam
@@ -62,14 +65,6 @@ class Peminjaman extends Model
     }
 
     /**
-     * Get sarpras yang dipinjam
-     */
-    public function sarpras(): BelongsTo
-    {
-        return $this->belongsTo(Sarpras::class, 'sarpras_id');
-    }
-
-    /**
      * Get petugas yang menyetujui
      */
     public function petugas(): BelongsTo
@@ -78,10 +73,57 @@ class Peminjaman extends Model
     }
 
     /**
+     * Get detail peminjaman (unit-unit yang dipinjam)
+     */
+    public function details(): HasMany
+    {
+        return $this->hasMany(PeminjamanDetail::class, 'peminjaman_id');
+    }
+
+    /**
+     * Get semua unit yang dipinjam melalui details
+     */
+    public function units(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            SarprasUnit::class,
+            PeminjamanDetail::class,
+            'peminjaman_id', // FK di peminjaman_details
+            'id',            // PK di sarpras_units
+            'id',            // PK di peminjaman
+            'sarpras_unit_id' // FK di peminjaman_details ke sarpras_units
+        );
+    }
+
+    /**
      * Get pengembalian untuk peminjaman ini
      */
     public function pengembalian(): HasOne
     {
         return $this->hasOne(Pengembalian::class, 'peminjaman_id');
+    }
+
+    /**
+     * Scope untuk peminjaman yang aktif (disetujui tapi belum selesai)
+     */
+    public function scopeAktif($query)
+    {
+        return $query->where('status', self::STATUS_DISETUJUI);
+    }
+
+    /**
+     * Scope untuk peminjaman menunggu approval
+     */
+    public function scopeMenunggu($query)
+    {
+        return $query->where('status', self::STATUS_MENUNGGU);
+    }
+
+    /**
+     * Get jumlah unit yang dipinjam
+     */
+    public function getJumlahUnitAttribute(): int
+    {
+        return $this->details()->count();
     }
 }

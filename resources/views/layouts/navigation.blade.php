@@ -35,8 +35,8 @@
                                     <a href="{{ route('sarpras.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('sarpras.*') ? 'bg-gray-100 font-medium' : '' }}">
                                         📦 Daftar Sarpras
                                     </a>
-                                    <a href="{{ route('barang-rusak.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('barang-rusak.*') ? 'bg-gray-100 font-medium' : '' }}">
-                                        🔧 Barang Rusak
+                                    <a href="{{ route('maintenance.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('maintenance.*') ? 'bg-gray-100 font-medium' : '' }}">
+                                        🔧 Maintenance
                                     </a>
                                     <a href="{{ route('barang-hilang.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('barang-hilang.*') ? 'bg-gray-100 font-medium' : '' }}">
                                         ❌ Barang Hilang
@@ -142,8 +142,8 @@
                     <x-responsive-nav-link :href="route('sarpras.index')" :active="request()->routeIs('sarpras.*')">
                         📦 Daftar Sarpras
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('barang-rusak.index')" :active="request()->routeIs('barang-rusak.*')">
-                        🔧 Barang Rusak
+                    <x-responsive-nav-link :href="route('maintenance.index')" :active="request()->routeIs('maintenance.*')">
+                        🔧 Maintenance
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('barang-hilang.index')" :active="request()->routeIs('barang-hilang.*')">
                         ❌ Barang Hilang

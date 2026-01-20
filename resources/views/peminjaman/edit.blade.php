@@ -14,6 +14,13 @@
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6">
+
+                    @if (session('error'))
+                        <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
                     {{-- Info Peminjaman --}}
                     <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                         {{-- Info Peminjam --}}
@@ -28,12 +35,16 @@
 
                         {{-- Info Barang --}}
                         <div class="bg-gray-50 rounded-lg p-4">
-                            <h3 class="font-semibold text-gray-800 mb-3 border-b pb-2">Info Barang</h3>
+                            <h3 class="font-semibold text-gray-800 mb-3 border-b pb-2">Unit yang Dipinjam</h3>
                             <div class="space-y-2">
-                                <p><span class="text-gray-500">Nama:</span> <span class="font-medium">{{ $peminjaman->sarpras->nama_barang ?? '-' }}</span></p>
-                                <p><span class="text-gray-500">Kode:</span> {{ $peminjaman->sarpras->kode_barang ?? '-' }}</p>
-                                <p><span class="text-gray-500">Jumlah Pinjam:</span> <span class="text-xl font-bold text-indigo-600">{{ $peminjaman->jumlah_pinjam }}</span></p>
-                                <p><span class="text-gray-500">Stok Tersedia:</span> <span class="font-medium text-green-600">{{ $peminjaman->sarpras->stok ?? 0 }}</span></p>
+                                <p><span class="text-gray-500">Jumlah Unit:</span> <span class="text-xl font-bold text-indigo-600">{{ $peminjaman->details->count() }}</span></p>
+                                <div class="flex flex-wrap gap-1 mt-2">
+                                    @foreach ($peminjaman->details as $detail)
+                                        <span class="inline-flex items-center px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">
+                                            {{ $detail->sarprasUnit->kode_unit ?? '-' }}
+                                        </span>
+                                    @endforeach
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -127,10 +138,7 @@
                 }
             }
 
-            // Initial check
             updateCatatanRequirement();
-
-            // Listen for changes
             statusSelect.addEventListener('change', updateCatatanRequirement);
         });
     </script>

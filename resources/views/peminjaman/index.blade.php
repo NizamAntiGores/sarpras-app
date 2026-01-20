@@ -107,8 +107,7 @@
                                     @if (auth()->user()->role !== 'peminjam')
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Peminjam</th>
                                     @endif
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barang</th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Jumlah</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit Barang</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tgl Pinjam</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tgl Kembali</th>
                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -126,10 +125,22 @@
                                             </td>
                                         @endif
                                         <td class="px-6 py-4">
-                                            <div class="text-sm font-medium text-gray-900">{{ $pinjam->sarpras->nama_barang ?? '-' }}</div>
-                                            <div class="text-sm text-gray-500">{{ $pinjam->sarpras->kode_barang ?? '-' }}</div>
+                                            @if ($pinjam->details && $pinjam->details->count() > 0)
+                                                <div class="text-sm font-medium text-gray-900">
+                                                    {{ $pinjam->details->count() }} unit
+                                                </div>
+                                                <div class="text-xs text-gray-500">
+                                                    @foreach ($pinjam->details->take(2) as $detail)
+                                                        <span class="inline-block bg-gray-100 rounded px-1 mr-1">{{ $detail->sarprasUnit->kode_unit ?? '-' }}</span>
+                                                    @endforeach
+                                                    @if ($pinjam->details->count() > 2)
+                                                        <span class="text-gray-400">+{{ $pinjam->details->count() - 2 }} lagi</span>
+                                                    @endif
+                                                </div>
+                                            @else
+                                                <span class="text-gray-400">-</span>
+                                            @endif
                                         </td>
-                                        <td class="px-6 py-4 text-center text-lg font-semibold">{{ $pinjam->jumlah_pinjam }}</td>
                                         <td class="px-6 py-4 text-sm text-gray-500">{{ $pinjam->tgl_pinjam?->format('d M Y') }}</td>
                                         <td class="px-6 py-4 text-sm text-gray-500">{{ $pinjam->tgl_kembali_rencana?->format('d M Y') }}</td>
                                         <td class="px-6 py-4 text-center">
@@ -155,19 +166,11 @@
                                                 </a>
                                                 @if (auth()->user()->role !== 'peminjam')
                                                     @if ($pinjam->status === 'menunggu')
-                                                        <form action="{{ route('peminjaman.update', $pinjam) }}" method="POST" class="inline">
-                                                            @csrf @method('PUT')
-                                                            <input type="hidden" name="status" value="disetujui">
-                                                            <button type="submit" class="text-green-600 hover:text-green-900" title="Setujui" onclick="return confirm('Setujui peminjaman?')">
-                                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                                            </button>
-                                                        </form>
-                                                        {{-- Link ke halaman edit untuk menolak dengan alasan --}}
-                                                        <a href="{{ route('peminjaman.edit', $pinjam) }}" class="text-red-600 hover:text-red-900" title="Tolak (dengan alasan)">
-                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                        <a href="{{ route('peminjaman.edit', $pinjam) }}" class="text-indigo-600 hover:text-indigo-900" title="Proses">
+                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                         </a>
                                                     @elseif ($pinjam->status === 'disetujui')
-                                                        <a href="{{ route('pengembalian.create', $pinjam) }}" class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-md hover:bg-blue-200">Proses Kembali</a>
+                                                        <a href="{{ route('pengembalian.create', ['peminjaman' => $pinjam->id]) }}" class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-md hover:bg-blue-200">Proses Kembali</a>
                                                     @endif
                                                 @endif
                                             </div>
@@ -175,7 +178,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="{{ auth()->user()->role !== 'peminjam' ? 8 : 7 }}" class="px-6 py-12 text-center text-gray-500">
+                                        <td colspan="{{ auth()->user()->role !== 'peminjam' ? 7 : 6 }}" class="px-6 py-12 text-center text-gray-500">
                                             Belum ada data peminjaman
                                         </td>
                                     </tr>

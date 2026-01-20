@@ -35,13 +35,24 @@
                             </div>
                         </div>
 
-                        {{-- Info Barang --}}
+                        {{-- Info Barang (Unit-Based) --}}
                         <div class="bg-gray-50 rounded-lg p-4">
-                            <h3 class="font-semibold text-gray-800 mb-3 border-b pb-2">Info Barang</h3>
+                            <h3 class="font-semibold text-gray-800 mb-3 border-b pb-2">Unit yang Dipinjam</h3>
                             <div class="space-y-2">
-                                <p><span class="text-gray-500">Nama:</span> <span class="font-medium">{{ $peminjaman->sarpras->nama_barang ?? '-' }}</span></p>
-                                <p><span class="text-gray-500">Kode:</span> {{ $peminjaman->sarpras->kode_barang ?? '-' }}</p>
-                                <p><span class="text-gray-500">Jumlah Pinjam:</span> <span class="text-xl font-bold text-indigo-600">{{ $peminjaman->jumlah_pinjam }}</span></p>
+                                <p><span class="text-gray-500">Jumlah Unit:</span> <span class="text-xl font-bold text-indigo-600">{{ $peminjaman->details->count() }}</span></p>
+                                <div class="mt-2 space-y-1">
+                                    @foreach ($peminjaman->details as $detail)
+                                        <div class="flex items-center justify-between bg-white p-2 rounded border text-sm">
+                                            <div>
+                                                <span class="font-mono font-medium">{{ $detail->sarprasUnit->kode_unit ?? '-' }}</span>
+                                                <span class="text-gray-500 ml-2">{{ $detail->sarprasUnit->sarpras->nama_barang ?? '-' }}</span>
+                                            </div>
+                                            <span class="text-xs px-2 py-0.5 rounded-full {{ $detail->sarprasUnit->kondisi === 'baik' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">
+                                                {{ ucfirst(str_replace('_', ' ', $detail->sarprasUnit->kondisi ?? '-')) }}
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -65,7 +76,6 @@
                         </div>
                     </div>
 
-
                     @if ($peminjaman->keterangan)
                         <div class="mt-6 bg-gray-50 rounded-lg p-4">
                             <h3 class="font-semibold text-gray-800 mb-2">Keterangan dari Peminjam</h3>
@@ -80,11 +90,6 @@
                                 {{ $peminjaman->status === 'ditolak' ? '❌ Alasan Penolakan' : '📝 Catatan dari Petugas' }}
                             </h3>
                             <p class="{{ $peminjaman->status === 'ditolak' ? 'text-red-700' : 'text-yellow-700' }}">{{ $peminjaman->catatan_petugas }}</p>
-                            @if ($peminjaman->petugas)
-                                <p class="text-sm mt-2 {{ $peminjaman->status === 'ditolak' ? 'text-red-500' : 'text-yellow-600' }}">
-                                    — {{ $peminjaman->petugas->name }}
-                                </p>
-                            @endif
                         </div>
                     @endif
 
@@ -92,40 +97,35 @@
                     @if ($peminjaman->status === 'selesai' && $peminjaman->pengembalian)
                         <div class="mt-6 bg-blue-50 rounded-lg p-4">
                             <h3 class="font-semibold text-gray-800 mb-3 border-b border-blue-200 pb-2">Info Pengembalian</h3>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <p class="text-gray-500 text-sm">Tanggal Kembali</p>
-                                    <p class="font-medium">{{ $peminjaman->pengembalian->tgl_kembali_aktual?->format('d M Y') }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-500 text-sm">Kondisi Akhir</p>
-                                    @php
-                                        $kondisiColors = [
-                                            'baik' => 'text-green-600',
-                                            'rusak_ringan' => 'text-yellow-600',
-                                            'rusak_berat' => 'text-orange-600',
-                                            'hilang' => 'text-red-600',
-                                        ];
-                                        $kondisiLabels = [
-                                            'baik' => 'Baik',
-                                            'rusak_ringan' => 'Rusak Ringan',
-                                            'rusak_berat' => 'Rusak Berat',
-                                            'hilang' => 'Hilang',
-                                        ];
-                                    @endphp
-                                    <p class="font-medium {{ $kondisiColors[$peminjaman->pengembalian->kondisi_akhir] ?? 'text-gray-600' }}">
-                                        {{ $kondisiLabels[$peminjaman->pengembalian->kondisi_akhir] ?? $peminjaman->pengembalian->kondisi_akhir }}
-                                    </p>
+                                    <p class="font-medium">{{ $peminjaman->pengembalian->tgl_kembali_aktual?->format('d M Y') ?? $peminjaman->pengembalian->created_at?->format('d M Y') }}</p>
                                 </div>
                                 <div>
                                     <p class="text-gray-500 text-sm">Diterima Oleh</p>
                                     <p class="font-medium">{{ $peminjaman->pengembalian->petugas->name ?? '-' }}</p>
                                 </div>
                             </div>
-                            @if ($peminjaman->pengembalian->foto_kondisi)
+                            
+                            @if ($peminjaman->pengembalian->details && $peminjaman->pengembalian->details->count() > 0)
                                 <div class="mt-4">
-                                    <p class="text-gray-500 text-sm mb-2">Foto Kondisi</p>
-                                    <img src="{{ Storage::url($peminjaman->pengembalian->foto_kondisi) }}" alt="Foto Kondisi" class="max-h-48 rounded-lg">
+                                    <p class="text-gray-500 text-sm mb-2">Kondisi Unit Saat Dikembalikan:</p>
+                                    <div class="space-y-1">
+                                        @foreach ($peminjaman->pengembalian->details as $detail)
+                                            <div class="flex items-center justify-between bg-white p-2 rounded border text-sm">
+                                                <span class="font-mono">{{ $detail->sarprasUnit->kode_unit ?? '-' }}</span>
+                                                <span class="px-2 py-0.5 rounded-full text-xs 
+                                                    {{ $detail->kondisi_akhir === 'baik' ? 'bg-green-100 text-green-700' : '' }}
+                                                    {{ $detail->kondisi_akhir === 'rusak_ringan' ? 'bg-yellow-100 text-yellow-700' : '' }}
+                                                    {{ $detail->kondisi_akhir === 'rusak_berat' ? 'bg-orange-100 text-orange-700' : '' }}
+                                                    {{ $detail->kondisi_akhir === 'hilang' ? 'bg-red-100 text-red-700' : '' }}
+                                                ">
+                                                    {{ ucfirst(str_replace('_', ' ', $detail->kondisi_akhir)) }}
+                                                </span>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
                             @endif
                         </div>
@@ -135,14 +135,22 @@
                         <a href="{{ route('peminjaman.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300">Kembali</a>
                         
                         <div class="flex gap-3">
-                            {{-- Tombol Proses Pengembalian (hanya admin/petugas jika status disetujui) --}}
-                            @if ($peminjaman->status === 'disetujui' && in_array(auth()->user()->role, ['admin', 'petugas']))
-                                <a href="{{ route('pengembalian.create', $peminjaman) }}" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                    </svg>
-                                    Proses Pengembalian
-                                </a>
+                            @if (in_array(auth()->user()->role, ['admin', 'petugas']))
+                                @if ($peminjaman->status === 'menunggu')
+                                    <a href="{{ route('peminjaman.edit', $peminjaman) }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                        Proses Peminjaman
+                                    </a>
+                                @elseif ($peminjaman->status === 'disetujui')
+                                    <a href="{{ route('pengembalian.create', ['peminjaman' => $peminjaman->id]) }}" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        Proses Pengembalian
+                                    </a>
+                                @endif
                             @endif
                         </div>
                     </div>

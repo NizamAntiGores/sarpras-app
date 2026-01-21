@@ -15,14 +15,38 @@ class SarprasUnitController extends Controller
     /**
      * Display a listing of units for a specific sarpras.
      */
-    public function index(Sarpras $sarpras): View
+    public function index(Request $request, Sarpras $sarpras): View
     {
-        $units = $sarpras->units()
-            ->with('lokasi')
-            ->orderBy('kode_unit')
-            ->paginate(20);
+        $query = $sarpras->units()->visibleInList()->with('lokasi');
 
-        return view('sarpras-unit.index', compact('sarpras', 'units'));
+        // Pencarian berdasarkan kode unit
+        if ($request->filled('search')) {
+            $query->where('kode_unit', 'like', '%' . $request->search . '%');
+        }
+
+        // Filter berdasarkan status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter berdasarkan kondisi
+        if ($request->filled('kondisi')) {
+            $query->where('kondisi', $request->kondisi);
+        }
+
+        // Hitung statistik global untuk kartu (tidak terpengaruh paginasi)
+        $stats = [
+            'total_unit' => $sarpras->units()->visibleInList()->count(),
+            'tersedia' => $sarpras->units()->visibleInList()->where('status', 'tersedia')->count(),
+            'dipinjam' => $sarpras->units()->visibleInList()->where('status', 'dipinjam')->count(),
+            'maintenance' => $sarpras->units()->visibleInList()->where('status', 'maintenance')->count(),
+        ];
+
+        $units = $query->orderBy('kode_unit')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('sarpras-unit.index', compact('sarpras', 'units', 'stats'));
     }
 
     /**
@@ -78,15 +102,15 @@ class SarprasUnitController extends Controller
 
             DB::commit();
 
-            $message = count($unitsCreated) === 1
-                ? "Unit {$unitsCreated[0]} berhasil ditambahkan."
-                : count($unitsCreated) . " unit berhasil ditambahkan ({$unitsCreated[0]} - " . end($unitsCreated) . ").";
+            $logDescription = count($unitsCreated) === 1
+                ? "Menambahkan unit untuk {$sarpras->nama_barang}: " . $unitsCreated[0]
+                : "Menambahkan " . count($unitsCreated) . " unit untuk {$sarpras->nama_barang}: " . $unitsCreated[0] . " sampai " . end($unitsCreated);
 
-            \App\Helpers\LogHelper::record('create', "Menambahkan unit untuk {$sarpras->nama_barang}: " . implode(', ', $unitsCreated));
+            \App\Helpers\LogHelper::record('create', $logDescription);
 
             return redirect()
                 ->route('sarpras.units.index', $sarpras)
-                ->with('success', $message);
+                ->with('success', $logDescription);
 
         } catch (\Exception $e) {
             DB::rollBack();

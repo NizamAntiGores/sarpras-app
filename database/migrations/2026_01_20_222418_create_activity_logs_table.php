@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->string('action'); // login, create, update, delete, approve, reject
-            $table->string('description'); // Detail: "Menambahkan barang Laptop Asus"
+            $table->text('description'); // Detail: "Menambahkan barang Laptop Asus"
             $table->string('ip_address')->nullable();
             $table->string('user_agent')->nullable();
             $table->timestamps();

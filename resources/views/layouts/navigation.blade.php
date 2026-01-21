@@ -15,6 +15,12 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+
+                    @if (auth()->user()->role === 'peminjam')
+                        <x-nav-link :href="route('katalog.index')" :active="request()->routeIs('katalog.*')">
+                            {{ __('Katalog Barang') }}
+                        </x-nav-link>
+                    @endif
                     
                     @if (auth()->user()->role === 'admin' || auth()->user()->role === 'petugas')
                         {{-- Dropdown Inventaris --}}
@@ -22,7 +28,7 @@
                             <button @click="open = !open" 
                                     class="inline-flex items-center px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out
                                            {{ request()->routeIs('sarpras.*') || request()->routeIs('barang-rusak.*') || request()->routeIs('barang-hilang.*') 
-                                              ? 'text-gray-900 border-b-2 border-indigo-400' 
+                                              ? 'text-gray-900 border-b-2 border-blue-400' 
                                               : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300' }}">
                                 <span>Inventaris</span>
                                 <svg class="ml-1 h-4 w-4 transition-transform" :class="{'rotate-180': open}" fill="currentColor" viewBox="0 0 20 20">
@@ -52,7 +58,7 @@
                             <button @click="open = !open" 
                                     class="inline-flex items-center px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out
                                            {{ request()->routeIs('laporan.*') 
-                                              ? 'text-gray-900 border-b-2 border-indigo-400' 
+                                              ? 'text-gray-900 border-b-2 border-blue-400' 
                                               : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300' }}">
                                 <span>Laporan</span>
                                 <svg class="ml-1 h-4 w-4 transition-transform" :class="{'rotate-180': open}" fill="currentColor" viewBox="0 0 20 20">
@@ -81,7 +87,7 @@
                             <button @click="open = !open" 
                                     class="inline-flex items-center px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out
                                            {{ request()->routeIs('users.*') || request()->routeIs('lokasi.*') || request()->routeIs('kategori.*') 
-                                              ? 'text-gray-900 border-b-2 border-indigo-400' 
+                                              ? 'text-gray-900 border-b-2 border-blue-400' 
                                               : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300' }}">
                                 <span>Master Data</span>
                                 <svg class="ml-1 h-4 w-4 transition-transform" :class="{'rotate-180': open}" fill="currentColor" viewBox="0 0 20 20">
@@ -166,6 +172,12 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            @if (auth()->user()->role === 'peminjam')
+                <x-responsive-nav-link :href="route('katalog.index')" :active="request()->routeIs('katalog.*')">
+                    {{ __('Katalog Barang') }}
+                </x-responsive-nav-link>
+            @endif
             
             @if (auth()->user()->role === 'admin' || auth()->user()->role === 'petugas')
                 {{-- Inventaris Group --}}

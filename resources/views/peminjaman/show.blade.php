@@ -39,13 +39,13 @@
                         <div class="bg-gray-50 rounded-lg p-4">
                             <h3 class="font-semibold text-gray-800 mb-3 border-b pb-2">Unit yang Dipinjam</h3>
                             <div class="space-y-2">
-                                <p><span class="text-gray-500">Jumlah Unit:</span> <span class="text-xl font-bold text-indigo-600">{{ $peminjaman->details->count() }}</span></p>
+                                <p><span class="text-gray-500">Jumlah Unit:</span> <span class="text-xl font-bold text-blue-600">{{ $peminjaman->details->count() }}</span></p>
                                 <div class="mt-2 space-y-1">
                                     @foreach ($peminjaman->details as $detail)
                                         <div class="flex items-center justify-between bg-white p-2 rounded border text-sm">
                                             <div>
                                                 <span class="font-mono font-medium">{{ $detail->sarprasUnit->kode_unit ?? '-' }}</span>
-                                                <span class="text-gray-500 ml-2">{{ $detail->sarprasUnit->sarpras->nama_barang ?? '-' }}</span>
+                                                <span class="text-gray-500 ml-2">{{ $detail->sarprasUnit?->sarpras?->nama_barang ?? '-' }}</span>
                                             </div>
                                             <span class="text-xs px-2 py-0.5 rounded-full {{ $detail->sarprasUnit->kondisi === 'baik' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">
                                                 {{ ucfirst(str_replace('_', ' ', $detail->sarprasUnit->kondisi ?? '-')) }}
@@ -58,7 +58,7 @@
                     </div>
 
                     {{-- Info Tanggal --}}
-                    <div class="mt-6 bg-indigo-50 rounded-lg p-4">
+                    <div class="mt-6 bg-blue-50 rounded-lg p-4">
                         <h3 class="font-semibold text-gray-800 mb-3 border-b border-indigo-200 pb-2">Info Peminjaman</h3>
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
                             <div>
@@ -137,7 +137,7 @@
                         <div class="flex gap-3">
                             @if (in_array(auth()->user()->role, ['admin', 'petugas']))
                                 @if ($peminjaman->status === 'menunggu')
-                                    <a href="{{ route('peminjaman.edit', $peminjaman) }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 flex items-center gap-2">
+                                    <a href="{{ route('peminjaman.edit', $peminjaman) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 flex items-center gap-2">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                         </svg>

@@ -36,7 +36,7 @@
                         <div class="mb-6">
                             <label for="jenis" class="block text-sm font-medium text-gray-700 mb-2">Jenis Maintenance</label>
                             <select name="jenis" id="jenis" required
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option value="perbaikan" {{ old('jenis', $maintenance->jenis) == 'perbaikan' ? 'selected' : '' }}>Perbaikan</option>
                                 <option value="servis_rutin" {{ old('jenis', $maintenance->jenis) == 'servis_rutin' ? 'selected' : '' }}>Servis Rutin</option>
                                 <option value="kalibrasi" {{ old('jenis', $maintenance->jenis) == 'kalibrasi' ? 'selected' : '' }}>Kalibrasi</option>
@@ -49,7 +49,7 @@
                         <div class="mb-6">
                             <label for="deskripsi" class="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label>
                             <textarea name="deskripsi" id="deskripsi" rows="3"
-                                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('deskripsi', $maintenance->deskripsi) }}</textarea>
+                                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('deskripsi', $maintenance->deskripsi) }}</textarea>
                             @error('deskripsi') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
@@ -58,7 +58,7 @@
                             <label for="tanggal_selesai" class="block text-sm font-medium text-gray-700 mb-2">Tanggal Selesai</label>
                             <input type="date" name="tanggal_selesai" id="tanggal_selesai" 
                                    value="{{ old('tanggal_selesai', $maintenance->tanggal_selesai?->format('Y-m-d')) }}"
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <p class="mt-1 text-xs text-gray-500">Isi tanggal selesai jika maintenance sudah selesai</p>
                             @error('tanggal_selesai') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
@@ -67,7 +67,7 @@
                         <div class="mb-6">
                             <label for="biaya" class="block text-sm font-medium text-gray-700 mb-2">Biaya Aktual (Rp)</label>
                             <input type="number" name="biaya" id="biaya" value="{{ old('biaya', $maintenance->biaya) }}" min="0"
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             @error('biaya') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
@@ -75,7 +75,7 @@
                         <div class="mb-6">
                             <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                             <select name="status" id="status" required
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option value="sedang_berlangsung" {{ old('status', $maintenance->status) == 'sedang_berlangsung' ? 'selected' : '' }}>Sedang Berlangsung</option>
                                 <option value="selesai" {{ old('status', $maintenance->status) == 'selesai' ? 'selected' : '' }}>Selesai</option>
                                 <option value="dibatalkan" {{ old('status', $maintenance->status) == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
@@ -87,7 +87,7 @@
                         <div class="mb-6" id="kondisi_setelah_wrapper" style="display: none;">
                             <label for="kondisi_setelah" class="block text-sm font-medium text-gray-700 mb-2">Kondisi Unit Setelah Maintenance</label>
                             <select name="kondisi_setelah" id="kondisi_setelah"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option value="baik">Baik</option>
                                 <option value="rusak_ringan">Rusak Ringan</option>
                                 <option value="rusak_berat">Rusak Berat</option>
@@ -97,7 +97,7 @@
 
                         {{-- Submit Button --}}
                         <div class="flex justify-end">
-                            <button type="submit" class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg text-sm font-semibold uppercase hover:bg-indigo-700">
+                            <button type="submit" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg text-sm font-semibold uppercase hover:bg-blue-700">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 Simpan Perubahan
                             </button>

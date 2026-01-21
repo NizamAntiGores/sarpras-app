@@ -1,7 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center">
-            <a href="{{ route('peminjaman.index') }}" class="text-gray-500 hover:text-gray-700 mr-3">
+            @if(request('from') == 'katalog')
+                <a href="{{ route('katalog.index') }}" class="text-gray-500 hover:text-gray-700 mr-3">
+            @else
+                <a href="{{ route('peminjaman.index') }}" class="text-gray-500 hover:text-gray-700 mr-3">
+            @endif
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
@@ -70,14 +74,14 @@
                                 {{-- Search Filter --}}
                                 <div class="mb-4">
                                     <input type="text" id="searchUnit" placeholder="Cari barang atau kode unit..."
-                                           class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                           class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 </div>
 
                                 {{-- Unit Selection --}}
                                 <div class="border border-gray-200 rounded-lg max-h-80 overflow-y-auto p-3 space-y-4" id="unitList">
                                     @foreach ($sarprasList as $sarpras)
                                         @if (isset($availableUnits[$sarpras->id]) && $availableUnits[$sarpras->id]->count() > 0)
-                                            <div class="sarpras-group" data-nama="{{ strtolower($sarpras->nama_barang) }}">
+                                            <div class="sarpras-group" data-id="{{ $sarpras->id }}" data-nama="{{ strtolower($sarpras->nama_barang) }}">
                                                 <p class="font-medium text-gray-800 text-sm mb-2">
                                                     {{ $sarpras->nama_barang }} 
                                                     <span class="text-gray-500">({{ $sarpras->kode_barang }})</span>
@@ -85,10 +89,10 @@
                                                 </p>
                                                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 ml-4">
                                                     @foreach ($availableUnits[$sarpras->id] as $unit)
-                                                        <label class="unit-item flex items-center p-2 border rounded hover:bg-gray-50 cursor-pointer {{ in_array($unit->id, old('unit_ids', [])) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200' }}"
+                                                        <label class="unit-item flex items-center p-2 border rounded hover:bg-gray-50 cursor-pointer {{ in_array($unit->id, old('unit_ids', [])) ? 'border-blue-500 bg-blue-50' : 'border-gray-200' }}"
                                                                data-kode="{{ strtolower($unit->kode_unit) }}">
                                                             <input type="checkbox" name="unit_ids[]" value="{{ $unit->id }}" 
-                                                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                                                    {{ in_array($unit->id, old('unit_ids', [])) ? 'checked' : '' }}>
                                                             <span class="ml-2 text-sm">
                                                                 <span class="font-mono font-medium">{{ $unit->kode_unit }}</span>
@@ -132,7 +136,7 @@
                                 <input type="date" name="tgl_pinjam" id="tgl_pinjam" 
                                        value="{{ old('tgl_pinjam', date('Y-m-d')) }}"
                                        min="{{ date('Y-m-d') }}"
-                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('tgl_pinjam') border-red-500 @enderror">
+                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('tgl_pinjam') border-red-500 @enderror">
                                 @error('tgl_pinjam')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -144,7 +148,7 @@
                                 <input type="date" name="tgl_kembali_rencana" id="tgl_kembali_rencana" 
                                        value="{{ old('tgl_kembali_rencana') }}"
                                        min="{{ date('Y-m-d', strtotime('+1 day')) }}"
-                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('tgl_kembali_rencana') border-red-500 @enderror">
+                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('tgl_kembali_rencana') border-red-500 @enderror">
                                 @error('tgl_kembali_rencana')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -158,7 +162,7 @@
                             </label>
                             <textarea name="keterangan" id="keterangan" rows="3"
                                       placeholder="Jelaskan keperluan peminjaman barang..."
-                                      class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('keterangan') border-red-500 @enderror">{{ old('keterangan') }}</textarea>
+                                      class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('keterangan') border-red-500 @enderror">{{ old('keterangan') }}</textarea>
                             @error('keterangan')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -166,12 +170,19 @@
 
                         {{-- Buttons --}}
                         <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
-                            <a href="{{ route('peminjaman.index') }}" 
-                               class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 transition ease-in-out duration-150">
-                                Batal
-                            </a>
+                            @if(request('from') == 'katalog')
+                                <a href="{{ route('katalog.index') }}" 
+                                   class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 transition ease-in-out duration-150">
+                                    Kembali ke Katalog
+                                </a>
+                            @else
+                                <a href="{{ route('peminjaman.index') }}" 
+                                   class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 transition ease-in-out duration-150">
+                                    Batal
+                                </a>
+                            @endif
                             <button type="submit" 
-                                    class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 transition ease-in-out duration-150"
+                                    class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 transition ease-in-out duration-150"
                                     {{ $sarprasList->isEmpty() ? 'disabled' : '' }}>
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
@@ -197,10 +208,10 @@
             checkbox.addEventListener('change', function() {
                 const label = this.closest('label');
                 if (this.checked) {
-                    label.classList.add('border-indigo-500', 'bg-indigo-50');
+                    label.classList.add('border-blue-500', 'bg-blue-50');
                     label.classList.remove('border-gray-200');
                 } else {
-                    label.classList.remove('border-indigo-500', 'bg-indigo-50');
+                    label.classList.remove('border-blue-500', 'bg-blue-50');
                     label.classList.add('border-gray-200');
                 }
                 updateSelectedCount();
@@ -228,6 +239,18 @@
                 group.style.display = hasVisibleUnit || namaBarang.includes(searchTerm) ? '' : 'none';
             });
         });
+
+        // Initial filter if sarpras_id is provided
+        const selectedSarprasId = "{{ $selectedSarprasId ?? '' }}";
+        if (selectedSarprasId) {
+            const searchInput = document.getElementById('searchUnit');
+            const group = document.querySelector(`.sarpras-group[data-id="${selectedSarprasId}"]`);
+            if (group) {
+                searchInput.value = group.dataset.nama;
+                // Trigger search manually
+                searchInput.dispatchEvent(new Event('input'));
+            }
+        }
 
         // Initial count
         updateSelectedCount();

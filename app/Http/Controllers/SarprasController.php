@@ -15,9 +15,9 @@ class SarprasController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $sarpras = Sarpras::with(['kategori'])
+        $query = Sarpras::with(['kategori'])
             ->withCount([
                 'units as total_unit' => function ($query) {
                     $query->aktif();
@@ -31,11 +31,36 @@ class SarprasController extends Controller
                 'units as maintenance_count' => function ($query) {
                     $query->where('status', SarprasUnit::STATUS_MAINTENANCE);
                 },
-            ])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ]);
 
-        return view('sarpras.index', compact('sarpras'));
+        // Search logic
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('nama_barang', 'like', '%' . $request->search . '%')
+                  ->orWhere('kode_barang', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        // Filter by Kategori
+        if ($request->filled('kategori_id')) {
+            $query->where('kategori_id', $request->kategori_id);
+        }
+
+        // Calculate totals across ALL records for stats cards
+        $stats = [
+            'total_jenis' => Sarpras::count(),
+            'total_tersedia' => SarprasUnit::bisaDipinjam()->count(),
+            'total_dipinjam' => SarprasUnit::where('status', SarprasUnit::STATUS_DIPINJAM)->count(),
+            'total_maintenance' => SarprasUnit::where('status', SarprasUnit::STATUS_MAINTENANCE)->count(),
+        ];
+
+        $sarpras = $query->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+            
+        $kategoriList = Kategori::orderBy('nama_kategori')->get();
+
+        return view('sarpras.index', compact('sarpras', 'stats', 'kategoriList'));
     }
 
     /**

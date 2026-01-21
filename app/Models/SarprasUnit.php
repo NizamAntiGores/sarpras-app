@@ -109,6 +109,14 @@ class SarprasUnit extends Model
     }
 
     /**
+     * Scope untuk unit yang tampil di daftar (alias dari aktif)
+     */
+    public function scopeVisibleInList($query)
+    {
+        return $query->aktif();
+    }
+
+    /**
      * Scope untuk unit dengan kondisi baik
      */
     public function scopeKondisiBaik($query)

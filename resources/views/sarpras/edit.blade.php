@@ -37,13 +37,13 @@
                             <div>
                                 <label for="kode_barang" class="block text-sm font-medium text-gray-700 mb-1">Kode Barang <span class="text-red-500">*</span></label>
                                 <input type="text" name="kode_barang" id="kode_barang" value="{{ old('kode_barang', $sarpras->kode_barang) }}"
-                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <p class="text-xs text-gray-500 mt-1">Kode ini digunakan sebagai prefix kode unit</p>
                             </div>
                             <div>
                                 <label for="nama_barang" class="block text-sm font-medium text-gray-700 mb-1">Nama Barang <span class="text-red-500">*</span></label>
                                 <input type="text" name="nama_barang" id="nama_barang" value="{{ old('nama_barang', $sarpras->nama_barang) }}"
-                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             </div>
                         </div>
 
@@ -70,7 +70,7 @@
                                     {{ $sarpras->foto ? 'Ganti Foto' : 'Upload Foto' }}
                                 </label>
                                 <input type="file" name="foto" id="foto" accept="image/jpeg,image/png,image/jpg,image/webp"
-                                       class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                       class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                        onchange="previewImage(this)">
                                 <p class="text-xs text-gray-500 mt-1">Format: JPEG, PNG, JPG, WebP. Maksimal 2MB.</p>
                                 <div id="preview-container" class="mt-3 hidden">
@@ -82,7 +82,7 @@
 
                         <div>
                             <label for="kategori_id" class="block text-sm font-medium text-gray-700 mb-1">Kategori <span class="text-red-500">*</span></label>
-                            <select name="kategori_id" id="kategori_id" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <select name="kategori_id" id="kategori_id" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 @foreach ($kategori as $kat)
                                     <option value="{{ $kat->id }}" {{ old('kategori_id', $sarpras->kategori_id) == $kat->id ? 'selected' : '' }}>{{ $kat->nama_kategori }}</option>
                                 @endforeach
@@ -92,12 +92,12 @@
                         <div>
                             <label for="deskripsi" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
                             <textarea name="deskripsi" id="deskripsi" rows="3" placeholder="Deskripsi barang (opsional)..."
-                                      class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('deskripsi', $sarpras->deskripsi) }}</textarea>
+                                      class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('deskripsi', $sarpras->deskripsi) }}</textarea>
                         </div>
 
                         <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
                             <a href="{{ route('sarpras.index') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 uppercase hover:bg-gray-50">Batal</a>
-                            <button type="submit" class="px-4 py-2 bg-indigo-600 rounded-lg text-xs font-semibold text-white uppercase hover:bg-indigo-700">
+                            <button type="submit" class="px-4 py-2 bg-blue-600 rounded-lg text-xs font-semibold text-white uppercase hover:bg-blue-700">
                                 <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 Update
                             </button>

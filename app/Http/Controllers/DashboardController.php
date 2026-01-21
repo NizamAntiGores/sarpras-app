@@ -21,17 +21,18 @@ class DashboardController extends Controller
         // PERHITUNGAN STOK (Unit-based)
         // =============================================
         // Rumus:
-        // - Total Unit = Unit aktif (bukan dihapusbukukan)
-        // - Tersedia = Unit dengan status 'tersedia' dan kondisi bukan rusak_berat
+        // - Total Unit = Semua unit yang tidak dihapusbukukan
+        // - Tersedia = Unit dengan status 'tersedia' DAN kondisi 'baik' (Siap Pakai)
         // - Dipinjam = Unit dengan status 'dipinjam'
-        // - Maintenance = Unit dengan status 'maintenance'
-        // - Rusak = Unit dengan kondisi != 'baik'
+        // - Rusak = Unit dengan kondisi != 'baik' yang TIDAK sedang dipinjam (untuk menghindari double count di dashboard)
         
         $totalUnit = SarprasUnit::aktif()->count();
-        $tersedia = SarprasUnit::bisaDipinjam()->count();
+        $tersedia = SarprasUnit::where('status', SarprasUnit::STATUS_TERSEDIA)
+            ->where('kondisi', SarprasUnit::KONDISI_BAIK)->count();
         $dipinjam = SarprasUnit::where('status', SarprasUnit::STATUS_DIPINJAM)->count();
+        $rusak = SarprasUnit::aktif()->where('kondisi', '!=', SarprasUnit::KONDISI_BAIK)
+            ->where('status', '!=', SarprasUnit::STATUS_DIPINJAM)->count();
         $maintenance = SarprasUnit::where('status', SarprasUnit::STATUS_MAINTENANCE)->count();
-        $rusak = SarprasUnit::aktif()->where('kondisi', '!=', SarprasUnit::KONDISI_BAIK)->count();
 
         if ($user->role === 'admin') {
             // Dashboard Admin: Statistik lengkap

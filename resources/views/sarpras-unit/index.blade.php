@@ -10,7 +10,7 @@
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                     Kembali
                 </a>
-                <a href="{{ route('sarpras.units.create', $sarpras) }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold uppercase hover:bg-indigo-700">
+                <a href="{{ route('sarpras.units.create', $sarpras) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold uppercase hover:bg-blue-700">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     Tambah Unit
                 </a>
@@ -32,20 +32,60 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div class="bg-white rounded-lg shadow p-4">
                     <p class="text-gray-500 text-sm">Total Unit</p>
-                    <p class="text-2xl font-bold text-gray-700">{{ $units->total() }}</p>
+                    <p class="text-2xl font-bold text-gray-700">{{ $stats['total_unit'] }}</p>
                 </div>
                 <div class="bg-white rounded-lg shadow p-4">
                     <p class="text-gray-500 text-sm">Tersedia</p>
-                    <p class="text-2xl font-bold text-green-600">{{ $units->where('status', 'tersedia')->count() }}</p>
+                    <p class="text-2xl font-bold text-green-600">{{ $stats['tersedia'] }}</p>
                 </div>
                 <div class="bg-white rounded-lg shadow p-4">
                     <p class="text-gray-500 text-sm">Dipinjam</p>
-                    <p class="text-2xl font-bold text-orange-600">{{ $units->where('status', 'dipinjam')->count() }}</p>
+                    <p class="text-2xl font-bold text-orange-600">{{ $stats['dipinjam'] }}</p>
                 </div>
                 <div class="bg-white rounded-lg shadow p-4">
                     <p class="text-gray-500 text-sm">Maintenance</p>
-                    <p class="text-2xl font-bold text-red-600">{{ $units->where('status', 'maintenance')->count() }}</p>
+                    <p class="text-2xl font-bold text-red-600">{{ $stats['maintenance'] }}</p>
                 </div>
+            </div>
+
+            {{-- Search & Filter Section --}}
+            <div class="bg-white rounded-lg shadow-sm border p-4 mb-6">
+                <form action="{{ route('sarpras.units.index', $sarpras) }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Cari Kode Unit</label>
+                        <input type="text" name="search" value="{{ request('search') }}" 
+                               placeholder="Contoh: TAB-001"
+                               class="w-full rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Status</label>
+                        <select name="status" class="w-full rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Semua Status</option>
+                            <option value="tersedia" {{ request('status') == 'tersedia' ? 'selected' : '' }}>Tersedia</option>
+                            <option value="dipinjam" {{ request('status') == 'dipinjam' ? 'selected' : '' }}>Dipinjam</option>
+                            <option value="maintenance" {{ request('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Kondisi</label>
+                        <select name="kondisi" class="w-full rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Semua Kondisi</option>
+                            <option value="baik" {{ request('kondisi') == 'baik' ? 'selected' : '' }}>Baik</option>
+                            <option value="rusak_ringan" {{ request('kondisi') == 'rusak_ringan' ? 'selected' : '' }}>Rusak Ringan</option>
+                            <option value="rusak_berat" {{ request('kondisi') == 'rusak_berat' ? 'selected' : '' }}>Rusak Berat</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="submit" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition">
+                            Filter
+                        </button>
+                        @if(request()->anyFilled(['search', 'status', 'kondisi']))
+                            <a href="{{ route('sarpras.units.index', $sarpras) }}" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-semibold hover:bg-gray-200">
+                                Reset
+                            </a>
+                        @endif
+                    </div>
+                </form>
             </div>
 
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
@@ -109,7 +149,7 @@
                                                 <a href="{{ route('sarpras.units.show', [$sarpras, $unit]) }}" class="text-gray-600 hover:text-gray-900" title="Detail">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                                 </a>
-                                                <a href="{{ route('sarpras.units.edit', [$sarpras, $unit]) }}" class="text-indigo-600 hover:text-indigo-900" title="Edit">
+                                                <a href="{{ route('sarpras.units.edit', [$sarpras, $unit]) }}" class="text-blue-600 hover:text-blue-900" title="Edit">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                 </a>
                                                 @if ($unit->status !== 'dipinjam')
@@ -132,7 +172,7 @@
                                     <tr>
                                         <td colspan="6" class="px-6 py-12 text-center text-gray-500">
                                             <p>Belum ada unit untuk barang ini.</p>
-                                            <a href="{{ route('sarpras.units.create', $sarpras) }}" class="text-indigo-600 hover:underline mt-2 inline-block">Tambahkan unit sekarang</a>
+                                            <a href="{{ route('sarpras.units.create', $sarpras) }}" class="text-blue-600 hover:underline mt-2 inline-block">Tambahkan unit sekarang</a>
                                         </td>
                                     </tr>
                                 @endforelse

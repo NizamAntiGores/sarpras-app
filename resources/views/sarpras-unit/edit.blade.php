@@ -36,7 +36,7 @@
                         <div class="mb-6">
                             <label for="lokasi_id" class="block text-sm font-medium text-gray-700 mb-2">Lokasi Penyimpanan</label>
                             <select name="lokasi_id" id="lokasi_id" required
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option value="">-- Pilih Lokasi --</option>
                                 @foreach ($lokasis as $lokasi)
                                     <option value="{{ $lokasi->id }}" {{ old('lokasi_id', $unit->lokasi_id) == $lokasi->id ? 'selected' : '' }}>
@@ -51,7 +51,7 @@
                         <div class="mb-6">
                             <label for="kondisi" class="block text-sm font-medium text-gray-700 mb-2">Kondisi</label>
                             <select name="kondisi" id="kondisi" required
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option value="baik" {{ old('kondisi', $unit->kondisi) == 'baik' ? 'selected' : '' }}>Baik</option>
                                 <option value="rusak_ringan" {{ old('kondisi', $unit->kondisi) == 'rusak_ringan' ? 'selected' : '' }}>Rusak Ringan</option>
                                 <option value="rusak_berat" {{ old('kondisi', $unit->kondisi) == 'rusak_berat' ? 'selected' : '' }}>Rusak Berat</option>
@@ -63,7 +63,7 @@
                         <div class="mb-6">
                             <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                             <select name="status" id="status" required
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                     {{ $unit->status === 'dipinjam' ? 'disabled' : '' }}>
                                 <option value="tersedia" {{ old('status', $unit->status) == 'tersedia' ? 'selected' : '' }}>Tersedia</option>
                                 <option value="dipinjam" {{ old('status', $unit->status) == 'dipinjam' ? 'selected' : '' }}>Dipinjam</option>
@@ -82,7 +82,7 @@
                             <label for="tanggal_perolehan" class="block text-sm font-medium text-gray-700 mb-2">Tanggal Perolehan</label>
                             <input type="date" name="tanggal_perolehan" id="tanggal_perolehan" 
                                    value="{{ old('tanggal_perolehan', $unit->tanggal_perolehan?->format('Y-m-d')) }}"
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             @error('tanggal_perolehan') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
@@ -91,13 +91,13 @@
                             <label for="nilai_perolehan" class="block text-sm font-medium text-gray-700 mb-2">Nilai Perolehan (Rp)</label>
                             <input type="number" name="nilai_perolehan" id="nilai_perolehan" 
                                    value="{{ old('nilai_perolehan', $unit->nilai_perolehan) }}" min="0"
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             @error('nilai_perolehan') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
                         {{-- Submit Button --}}
                         <div class="flex justify-end">
-                            <button type="submit" class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg text-sm font-semibold uppercase hover:bg-indigo-700">
+                            <button type="submit" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg text-sm font-semibold uppercase hover:bg-blue-700">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 Simpan Perubahan
                             </button>

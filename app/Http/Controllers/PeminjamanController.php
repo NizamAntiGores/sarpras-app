@@ -45,6 +45,26 @@ class PeminjamanController extends Controller
             $query->whereDate('tgl_pinjam', '<=', $request->tanggal_selesai);
         }
 
+        if ($request->filled('tanggal_selesai')) {
+            $query->whereDate('tgl_pinjam', '<=', $request->tanggal_selesai);
+        }
+
+        // Search logic
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->whereHas('user', function($u) use ($search) {
+                    $u->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('details.sarprasUnit.sarpras', function($s) use ($search) {
+                    $s->where('nama_barang', 'like', "%{$search}%");
+                })
+                ->orWhereHas('details.sarprasUnit', function($su) use ($search) {
+                    $su->where('kode_unit', 'like', "%{$search}%");
+                });
+            });
+        }
+
         $peminjaman = $query->paginate(10)->withQueryString();
 
         // Data untuk filter
@@ -60,8 +80,10 @@ class PeminjamanController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
+        $selectedSarprasId = $request->query('sarpras_id');
+
         // Ambil semua sarpras yang memiliki unit tersedia
         $sarprasList = Sarpras::withCount([
             'units as available_units_count' => function ($query) {
@@ -79,7 +101,7 @@ class PeminjamanController extends Controller
             ->get()
             ->groupBy('sarpras_id');
 
-        return view('peminjaman.create', compact('sarprasList', 'availableUnits'));
+        return view('peminjaman.create', compact('sarprasList', 'availableUnits', 'selectedSarprasId'));
     }
 
     /**

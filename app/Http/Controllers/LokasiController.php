@@ -14,7 +14,9 @@ class LokasiController extends Controller
      */
     public function index(): View
     {
-        $lokasi = Lokasi::withCount('sarpras')
+        $lokasi = Lokasi::withCount(['units as units_count' => function ($query) {
+                $query->where('status', '!=', \App\Models\SarprasUnit::STATUS_DIHAPUSBUKUKAN);
+            }])
             ->orderBy('nama_lokasi')
             ->paginate(10);
 

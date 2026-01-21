@@ -36,73 +36,47 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {{-- Section 2: Barang Rusak / Butuh Perhatian --}}
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                        <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                        Daftar Aset Rusak & Perlu Maintenance
-                    </h3>
-                    <div class="overflow-y-auto max-h-96">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+            {{-- Section 2: Barang Rusak / Butuh Perhatian --}}
+            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                    <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    Daftar Aset Rusak & Perlu Maintenance
+                </h3>
+                <div class="overflow-y-auto max-h-96">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Barang</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Kondisi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @forelse ($asetRusak as $unit)
                                 <tr>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Barang</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Kondisi</th>
+                                    <td class="px-4 py-2">
+                                        <div class="text-sm font-medium text-gray-900">{{ $unit->sarpras->nama_barang }}</div>
+                                        <div class="text-xs text-gray-500">{{ $unit->lokasi->nama_lokasi ?? '-' }}</div>
+                                    </td>
+                                    <td class="px-4 py-2 text-sm text-gray-900">{{ $unit->kode_unit }}</td>
+                                    <td class="px-4 py-2">
+                                        @if($unit->kondisi === 'rusak_berat')
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Rusak Berat</span>
+                                        @elseif($unit->kondisi === 'rusak_ringan')
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Rusak Ringan</span>
+                                        @endif
+                                        @if($unit->status === 'maintenance')
+                                            <div class="text-xs text-blue-600 mt-1">Sedang Maintenance</div>
+                                        @endif
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @forelse ($asetRusak as $unit)
-                                    <tr>
-                                        <td class="px-4 py-2">
-                                            <div class="text-sm font-medium text-gray-900">{{ $unit->sarpras->nama_barang }}</div>
-                                            <div class="text-xs text-gray-500">{{ $unit->lokasi->nama_lokasi ?? '-' }}</div>
-                                        </td>
-                                        <td class="px-4 py-2 text-sm text-gray-900">{{ $unit->kode_unit }}</td>
-                                        <td class="px-4 py-2">
-                                            @if($unit->kondisi === 'rusak_berat')
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Rusak Berat</span>
-                                            @elseif($unit->kondisi === 'rusak_ringan')
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Rusak Ringan</span>
-                                            @endif
-                                            @if($unit->status === 'maintenance')
-                                                <div class="text-xs text-blue-600 mt-1">Sedang Maintenance</div>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="3" class="px-4 py-4 text-center text-sm text-gray-500">Tidak ada aset rusak saat ini.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {{-- Section 3: Analisis Kerusakan --}}
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                        <svg class="w-5 h-5 text-orange-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-                        Top 5 Aset Paling Sering Rusak
-                    </h3>
-                    <div class="space-y-4">
-                        @forelse ($seringRusak as $index => $item)
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div class="flex items-center">
-                                <span class="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded-full mr-3">#{{ $index + 1 }}</span>
-                                <span class="text-sm font-medium text-gray-700">{{ $item->nama_barang }}</span>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="text-sm font-bold text-gray-900 mr-1">{{ $item->total_kerusakan }}</span>
-                                <span class="text-xs text-gray-500">x rusak</span>
-                            </div>
-                        </div>
-                        @empty
-                            <p class="text-center text-gray-500 py-4">Belum ada data historis kerusakan.</p>
-                        @endforelse
-                    </div>
+                            @empty
+                                <tr>
+                                    <td colspan="3" class="px-4 py-4 text-center text-sm text-gray-500">Tidak ada aset rusak saat ini.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
 

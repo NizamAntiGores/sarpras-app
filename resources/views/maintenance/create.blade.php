@@ -25,7 +25,7 @@
                         <div class="mb-6">
                             <label for="sarpras_unit_id" class="block text-sm font-medium text-gray-700 mb-2">Pilih Unit</label>
                             <select name="sarpras_unit_id" id="sarpras_unit_id" required
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option value="">-- Pilih Unit --</option>
                                 @foreach ($units as $unit)
                                     <option value="{{ $unit->id }}" {{ old('sarpras_unit_id', $selectedUnit?->id) == $unit->id ? 'selected' : '' }}>
@@ -40,7 +40,7 @@
                         <div class="mb-6">
                             <label for="jenis" class="block text-sm font-medium text-gray-700 mb-2">Jenis Maintenance</label>
                             <select name="jenis" id="jenis" required
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option value="perbaikan" {{ old('jenis') == 'perbaikan' ? 'selected' : '' }}>Perbaikan</option>
                                 <option value="servis_rutin" {{ old('jenis') == 'servis_rutin' ? 'selected' : '' }}>Servis Rutin</option>
                                 <option value="kalibrasi" {{ old('jenis') == 'kalibrasi' ? 'selected' : '' }}>Kalibrasi</option>
@@ -53,7 +53,7 @@
                         <div class="mb-6">
                             <label for="deskripsi" class="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label>
                             <textarea name="deskripsi" id="deskripsi" rows="3"
-                                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                       placeholder="Jelaskan detail kerusakan atau pekerjaan yang akan dilakukan...">{{ old('deskripsi') }}</textarea>
                             @error('deskripsi') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
@@ -62,7 +62,7 @@
                         <div class="mb-6">
                             <label for="tanggal_mulai" class="block text-sm font-medium text-gray-700 mb-2">Tanggal Mulai</label>
                             <input type="date" name="tanggal_mulai" id="tanggal_mulai" value="{{ old('tanggal_mulai', date('Y-m-d')) }}" required
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             @error('tanggal_mulai') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
@@ -70,14 +70,14 @@
                         <div class="mb-6">
                             <label for="biaya" class="block text-sm font-medium text-gray-700 mb-2">Estimasi Biaya (Rp)</label>
                             <input type="number" name="biaya" id="biaya" value="{{ old('biaya') }}" min="0"
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                    placeholder="Opsional">
                             @error('biaya') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
                         {{-- Submit Button --}}
                         <div class="flex justify-end">
-                            <button type="submit" class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg text-sm font-semibold uppercase hover:bg-indigo-700">
+                            <button type="submit" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg text-sm font-semibold uppercase hover:bg-blue-700">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 Mulai Maintenance
                             </button>

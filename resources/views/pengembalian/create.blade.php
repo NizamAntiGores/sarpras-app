@@ -22,7 +22,7 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6">
                     {{-- Info Peminjaman --}}
-                    <div class="mb-6 bg-indigo-50 rounded-lg p-4">
+                    <div class="mb-6 bg-blue-50 rounded-lg p-4">
                         <h3 class="font-semibold text-gray-800 mb-3 border-b border-indigo-200 pb-2">Info Peminjaman</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -31,11 +31,11 @@
                             </div>
                             <div>
                                 <p class="text-gray-500 text-sm">Barang</p>
-                                <p class="font-medium">{{ $peminjaman->sarpras->nama_barang }}</p>
+                                <p class="font-medium">{{ $peminjaman->details->first()?->sarprasUnit?->sarpras?->nama_barang ?? '-' }}</p>
                             </div>
                             <div>
                                 <p class="text-gray-500 text-sm">Jumlah Dipinjam</p>
-                                <p class="font-bold text-xl text-indigo-600">{{ $peminjaman->jumlah_pinjam }}</p>
+                                <p class="font-bold text-xl text-blue-600">{{ $peminjaman->jumlah_pinjam }}</p>
                             </div>
                             <div>
                                 <p class="text-gray-500 text-sm">Tanggal Pinjam</p>
@@ -60,99 +60,106 @@
                     <form action="{{ route('pengembalian.store', $peminjaman) }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
-                        <div class="space-y-6">
-                            {{-- Kondisi Akhir --}}
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-3">Kondisi Akhir Barang <span class="text-red-500">*</span></label>
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                    <label class="relative cursor-pointer">
-                                        <input type="radio" name="kondisi_akhir" value="baik" class="peer sr-only" required {{ old('kondisi_akhir') == 'baik' ? 'checked' : '' }}>
-                                        <div class="p-4 border-2 rounded-lg text-center peer-checked:border-green-500 peer-checked:bg-green-50 hover:bg-gray-50 transition">
-                                            <div class="text-3xl mb-2">✅</div>
-                                            <div class="font-medium text-green-700">Baik</div>
-                                            <div class="text-xs text-gray-500">Kondisi normal</div>
-                                        </div>
-                                    </label>
-                                    <label class="relative cursor-pointer">
-                                        <input type="radio" name="kondisi_akhir" value="rusak_ringan" class="peer sr-only" {{ old('kondisi_akhir') == 'rusak_ringan' ? 'checked' : '' }}>
-                                        <div class="p-4 border-2 rounded-lg text-center peer-checked:border-yellow-500 peer-checked:bg-yellow-50 hover:bg-gray-50 transition">
-                                            <div class="text-3xl mb-2">⚠️</div>
-                                            <div class="font-medium text-yellow-700">Rusak Ringan</div>
-                                            <div class="text-xs text-gray-500">Masih bisa diperbaiki</div>
-                                        </div>
-                                    </label>
-                                    <label class="relative cursor-pointer">
-                                        <input type="radio" name="kondisi_akhir" value="rusak_berat" class="peer sr-only" {{ old('kondisi_akhir') == 'rusak_berat' ? 'checked' : '' }}>
-                                        <div class="p-4 border-2 rounded-lg text-center peer-checked:border-orange-500 peer-checked:bg-orange-50 hover:bg-gray-50 transition">
-                                            <div class="text-3xl mb-2">🔧</div>
-                                            <div class="font-medium text-orange-700">Rusak Berat</div>
-                                            <div class="text-xs text-gray-500">Sulit diperbaiki</div>
-                                        </div>
-                                    </label>
-                                    <label class="relative cursor-pointer">
-                                        <input type="radio" name="kondisi_akhir" value="hilang" class="peer sr-only" {{ old('kondisi_akhir') == 'hilang' ? 'checked' : '' }}>
-                                        <div class="p-4 border-2 rounded-lg text-center peer-checked:border-red-500 peer-checked:bg-red-50 hover:bg-gray-50 transition">
-                                            <div class="text-3xl mb-2">❌</div>
-                                            <div class="font-medium text-red-700">Hilang</div>
-                                            <div class="text-xs text-gray-500">Tidak dikembalikan</div>
-                                        </div>
-                                    </label>
-                                </div>
-                                @error('kondisi_akhir')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
+                        <div class="space-y-8">
+                            
+                            {{-- Tanggal Kembali --}}
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <label for="tgl_kembali_aktual" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Tanggal Pengembalian <span class="text-red-500">*</span>
+                                </label>
+                                <input type="date" name="tgl_kembali_aktual" id="tgl_kembali_aktual" 
+                                       value="{{ old('tgl_kembali_aktual', date('Y-m-d')) }}"
+                                       max="{{ date('Y-m-d') }}"
+                                       class="w-full md:w-1/3 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             </div>
 
-                            {{-- Upload Foto --}}
-                            <div>
-                                <label for="foto_kondisi" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Foto Dokumentasi Kondisi
-                                    <span class="text-gray-400 font-normal">(Opsional, max 2MB)</span>
-                                </label>
-                                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-indigo-400 transition" id="dropzone">
-                                    <div class="space-y-1 text-center">
-                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                        </svg>
-                                        <div class="flex text-sm text-gray-600 justify-center">
-                                            <label for="foto_kondisi" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500">
-                                                <span>Upload foto</span>
-                                                <input id="foto_kondisi" name="foto_kondisi" type="file" class="sr-only" accept="image/jpeg,image/png,image/jpg">
-                                            </label>
-                                            <p class="pl-1">atau drag & drop</p>
+                            <hr class="border-gray-200">
+
+                            <h3 class="font-semibold text-gray-800 text-lg">Inspeksi Kondisi Barang</h3>
+
+                            @foreach ($peminjaman->details as $index => $detail)
+                                <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
+                                    <div class="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
+                                        <div>
+                                            <span class="font-bold text-gray-700">Unit #{{ $index + 1 }}</span>
+                                            <span class="mx-2 text-gray-300">|</span>
+                                            <span class="font-mono text-blue-600 font-medium">{{ $detail->sarprasUnit->kode_unit }}</span>
                                         </div>
-                                        <p class="text-xs text-gray-500">PNG, JPG, JPEG hingga 2MB</p>
+                                        <div class="text-sm text-gray-500">
+                                            Kondisi Awal: {{ ucfirst(str_replace('_', ' ', $detail->sarprasUnit->kondisi)) }}
+                                        </div>
+                                    </div>
+
+                                    <div class="p-6 space-y-6">
+                                        {{-- Kondisi Radio --}}
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-3">Kondisi Akhir <span class="text-red-500">*</span></label>
+                                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                @php $unitId = $detail->sarpras_unit_id; @endphp
+                                                
+                                                <label class="relative cursor-pointer">
+                                                    <input type="radio" name="kondisi_{{ $unitId }}" value="baik" class="peer sr-only" required {{ old("kondisi_{$unitId}") == 'baik' ? 'checked' : '' }}>
+                                                    <div class="p-3 border rounded-lg text-center peer-checked:border-green-500 peer-checked:bg-green-50 hover:bg-gray-50 transition">
+                                                        <div class="text-2xl mb-1">✅</div>
+                                                        <div class="font-medium text-sm text-green-700">Baik</div>
+                                                    </div>
+                                                </label>
+                                                <label class="relative cursor-pointer">
+                                                    <input type="radio" name="kondisi_{{ $unitId }}" value="rusak_ringan" class="peer sr-only" {{ old("kondisi_{$unitId}") == 'rusak_ringan' ? 'checked' : '' }}>
+                                                    <div class="p-3 border rounded-lg text-center peer-checked:border-yellow-500 peer-checked:bg-yellow-50 hover:bg-gray-50 transition">
+                                                        <div class="text-2xl mb-1">⚠️</div>
+                                                        <div class="font-medium text-sm text-yellow-700">Rusak Ringan</div>
+                                                    </div>
+                                                </label>
+                                                <label class="relative cursor-pointer">
+                                                    <input type="radio" name="kondisi_{{ $unitId }}" value="rusak_berat" class="peer sr-only" {{ old("kondisi_{$unitId}") == 'rusak_berat' ? 'checked' : '' }}>
+                                                    <div class="p-3 border rounded-lg text-center peer-checked:border-orange-500 peer-checked:bg-orange-50 hover:bg-gray-50 transition">
+                                                        <div class="text-2xl mb-1">🔧</div>
+                                                        <div class="font-medium text-sm text-orange-700">Rusak Berat</div>
+                                                    </div>
+                                                </label>
+                                                <label class="relative cursor-pointer">
+                                                    <input type="radio" name="kondisi_{{ $unitId }}" value="hilang" class="peer sr-only" {{ old("kondisi_{$unitId}") == 'hilang' ? 'checked' : '' }}>
+                                                    <div class="p-3 border rounded-lg text-center peer-checked:border-red-500 peer-checked:bg-red-50 hover:bg-gray-50 transition">
+                                                        <div class="text-2xl mb-1">❌</div>
+                                                        <div class="font-medium text-sm text-red-700">Hilang</div>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                            @error("kondisi_{$unitId}")
+                                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {{-- Catatan --}}
+                                            <div>
+                                                <label for="catatan_{{ $unitId }}" class="block text-sm font-medium text-gray-700 mb-2">Catatan / Keterangan</label>
+                                                <textarea name="catatan_{{ $unitId }}" id="catatan_{{ $unitId }}" rows="2" 
+                                                          class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                                                          placeholder="Keterangan kondisi...">{{ old("catatan_{$unitId}") }}</textarea>
+                                            </div>
+
+                                            {{-- Upload Foto --}}
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">Foto Bukti (Opsional)</label>
+                                                <input type="file" name="foto_{{ $unitId }}" accept="image/*"
+                                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div id="preview-container" class="mt-3 hidden">
-                                    <img id="preview-image" class="max-h-48 rounded-lg mx-auto" src="" alt="Preview">
-                                    <button type="button" id="remove-image" class="mt-2 text-sm text-red-600 hover:text-red-800">Hapus gambar</button>
-                                </div>
-                                @error('foto_kondisi')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            {{-- Keterangan --}}
-                            <div>
-                                <label for="keterangan" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Catatan / Keterangan
-                                    <span id="keterangan-required" class="text-red-500 hidden">* (Wajib diisi)</span>
-                                </label>
-                                <textarea id="keterangan" name="keterangan" rows="3" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Jelaskan kondisi barang (wajib jika rusak/hilang)...">{{ old('keterangan') }}</textarea>
-                                @error('keterangan')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
+                            @endforeach
+                            
                         </div>
 
                         {{-- Submit Buttons --}}
-                        <div class="mt-8 pt-6 border-t flex justify-between items-center">
-                            <a href="{{ route('peminjaman.show', $peminjaman) }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300">
+                        <div class="mt-8 pt-6 border-t flex justify-end items-center space-x-3">
+                            <a href="{{ route('peminjaman.show', $peminjaman) }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50">
                                 Batal
                             </a>
-                            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                Proses Pengembalian
+                            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-md transition transform hover:-translate-y-0.5">
+                                Simpan Pengembalian
                             </button>
                         </div>
                     </form>
@@ -160,52 +167,4 @@
             </div>
         </div>
     </div>
-
-    {{-- JavaScript for image preview and keterangan required toggle --}}
-    <script>
-        const input = document.getElementById('foto_kondisi');
-        const previewContainer = document.getElementById('preview-container');
-        const previewImage = document.getElementById('preview-image');
-        const removeBtn = document.getElementById('remove-image');
-
-        input.addEventListener('change', function(e) {
-            if (e.target.files && e.target.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    previewImage.src = e.target.result;
-                    previewContainer.classList.remove('hidden');
-                }
-                reader.readAsDataURL(e.target.files[0]);
-            }
-        });
-
-        removeBtn.addEventListener('click', function() {
-            input.value = '';
-            previewContainer.classList.add('hidden');
-            previewImage.src = '';
-        });
-
-        // Toggle keterangan required based on kondisi
-        const kondisiRadios = document.querySelectorAll('input[name="kondisi_akhir"]');
-        const keteranganRequired = document.getElementById('keterangan-required');
-        const keteranganTextarea = document.getElementById('keterangan');
-
-        function updateKeteranganRequired() {
-            const selected = document.querySelector('input[name="kondisi_akhir"]:checked');
-            if (selected && selected.value !== 'baik') {
-                keteranganRequired.classList.remove('hidden');
-                keteranganTextarea.setAttribute('required', 'required');
-            } else {
-                keteranganRequired.classList.add('hidden');
-                keteranganTextarea.removeAttribute('required');
-            }
-        }
-
-        kondisiRadios.forEach(radio => {
-            radio.addEventListener('change', updateKeteranganRequired);
-        });
-
-        // Initial check
-        updateKeteranganRequired();
-    </script>
 </x-app-layout>

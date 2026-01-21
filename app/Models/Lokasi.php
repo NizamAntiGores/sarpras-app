@@ -24,4 +24,12 @@ class Lokasi extends Model
     {
         return $this->hasMany(Sarpras::class, 'lokasi_id');
     }
+
+    /**
+     * Get all units di lokasi ini
+     */
+    public function units(): HasMany
+    {
+        return $this->hasMany(SarprasUnit::class, 'lokasi_id');
+    }
 }

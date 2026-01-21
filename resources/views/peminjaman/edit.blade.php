@@ -37,10 +37,10 @@
                         <div class="bg-gray-50 rounded-lg p-4">
                             <h3 class="font-semibold text-gray-800 mb-3 border-b pb-2">Unit yang Dipinjam</h3>
                             <div class="space-y-2">
-                                <p><span class="text-gray-500">Jumlah Unit:</span> <span class="text-xl font-bold text-indigo-600">{{ $peminjaman->details->count() }}</span></p>
+                                <p><span class="text-gray-500">Jumlah Unit:</span> <span class="text-xl font-bold text-blue-600">{{ $peminjaman->details->count() }}</span></p>
                                 <div class="flex flex-wrap gap-1 mt-2">
                                     @foreach ($peminjaman->details as $detail)
-                                        <span class="inline-flex items-center px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">
+                                        <span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
                                             {{ $detail->sarprasUnit->kode_unit ?? '-' }}
                                         </span>
                                     @endforeach
@@ -50,7 +50,7 @@
                     </div>
 
                     {{-- Info Tanggal --}}
-                    <div class="mb-6 bg-indigo-50 rounded-lg p-4">
+                    <div class="mb-6 bg-blue-50 rounded-lg p-4">
                         <div class="grid grid-cols-2 gap-4 text-center">
                             <div>
                                 <p class="text-gray-500 text-sm">Tanggal Pinjam</p>
@@ -78,7 +78,7 @@
                         {{-- Status --}}
                         <div>
                             <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status Peminjaman <span class="text-red-500">*</span></label>
-                            <select name="status" id="status" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+                            <select name="status" id="status" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
                                 <option value="menunggu" {{ $peminjaman->status === 'menunggu' ? 'selected' : '' }}>⏳ Menunggu</option>
                                 <option value="disetujui" {{ $peminjaman->status === 'disetujui' ? 'selected' : '' }}>✅ Disetujui</option>
                                 <option value="ditolak" {{ $peminjaman->status === 'ditolak' ? 'selected' : '' }}>❌ Ditolak</option>
@@ -99,7 +99,7 @@
                                 name="catatan_petugas" 
                                 id="catatan_petugas" 
                                 rows="3" 
-                                class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500" 
+                                class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" 
                                 placeholder="Masukkan catatan atau alasan penolakan..."
                             >{{ old('catatan_petugas', $peminjaman->catatan_petugas) }}</textarea>
                             @error('catatan_petugas')
@@ -111,7 +111,7 @@
                         {{-- Buttons --}}
                         <div class="flex justify-end gap-3 pt-4 border-t">
                             <a href="{{ route('peminjaman.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Batal</a>
-                            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">
+                            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
                                 Simpan Perubahan
                             </button>
                         </div>

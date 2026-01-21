@@ -5,7 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Pengembalian extends Model
 {
@@ -18,26 +19,18 @@ class Pengembalian extends Model
 
     /**
      * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
      */
     protected $fillable = [
         'peminjaman_id',
         'petugas_id',
         'tgl_kembali_aktual',
-        'kondisi_akhir',
-        'foto_kondisi',
-        'denda',
     ];
 
     /**
      * The attributes that should be cast.
-     *
-     * @var array<string, string>
      */
     protected $casts = [
         'tgl_kembali_aktual' => 'date',
-        'denda' => 'integer',
     ];
 
     /**
@@ -57,10 +50,41 @@ class Pengembalian extends Model
     }
 
     /**
-     * Get data barang hilang jika ada
+     * Get detail pengembalian (kondisi setiap unit)
      */
-    public function barangHilang(): HasOne
+    public function details(): HasMany
     {
-        return $this->hasOne(BarangHilang::class, 'pengembalian_id');
+        return $this->hasMany(PengembalianDetail::class, 'pengembalian_id');
+    }
+
+    /**
+     * Get total denda dari semua detail
+     */
+    public function getTotalDendaAttribute(): int
+    {
+        return $this->details()->sum('denda') ?? 0;
+    }
+
+    /**
+     * Get jumlah unit yang rusak saat dikembalikan
+     */
+    public function getJumlahRusakAttribute(): int
+    {
+        return $this->details()
+            ->whereIn('kondisi_akhir', [
+                PengembalianDetail::KONDISI_RUSAK_RINGAN,
+                PengembalianDetail::KONDISI_RUSAK_BERAT,
+            ])
+            ->count();
+    }
+
+    /**
+     * Get jumlah unit yang hilang
+     */
+    public function getJumlahHilangAttribute(): int
+    {
+        return $this->details()
+            ->where('kondisi_akhir', PengembalianDetail::KONDISI_HILANG)
+            ->count();
     }
 }

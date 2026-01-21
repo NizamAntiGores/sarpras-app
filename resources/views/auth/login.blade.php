@@ -27,7 +27,7 @@
         <!-- Remember Me -->
         <div class="block mt-4">
             <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
+                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500" name="remember">
                 <span class="ms-2 text-sm text-gray-600">Ingat saya</span>
             </label>
         </div>
@@ -49,7 +49,7 @@
     <div class="mt-6 pt-6 border-t border-gray-200 text-center">
         <p class="text-sm text-gray-600">
             Belum punya akun? 
-            <a href="{{ route('register') }}" class="font-medium text-indigo-600 hover:text-indigo-500">
+            <a href="{{ route('register') }}" class="font-medium text-blue-600 hover:text-blue-500">
                 Daftar di sini
             </a>
         </p>

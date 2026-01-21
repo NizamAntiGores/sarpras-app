@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Peminjaman;
+use App\Models\PeminjamanDetail;
 use App\Models\Sarpras;
+use App\Models\SarprasUnit;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -22,7 +24,7 @@ class PeminjamanController extends Controller
     {
         $user = auth()->user();
         
-        $query = Peminjaman::with(['user', 'sarpras', 'petugas'])
+        $query = Peminjaman::with(['user', 'details.sarprasUnit.sarpras', 'petugas'])
             ->orderBy('created_at', 'desc');
 
         // Jika user adalah peminjam, hanya tampilkan data miliknya
@@ -37,10 +39,30 @@ class PeminjamanController extends Controller
 
         // Filter by date range (berdasarkan tanggal_pinjam)
         if ($request->filled('tanggal_mulai')) {
-            $query->whereDate('tanggal_pinjam', '>=', $request->tanggal_mulai);
+            $query->whereDate('tgl_pinjam', '>=', $request->tanggal_mulai);
         }
         if ($request->filled('tanggal_selesai')) {
-            $query->whereDate('tanggal_pinjam', '<=', $request->tanggal_selesai);
+            $query->whereDate('tgl_pinjam', '<=', $request->tanggal_selesai);
+        }
+
+        if ($request->filled('tanggal_selesai')) {
+            $query->whereDate('tgl_pinjam', '<=', $request->tanggal_selesai);
+        }
+
+        // Search logic
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->whereHas('user', function($u) use ($search) {
+                    $u->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('details.sarprasUnit.sarpras', function($s) use ($search) {
+                    $s->where('nama_barang', 'like', "%{$search}%");
+                })
+                ->orWhereHas('details.sarprasUnit', function($su) use ($search) {
+                    $su->where('kode_unit', 'like', "%{$search}%");
+                });
+            });
         }
 
         $peminjaman = $query->paginate(10)->withQueryString();
@@ -58,14 +80,28 @@ class PeminjamanController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
-        // Hanya tampilkan sarpras yang stok > 0 (tersedia untuk dipinjam)
-        $sarpras = Sarpras::where('stok', '>', 0)
-            ->orderBy('nama_barang')
-            ->get();
+        $selectedSarprasId = $request->query('sarpras_id');
 
-        return view('peminjaman.create', compact('sarpras'));
+        // Ambil semua sarpras yang memiliki unit tersedia
+        $sarprasList = Sarpras::withCount([
+            'units as available_units_count' => function ($query) {
+                $query->bisaDipinjam();
+            }
+        ])
+        ->having('available_units_count', '>', 0)
+        ->orderBy('nama_barang')
+        ->get();
+
+        // Ambil semua unit yang bisa dipinjam, grouped by sarpras
+        $availableUnits = SarprasUnit::with('sarpras', 'lokasi')
+            ->bisaDipinjam()
+            ->orderBy('kode_unit')
+            ->get()
+            ->groupBy('sarpras_id');
+
+        return view('peminjaman.create', compact('sarprasList', 'availableUnits', 'selectedSarprasId'));
     }
 
     /**
@@ -75,80 +111,97 @@ class PeminjamanController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'sarpras_id' => 'required|exists:sarpras,id',
-            'jumlah_pinjam' => 'required|integer|min:1',
+            'unit_ids' => 'required|array|min:1',
+            'unit_ids.*' => 'exists:sarpras_units,id',
             'tgl_pinjam' => 'required|date|after_or_equal:today',
             'tgl_kembali_rencana' => 'required|date|after:tgl_pinjam',
             'keterangan' => 'nullable|string|max:500',
         ], [
-            'sarpras_id.required' => 'Barang wajib dipilih.',
-            'sarpras_id.exists' => 'Barang tidak ditemukan.',
-            'jumlah_pinjam.required' => 'Jumlah pinjam wajib diisi.',
-            'jumlah_pinjam.integer' => 'Jumlah pinjam harus berupa angka.',
-            'jumlah_pinjam.min' => 'Jumlah pinjam minimal 1.',
+            'unit_ids.required' => 'Pilih minimal 1 unit barang.',
+            'unit_ids.min' => 'Pilih minimal 1 unit barang.',
             'tgl_pinjam.required' => 'Tanggal pinjam wajib diisi.',
             'tgl_pinjam.after_or_equal' => 'Tanggal pinjam tidak boleh sebelum hari ini.',
             'tgl_kembali_rencana.required' => 'Tanggal kembali rencana wajib diisi.',
             'tgl_kembali_rencana.after' => 'Tanggal kembali harus setelah tanggal pinjam.',
         ]);
 
-        // Cek ketersediaan stok
-        $sarpras = Sarpras::findOrFail($validated['sarpras_id']);
-        
-        if ($sarpras->stok < $validated['jumlah_pinjam']) {
+        DB::beginTransaction();
+
+        try {
+            // Validasi setiap unit yang dipilih
+            $units = SarprasUnit::whereIn('id', $validated['unit_ids'])->get();
+            
+            foreach ($units as $unit) {
+                // Cek apakah unit bisa dipinjam
+                if (!$unit->canBeBorrowed()) {
+                    DB::rollBack();
+                    return redirect()
+                        ->back()
+                        ->withInput()
+                        ->with('error', "Unit {$unit->kode_unit} tidak tersedia untuk dipinjam.");
+                }
+
+                // Cek double booking - apakah unit sudah ada di peminjaman aktif
+                $existingBooking = PeminjamanDetail::whereHas('peminjaman', function ($query) use ($validated) {
+                    $query->whereIn('status', ['menunggu', 'disetujui'])
+                        ->where(function ($q) use ($validated) {
+                            $tglPinjam = $validated['tgl_pinjam'];
+                            $tglKembali = $validated['tgl_kembali_rencana'];
+                            
+                            // Overlap check
+                            $q->where(function ($inner) use ($tglPinjam, $tglKembali) {
+                                $inner->where('tgl_pinjam', '<=', $tglKembali)
+                                    ->where('tgl_kembali_rencana', '>=', $tglPinjam);
+                            });
+                        });
+                })
+                ->where('sarpras_unit_id', $unit->id)
+                ->first();
+
+                if ($existingBooking) {
+                    DB::rollBack();
+                    return redirect()
+                        ->back()
+                        ->withInput()
+                        ->with('error', "Unit {$unit->kode_unit} sudah dipinjam pada tanggal tersebut.");
+                }
+            }
+
+            // Buat peminjaman baru
+            $peminjaman = Peminjaman::create([
+                'user_id' => auth()->id(),
+                'petugas_id' => null,
+                'tgl_pinjam' => $validated['tgl_pinjam'],
+                'tgl_kembali_rencana' => $validated['tgl_kembali_rencana'],
+                'status' => Peminjaman::STATUS_MENUNGGU,
+                'keterangan' => $validated['keterangan'] ?? null,
+            ]);
+
+            // Buat detail peminjaman untuk setiap unit
+            foreach ($validated['unit_ids'] as $unitId) {
+                PeminjamanDetail::create([
+                    'peminjaman_id' => $peminjaman->id,
+                    'sarpras_unit_id' => $unitId,
+                ]);
+            }
+
+            \App\Helpers\LogHelper::record('create', "Membuat pengajuan peminjaman baru (ID: {$peminjaman->id}) untuk " . count($validated['unit_ids']) . " unit.");
+
+            DB::commit();
+
+            $jumlahUnit = count($validated['unit_ids']);
+            return redirect()
+                ->route('peminjaman.index')
+                ->with('success', "Pengajuan peminjaman {$jumlahUnit} unit berhasil dibuat. Silakan tunggu persetujuan petugas.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', "Stok tidak mencukupi. Stok tersedia: {$sarpras->stok}");
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
-
-        // Cek double booking - apakah ada peminjaman yang overlap tanggalnya
-        $tglPinjam = $validated['tgl_pinjam'];
-        $tglKembali = $validated['tgl_kembali_rencana'];
-
-        $existingBooking = Peminjaman::where('sarpras_id', $validated['sarpras_id'])
-            ->whereIn('status', ['menunggu', 'disetujui'])
-            ->where(function ($query) use ($tglPinjam, $tglKembali) {
-                // Cek overlap: peminjaman existing overlap dengan tanggal yang diminta
-                $query->where(function ($q) use ($tglPinjam, $tglKembali) {
-                    // Case 1: Tanggal pinjam baru berada di dalam rentang existing
-                    $q->where('tgl_pinjam', '<=', $tglPinjam)
-                      ->where('tgl_kembali_rencana', '>=', $tglPinjam);
-                })->orWhere(function ($q) use ($tglPinjam, $tglKembali) {
-                    // Case 2: Tanggal kembali baru berada di dalam rentang existing
-                    $q->where('tgl_pinjam', '<=', $tglKembali)
-                      ->where('tgl_kembali_rencana', '>=', $tglKembali);
-                })->orWhere(function ($q) use ($tglPinjam, $tglKembali) {
-                    // Case 3: Rentang baru mencakup seluruh rentang existing
-                    $q->where('tgl_pinjam', '>=', $tglPinjam)
-                      ->where('tgl_kembali_rencana', '<=', $tglKembali);
-                });
-            })
-            ->first();
-
-        if ($existingBooking) {
-            $tglExisting = $existingBooking->tgl_pinjam->format('d M Y') . ' - ' . $existingBooking->tgl_kembali_rencana->format('d M Y');
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', "Barang sudah dipinjam pada tanggal {$tglExisting}. Silakan pilih tanggal lain.");
-        }
-
-        // Buat peminjaman baru dengan status 'menunggu'
-        Peminjaman::create([
-            'user_id' => auth()->id(),
-            'sarpras_id' => $validated['sarpras_id'],
-            'petugas_id' => null,
-            'jumlah_pinjam' => $validated['jumlah_pinjam'],
-            'tgl_pinjam' => $validated['tgl_pinjam'],
-            'tgl_kembali_rencana' => $validated['tgl_kembali_rencana'],
-            'status' => 'menunggu',
-            'keterangan' => $validated['keterangan'] ?? null,
-        ]);
-
-        return redirect()
-            ->route('peminjaman.index')
-            ->with('success', 'Pengajuan peminjaman berhasil dibuat. Silakan tunggu persetujuan petugas.');
     }
 
     /**
@@ -163,7 +216,13 @@ class PeminjamanController extends Controller
             abort(403, 'Anda tidak memiliki akses ke data ini.');
         }
 
-        $peminjaman->load(['user', 'sarpras.kategori', 'petugas', 'pengembalian']);
+        $peminjaman->load([
+            'user', 
+            'details.sarprasUnit.sarpras.kategori',
+            'details.sarprasUnit.lokasi',
+            'petugas', 
+            'pengembalian.details.sarprasUnit'
+        ]);
 
         return view('peminjaman.show', compact('peminjaman'));
     }
@@ -181,7 +240,11 @@ class PeminjamanController extends Controller
             abort(403, 'Anda tidak memiliki akses untuk mengedit peminjaman.');
         }
 
-        $peminjaman->load(['user', 'sarpras', 'petugas']);
+        $peminjaman->load([
+            'user', 
+            'details.sarprasUnit.sarpras', 
+            'petugas'
+        ]);
 
         return view('peminjaman.edit', compact('peminjaman'));
     }
@@ -191,9 +254,9 @@ class PeminjamanController extends Controller
      * Logika untuk Admin/Petugas mengubah status peminjaman
      * 
      * PENTING: 
-     * - Jika status berubah ke 'disetujui' → kurangi stok
-     * - Jika status berubah ke 'selesai' → kembalikan stok
-     * - Jika status berubah ke 'ditolak' → tidak ada perubahan stok
+     * - Jika status berubah ke 'disetujui' → update status unit menjadi 'dipinjam'
+     * - Jika status berubah ke 'selesai' → handled by PengembalianController
+     * - Jika status berubah ke 'ditolak' → tidak ada perubahan unit
      */
     public function update(Request $request, Peminjaman $peminjaman): RedirectResponse
     {
@@ -231,38 +294,40 @@ class PeminjamanController extends Controller
         DB::beginTransaction();
 
         try {
-            $sarpras = $peminjaman->sarpras;
+            // LOGIKA PERUBAHAN STATUS UNIT
 
-            // LOGIKA PENGURANGAN/PENGEMBALIAN STOK
-            
             // Case 1: Status berubah ke 'disetujui' (dari 'menunggu')
             if ($newStatus === 'disetujui' && $oldStatus === 'menunggu') {
-                // Validasi stok tersedia
-                if ($sarpras->stok < $peminjaman->jumlah_pinjam) {
-                    DB::rollBack();
-                    return redirect()
-                        ->back()
-                        ->with('error', "Stok tidak mencukupi. Stok tersedia: {$sarpras->stok}, Jumlah pinjam: {$peminjaman->jumlah_pinjam}");
+                // Validasi semua unit masih tersedia
+                foreach ($peminjaman->details as $detail) {
+                    $unit = $detail->sarprasUnit;
+                    if (!$unit->canBeBorrowed()) {
+                        DB::rollBack();
+                        return redirect()
+                            ->back()
+                            ->with('error', "Unit {$unit->kode_unit} sudah tidak tersedia.");
+                    }
                 }
 
-                // Kurangi stok
-                $sarpras->decrement('stok', $peminjaman->jumlah_pinjam);
+                // Update status semua unit menjadi 'dipinjam'
+                foreach ($peminjaman->details as $detail) {
+                    $detail->sarprasUnit->update(['status' => SarprasUnit::STATUS_DIPINJAM]);
+                }
+
+                // Generate QR code
+                $peminjaman->qr_code = 'QR-' . strtoupper(Str::random(10));
             }
 
-            // Case 2: Status berubah ke 'selesai' (dari 'disetujui')
-            // Ini berarti barang sudah dikembalikan
-            if ($newStatus === 'selesai' && $oldStatus === 'disetujui') {
-                // Kembalikan stok
-                $sarpras->increment('stok', $peminjaman->jumlah_pinjam);
-            }
+            // Case 2: Status berubah ke 'ditolak' (dari 'menunggu')
+            // Tidak ada perubahan unit karena belum dipinjam
 
-            // Case 3: Status berubah ke 'ditolak' (dari 'menunggu')
-            // Tidak ada perubahan stok karena belum dipinjam
-            
-            // Case 4: Rollback dari 'disetujui' ke 'menunggu' (jarang terjadi, tapi handle)
+            // Case 3: Rollback dari 'disetujui' ke 'menunggu' (jarang terjadi)
             if ($newStatus === 'menunggu' && $oldStatus === 'disetujui') {
-                // Kembalikan stok karena approval dibatalkan
-                $sarpras->increment('stok', $peminjaman->jumlah_pinjam);
+                // Kembalikan status unit ke 'tersedia'
+                foreach ($peminjaman->details as $detail) {
+                    $detail->sarprasUnit->update(['status' => SarprasUnit::STATUS_TERSEDIA]);
+                }
+                $peminjaman->qr_code = null;
             }
 
             // Update peminjaman
@@ -270,14 +335,17 @@ class PeminjamanController extends Controller
                 'status' => $newStatus,
                 'petugas_id' => $user->id,
                 'catatan_petugas' => $validated['catatan_petugas'] ?? $peminjaman->catatan_petugas,
+                'qr_code' => $peminjaman->qr_code,
             ]);
+
+            \App\Helpers\LogHelper::record('update', "Mengubah status peminjaman (ID: {$peminjaman->id}) menjadi: {$newStatus} oleh " . auth()->user()->name);
 
             DB::commit();
 
             $statusMessages = [
-                'disetujui' => 'Peminjaman berhasil disetujui. Stok telah dikurangi.',
+                'disetujui' => 'Peminjaman berhasil disetujui. Status unit telah diperbarui.',
                 'ditolak' => 'Peminjaman telah ditolak.',
-                'selesai' => 'Peminjaman telah selesai. Stok telah dikembalikan.',
+                'selesai' => 'Peminjaman telah selesai.',
                 'menunggu' => 'Status peminjaman dikembalikan ke menunggu.',
             ];
 
@@ -314,6 +382,8 @@ class PeminjamanController extends Controller
         }
 
         $peminjaman->delete();
+        
+        \App\Helpers\LogHelper::record('delete', "Menghapus data peminjaman (ID: {$peminjaman->id})");
 
         return redirect()
             ->route('peminjaman.index')

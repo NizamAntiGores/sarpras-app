@@ -15,6 +15,12 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+
+                    @if (auth()->user()->role === 'peminjam')
+                        <x-nav-link :href="route('katalog.index')" :active="request()->routeIs('katalog.*')">
+                            {{ __('Katalog Barang') }}
+                        </x-nav-link>
+                    @endif
                     
                     @if (auth()->user()->role === 'admin' || auth()->user()->role === 'petugas')
                         {{-- Dropdown Inventaris --}}
@@ -22,7 +28,7 @@
                             <button @click="open = !open" 
                                     class="inline-flex items-center px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out
                                            {{ request()->routeIs('sarpras.*') || request()->routeIs('barang-rusak.*') || request()->routeIs('barang-hilang.*') 
-                                              ? 'text-gray-900 border-b-2 border-indigo-400' 
+                                              ? 'text-gray-900 border-b-2 border-blue-400' 
                                               : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300' }}">
                                 <span>Inventaris</span>
                                 <svg class="ml-1 h-4 w-4 transition-transform" :class="{'rotate-180': open}" fill="currentColor" viewBox="0 0 20 20">
@@ -35,12 +41,37 @@
                                     <a href="{{ route('sarpras.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('sarpras.*') ? 'bg-gray-100 font-medium' : '' }}">
                                         📦 Daftar Sarpras
                                     </a>
-                                    <a href="{{ route('barang-rusak.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('barang-rusak.*') ? 'bg-gray-100 font-medium' : '' }}">
-                                        🔧 Barang Rusak
+                                    <a href="{{ route('maintenance.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('maintenance.*') ? 'bg-gray-100 font-medium' : '' }}">
+                                        🔧 Maintenance
                                     </a>
                                     <a href="{{ route('barang-hilang.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('barang-hilang.*') ? 'bg-gray-100 font-medium' : '' }}">
                                         ❌ Barang Hilang
                                     </a>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if (auth()->user()->role === 'admin')
+                        {{-- Dropdown Laporan --}}
+                        <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                            <button @click="open = !open" 
+                                    class="inline-flex items-center px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out
+                                           {{ request()->routeIs('laporan.*') 
+                                              ? 'text-gray-900 border-b-2 border-blue-400' 
+                                              : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300' }}">
+                                <span>Laporan</span>
+                                <svg class="ml-1 h-4 w-4 transition-transform" :class="{'rotate-180': open}" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                </svg>
+                            </button>
+                            <div x-show="open" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                                 class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                                <div class="py-1">
+                                    <a href="{{ route('laporan.asset-health') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('laporan.asset-health') ? 'bg-gray-100 font-medium' : '' }}">
+                                        🏥 Asset Health
+                                    </a>
+                                    {{-- Bisa tambah Laporan Peminjaman disini jika mau dipisah dari menu utama --}}
                                 </div>
                             </div>
                         </div>
@@ -56,7 +87,7 @@
                             <button @click="open = !open" 
                                     class="inline-flex items-center px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out
                                            {{ request()->routeIs('users.*') || request()->routeIs('lokasi.*') || request()->routeIs('kategori.*') 
-                                              ? 'text-gray-900 border-b-2 border-indigo-400' 
+                                              ? 'text-gray-900 border-b-2 border-blue-400' 
                                               : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300' }}">
                                 <span>Master Data</span>
                                 <svg class="ml-1 h-4 w-4 transition-transform" :class="{'rotate-180': open}" fill="currentColor" viewBox="0 0 20 20">
@@ -74,6 +105,13 @@
                                     </a>
                                     <a href="{{ route('kategori.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('kategori.*') ? 'bg-gray-100 font-medium' : '' }}">
                                         🏷️ Kategori
+                                    </a>
+                                    <div class="border-t border-gray-100 my-1"></div>
+                                    <a href="{{ route('activity-logs.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('activity-logs.*') ? 'bg-gray-100 font-medium' : '' }}">
+                                        📜 Log Aktivitas
+                                    </a>
+                                    <a href="{{ route('trash.index') }}" class="block px-4 py-2 text-sm text-gray-700 text-red-600 hover:bg-red-50 {{ request()->routeIs('trash.*') ? 'bg-red-50 font-medium' : '' }}">
+                                        🗑️ Tong Sampah
                                     </a>
                                 </div>
                             </div>
@@ -134,6 +172,12 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            @if (auth()->user()->role === 'peminjam')
+                <x-responsive-nav-link :href="route('katalog.index')" :active="request()->routeIs('katalog.*')">
+                    {{ __('Katalog Barang') }}
+                </x-responsive-nav-link>
+            @endif
             
             @if (auth()->user()->role === 'admin' || auth()->user()->role === 'petugas')
                 {{-- Inventaris Group --}}
@@ -142,11 +186,21 @@
                     <x-responsive-nav-link :href="route('sarpras.index')" :active="request()->routeIs('sarpras.*')">
                         📦 Daftar Sarpras
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('barang-rusak.index')" :active="request()->routeIs('barang-rusak.*')">
-                        🔧 Barang Rusak
+                    <x-responsive-nav-link :href="route('maintenance.index')" :active="request()->routeIs('maintenance.*')">
+                        🔧 Maintenance
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('barang-hilang.index')" :active="request()->routeIs('barang-hilang.*')">
                         ❌ Barang Hilang
+                    </x-responsive-nav-link>
+                </div>
+            @endif
+
+            @if (auth()->user()->role === 'admin')
+                {{-- Laporan Group --}}
+                <div class="border-t border-gray-200 mt-2 pt-2">
+                    <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Laporan</div>
+                    <x-responsive-nav-link :href="route('laporan.asset-health')" :active="request()->routeIs('laporan.asset-health')">
+                        🏥 Asset Health
                     </x-responsive-nav-link>
                 </div>
             @endif
@@ -169,6 +223,12 @@
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('kategori.index')" :active="request()->routeIs('kategori.*')">
                         🏷️ Kategori
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('activity-logs.index')" :active="request()->routeIs('activity-logs.*')">
+                        📜 Log Aktivitas
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('trash.index')" :active="request()->routeIs('trash.*')">
+                        🗑️ Tong Sampah (Restore)
                     </x-responsive-nav-link>
                 </div>
             @endif

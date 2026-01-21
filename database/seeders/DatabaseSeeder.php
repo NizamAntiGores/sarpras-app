@@ -7,15 +7,21 @@ use App\Models\User;
 use App\Models\Kategori;
 use App\Models\Lokasi;
 use App\Models\Sarpras;
+use App\Models\SarprasUnit;
 use App\Models\Peminjaman;
+use App\Models\PeminjamanDetail;
 use App\Models\Pengembalian;
+use App\Models\PengembalianDetail;
+use App\Models\Maintenance;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
     /**
      * Seed the application's database.
+     * Updated for unit-based asset management system.
      */
     public function run(): void
     {
@@ -165,322 +171,307 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // =============================================
-        // SARPRAS SEEDER
+        // SARPRAS & UNITS SEEDER (UNIT-BASED)
         // =============================================
         
+        // Helper function to create units
+        $createUnits = function($sarpras, $lokasi, $count, $rusak = 0) {
+            $units = [];
+            for ($i = 1; $i <= $count; $i++) {
+                $kondisi = $i <= ($count - $rusak) ? 'baik' : 'rusak_ringan';
+                $status = 'tersedia';
+                
+                $units[] = SarprasUnit::create([
+                    'sarpras_id' => $sarpras->id,
+                    'kode_unit' => $sarpras->kode_barang . '-' . str_pad($i, 3, '0', STR_PAD_LEFT),
+                    'lokasi_id' => $lokasi->id,
+                    'kondisi' => $kondisi,
+                    'status' => $status,
+                    'tanggal_perolehan' => Carbon::now()->subMonths(rand(1, 24)),
+                    'nilai_perolehan' => rand(100000, 5000000),
+                ]);
+            }
+            return $units;
+        };
+
         // Elektronik
         $proyektor = Sarpras::create([
-            'kode_barang' => 'ELK-001',
+            'kode_barang' => 'PRJ',
             'nama_barang' => 'Proyektor Epson EB-X51',
             'kategori_id' => $kategoriElektronik->id,
-            'lokasi_id' => $lokasiMultimedia->id,
-            'stok' => 5,
-            'stok_rusak' => 1,
-            'kondisi_awal' => 'baik',
         ]);
+        $proyektorUnits = $createUnits($proyektor, $lokasiMultimedia, 5, 1);
 
         $laptop = Sarpras::create([
-            'kode_barang' => 'ELK-002',
+            'kode_barang' => 'LPT',
             'nama_barang' => 'Laptop Lenovo ThinkPad',
             'kategori_id' => $kategoriElektronik->id,
-            'lokasi_id' => $lokasiLab->id,
-            'stok' => 20,
-            'stok_rusak' => 2,
-            'kondisi_awal' => 'baik',
         ]);
+        $laptopUnits = $createUnits($laptop, $lokasiLab, 10, 2);
 
         $speaker = Sarpras::create([
-            'kode_barang' => 'ELK-003',
+            'kode_barang' => 'SPK',
             'nama_barang' => 'Speaker Portable JBL',
             'kategori_id' => $kategoriElektronik->id,
-            'lokasi_id' => $lokasiAula->id,
-            'stok' => 3,
-            'stok_rusak' => 0,
-            'kondisi_awal' => 'baik',
         ]);
+        $speakerUnits = $createUnits($speaker, $lokasiAula, 3, 0);
 
         $kamera = Sarpras::create([
-            'kode_barang' => 'ELK-004',
+            'kode_barang' => 'CAM',
             'nama_barang' => 'Kamera DSLR Canon EOS',
             'kategori_id' => $kategoriElektronik->id,
-            'lokasi_id' => $lokasiMultimedia->id,
-            'stok' => 2,
-            'stok_rusak' => 0,
-            'kondisi_awal' => 'baik',
         ]);
+        $kameraUnits = $createUnits($kamera, $lokasiMultimedia, 3, 0);
 
         $mikrofon = Sarpras::create([
-            'kode_barang' => 'ELK-005',
+            'kode_barang' => 'MIC',
             'nama_barang' => 'Mikrofon Wireless Shure',
             'kategori_id' => $kategoriElektronik->id,
-            'lokasi_id' => $lokasiAula->id,
-            'stok' => 4,
-            'stok_rusak' => 1,
-            'kondisi_awal' => 'baik',
         ]);
+        $mikrofonUnits = $createUnits($mikrofon, $lokasiAula, 4, 1);
 
         // Furniture
         $mejaLipat = Sarpras::create([
-            'kode_barang' => 'FRN-001',
+            'kode_barang' => 'MJL',
             'nama_barang' => 'Meja Lipat Portable',
             'kategori_id' => $kategoriFurniture->id,
-            'lokasi_id' => $lokasiGudang->id,
-            'stok' => 30,
-            'stok_rusak' => 3,
-            'kondisi_awal' => 'baik',
         ]);
+        $mejaUnits = $createUnits($mejaLipat, $lokasiGudang, 20, 2);
 
         $kursiPlastik = Sarpras::create([
-            'kode_barang' => 'FRN-002',
+            'kode_barang' => 'KRS',
             'nama_barang' => 'Kursi Plastik',
             'kategori_id' => $kategoriFurniture->id,
-            'lokasi_id' => $lokasiGudang->id,
-            'stok' => 100,
-            'stok_rusak' => 5,
-            'kondisi_awal' => 'baik',
         ]);
-
-        $papanTulis = Sarpras::create([
-            'kode_barang' => 'FRN-003',
-            'nama_barang' => 'Papan Tulis Portable',
-            'kategori_id' => $kategoriFurniture->id,
-            'lokasi_id' => $lokasiGudang->id,
-            'stok' => 5,
-            'stok_rusak' => 0,
-            'kondisi_awal' => 'baik',
-        ]);
+        $kursiUnits = $createUnits($kursiPlastik, $lokasiGudang, 30, 3);
 
         // Alat Olahraga
         $bolaVoli = Sarpras::create([
-            'kode_barang' => 'OLR-001',
+            'kode_barang' => 'BVL',
             'nama_barang' => 'Bola Voli Mikasa',
             'kategori_id' => $kategoriOlahraga->id,
-            'lokasi_id' => $lokasiOlahraga->id,
-            'stok' => 10,
-            'stok_rusak' => 2,
-            'kondisi_awal' => 'baik',
         ]);
+        $bolaVoliUnits = $createUnits($bolaVoli, $lokasiOlahraga, 8, 1);
 
         $bolaBasket = Sarpras::create([
-            'kode_barang' => 'OLR-002',
+            'kode_barang' => 'BBK',
             'nama_barang' => 'Bola Basket Spalding',
             'kategori_id' => $kategoriOlahraga->id,
-            'lokasi_id' => $lokasiOlahraga->id,
-            'stok' => 8,
-            'stok_rusak' => 1,
-            'kondisi_awal' => 'baik',
         ]);
-
-        $bolaFutsal = Sarpras::create([
-            'kode_barang' => 'OLR-003',
-            'nama_barang' => 'Bola Futsal Molten',
-            'kategori_id' => $kategoriOlahraga->id,
-            'lokasi_id' => $lokasiOlahraga->id,
-            'stok' => 6,
-            'stok_rusak' => 1,
-            'kondisi_awal' => 'baik',
-        ]);
+        $bolaBasketUnits = $createUnits($bolaBasket, $lokasiOlahraga, 6, 1);
 
         $raketBadminton = Sarpras::create([
-            'kode_barang' => 'OLR-004',
+            'kode_barang' => 'RKT',
             'nama_barang' => 'Raket Badminton Yonex',
             'kategori_id' => $kategoriOlahraga->id,
-            'lokasi_id' => $lokasiOlahraga->id,
-            'stok' => 12,
-            'stok_rusak' => 2,
-            'kondisi_awal' => 'baik',
         ]);
-
-        $matrasYoga = Sarpras::create([
-            'kode_barang' => 'OLR-005',
-            'nama_barang' => 'Matras Yoga',
-            'kategori_id' => $kategoriOlahraga->id,
-            'lokasi_id' => $lokasiOlahraga->id,
-            'stok' => 15,
-            'stok_rusak' => 0,
-            'kondisi_awal' => 'baik',
-        ]);
-
-        // Alat Tulis Kantor
-        $staplerBesar = Sarpras::create([
-            'kode_barang' => 'ATK-001',
-            'nama_barang' => 'Stapler Besar',
-            'kategori_id' => $kategoriATK->id,
-            'lokasi_id' => $lokasiGudang->id,
-            'stok' => 10,
-            'stok_rusak' => 0,
-            'kondisi_awal' => 'baik',
-        ]);
-
-        $pemotongKertas = Sarpras::create([
-            'kode_barang' => 'ATK-002',
-            'nama_barang' => 'Pemotong Kertas',
-            'kategori_id' => $kategoriATK->id,
-            'lokasi_id' => $lokasiGudang->id,
-            'stok' => 3,
-            'stok_rusak' => 0,
-            'kondisi_awal' => 'baik',
-        ]);
+        $raketUnits = $createUnits($raketBadminton, $lokasiOlahraga, 10, 2);
 
         // Alat Musik
         $gitarAkustik = Sarpras::create([
-            'kode_barang' => 'MSK-001',
+            'kode_barang' => 'GTR',
             'nama_barang' => 'Gitar Akustik Yamaha',
             'kategori_id' => $kategoriMusik->id,
-            'lokasi_id' => $lokasiAula->id,
-            'stok' => 5,
-            'stok_rusak' => 1,
-            'kondisi_awal' => 'baik',
         ]);
+        $gitarUnits = $createUnits($gitarAkustik, $lokasiAula, 4, 1);
 
         $keyboardYamaha = Sarpras::create([
-            'kode_barang' => 'MSK-002',
+            'kode_barang' => 'KYB',
             'nama_barang' => 'Keyboard Yamaha PSR',
             'kategori_id' => $kategoriMusik->id,
-            'lokasi_id' => $lokasiAula->id,
-            'stok' => 2,
-            'stok_rusak' => 0,
-            'kondisi_awal' => 'baik',
         ]);
+        $keyboardUnits = $createUnits($keyboardYamaha, $lokasiAula, 2, 0);
 
         // =============================================
-        // PEMINJAMAN SEEDER
+        // PEMINJAMAN SEEDER (UNIT-BASED)
         // =============================================
         
-        // Peminjaman 1: Sudah disetujui dan sedang dipinjam
+        // Peminjaman 1: Sudah disetujui dan sedang dipinjam (2 unit laptop)
         $peminjaman1 = Peminjaman::create([
             'user_id' => $siswa1->id,
-            'sarpras_id' => $proyektor->id,
             'petugas_id' => $petugas1->id,
-            'jumlah_pinjam' => 1,
             'tgl_pinjam' => Carbon::now()->subDays(3),
             'tgl_kembali_rencana' => Carbon::now()->addDays(4),
             'status' => 'disetujui',
             'keterangan' => 'Untuk presentasi kelas X-TKJ',
         ]);
+        
+        // Set units as dipinjam
+        $laptopUnits[0]->update(['status' => 'dipinjam']);
+        $laptopUnits[1]->update(['status' => 'dipinjam']);
+        
+        PeminjamanDetail::create([
+            'peminjaman_id' => $peminjaman1->id,
+            'sarpras_unit_id' => $laptopUnits[0]->id,
+        ]);
+        PeminjamanDetail::create([
+            'peminjaman_id' => $peminjaman1->id,
+            'sarpras_unit_id' => $laptopUnits[1]->id,
+        ]);
 
         // Peminjaman 2: Sudah dikembalikan
         $peminjaman2 = Peminjaman::create([
             'user_id' => $siswa2->id,
-            'sarpras_id' => $laptop->id,
             'petugas_id' => $petugas1->id,
-            'jumlah_pinjam' => 2,
             'tgl_pinjam' => Carbon::now()->subDays(10),
             'tgl_kembali_rencana' => Carbon::now()->subDays(5),
             'status' => 'selesai',
             'keterangan' => 'Untuk praktik pemrograman',
         ]);
+        
+        PeminjamanDetail::create([
+            'peminjaman_id' => $peminjaman2->id,
+            'sarpras_unit_id' => $proyektorUnits[0]->id,
+        ]);
+        
+        // Create pengembalian for peminjaman2
+        $pengembalian1 = Pengembalian::create([
+            'peminjaman_id' => $peminjaman2->id,
+            'petugas_id' => $petugas1->id,
+            'tgl_kembali_aktual' => Carbon::now()->subDays(5),
+        ]);
+        
+        PengembalianDetail::create([
+            'pengembalian_id' => $pengembalian1->id,
+            'sarpras_unit_id' => $proyektorUnits[0]->id,
+            'kondisi_akhir' => 'baik',
+            'denda' => 0,
+        ]);
 
         // Peminjaman 3: Menunggu persetujuan
         $peminjaman3 = Peminjaman::create([
             'user_id' => $siswa3->id,
-            'sarpras_id' => $bolaVoli->id,
             'petugas_id' => null,
-            'jumlah_pinjam' => 3,
             'tgl_pinjam' => Carbon::now(),
-            'tgl_kembali_rencana' => Carbon::now()->addDays(1),
+            'tgl_kembali_rencana' => Carbon::now()->addDays(2),
             'status' => 'menunggu',
             'keterangan' => 'Untuk latihan voli kelas XII',
         ]);
+        
+        PeminjamanDetail::create([
+            'peminjaman_id' => $peminjaman3->id,
+            'sarpras_unit_id' => $bolaVoliUnits[0]->id,
+        ]);
+        PeminjamanDetail::create([
+            'peminjaman_id' => $peminjaman3->id,
+            'sarpras_unit_id' => $bolaVoliUnits[1]->id,
+        ]);
 
-        // Peminjaman 4: Sudah disetujui, sedang dipinjam
+        // Peminjaman 4: Sedang dipinjam (1 speaker)
         $peminjaman4 = Peminjaman::create([
             'user_id' => $siswa4->id,
-            'sarpras_id' => $speaker->id,
             'petugas_id' => $petugas2->id,
-            'jumlah_pinjam' => 1,
             'tgl_pinjam' => Carbon::now()->subDays(1),
             'tgl_kembali_rencana' => Carbon::now()->addDays(2),
             'status' => 'disetujui',
             'keterangan' => 'Untuk acara pramuka',
         ]);
+        
+        $speakerUnits[0]->update(['status' => 'dipinjam']);
+        
+        PeminjamanDetail::create([
+            'peminjaman_id' => $peminjaman4->id,
+            'sarpras_unit_id' => $speakerUnits[0]->id,
+        ]);
 
         // Peminjaman 5: Ditolak
         $peminjaman5 = Peminjaman::create([
             'user_id' => $siswa5->id,
-            'sarpras_id' => $kamera->id,
             'petugas_id' => $petugas1->id,
-            'jumlah_pinjam' => 2,
             'tgl_pinjam' => Carbon::now()->subDays(2),
             'tgl_kembali_rencana' => Carbon::now()->addDays(5),
             'status' => 'ditolak',
-            'keterangan' => 'Stok tidak mencukupi',
+            'keterangan' => 'Unit tidak tersedia',
+            'catatan_petugas' => 'Semua unit kamera sedang dipinjam',
         ]);
 
-        // Peminjaman 6: Sudah dikembalikan
+        // Peminjaman 6: Menunggu persetujuan (gitar)
         $peminjaman6 = Peminjaman::create([
-            'user_id' => $siswa1->id,
-            'sarpras_id' => $mejaLipat->id,
-            'petugas_id' => $petugas2->id,
-            'jumlah_pinjam' => 10,
-            'tgl_pinjam' => Carbon::now()->subDays(14),
-            'tgl_kembali_rencana' => Carbon::now()->subDays(7),
-            'status' => 'selesai',
-            'keterangan' => 'Untuk acara class meeting',
-        ]);
-
-        // Peminjaman 7: Menunggu persetujuan
-        $peminjaman7 = Peminjaman::create([
             'user_id' => $siswa2->id,
-            'sarpras_id' => $gitarAkustik->id,
             'petugas_id' => null,
-            'jumlah_pinjam' => 2,
             'tgl_pinjam' => Carbon::now(),
             'tgl_kembali_rencana' => Carbon::now()->addDays(3),
             'status' => 'menunggu',
             'keterangan' => 'Untuk pentas seni',
         ]);
-
-        // Peminjaman 8: Sedang dipinjam
-        $peminjaman8 = Peminjaman::create([
-            'user_id' => $siswa3->id,
-            'sarpras_id' => $raketBadminton->id,
-            'petugas_id' => $petugas1->id,
-            'jumlah_pinjam' => 4,
-            'tgl_pinjam' => Carbon::now()->subDays(2),
-            'tgl_kembali_rencana' => Carbon::now()->addDays(1),
-            'status' => 'disetujui',
-            'keterangan' => 'Untuk pertandingan badminton antar kelas',
+        
+        PeminjamanDetail::create([
+            'peminjaman_id' => $peminjaman6->id,
+            'sarpras_unit_id' => $gitarUnits[0]->id,
+        ]);
+        PeminjamanDetail::create([
+            'peminjaman_id' => $peminjaman6->id,
+            'sarpras_unit_id' => $gitarUnits[1]->id,
         ]);
 
         // =============================================
-        // PENGEMBALIAN SEEDER
+        // MAINTENANCE SEEDER
         // =============================================
         
-        // Pengembalian untuk peminjaman 2
-        Pengembalian::create([
-            'peminjaman_id' => $peminjaman2->id,
+        // Maintenance 1: Sedang berlangsung (mikrofon rusak)
+        $mikrofonUnits[3]->update(['status' => 'maintenance']);
+        
+        Maintenance::create([
+            'sarpras_unit_id' => $mikrofonUnits[3]->id,
             'petugas_id' => $petugas1->id,
-            'tgl_kembali_aktual' => Carbon::now()->subDays(5),
-            'kondisi_akhir' => 'baik',
-            'denda' => 0,
+            'jenis' => 'perbaikan',
+            'deskripsi' => 'Tidak ada suara output, perlu cek kabel dan koneksi',
+            'tanggal_mulai' => Carbon::now()->subDays(2),
+            'biaya' => 150000,
+            'status' => 'sedang_berlangsung',
         ]);
 
-        // Pengembalian untuk peminjaman 6
-        Pengembalian::create([
-            'peminjaman_id' => $peminjaman6->id,
+        // Maintenance 2: Selesai (laptop)
+        Maintenance::create([
+            'sarpras_unit_id' => $laptopUnits[8]->id,
             'petugas_id' => $petugas2->id,
-            'tgl_kembali_aktual' => Carbon::now()->subDays(7),
-            'kondisi_akhir' => 'baik',
-            'denda' => 0,
+            'jenis' => 'servis_rutin',
+            'deskripsi' => 'Install ulang OS dan update driver',
+            'tanggal_mulai' => Carbon::now()->subDays(7),
+            'tanggal_selesai' => Carbon::now()->subDays(5),
+            'biaya' => 50000,
+            'status' => 'selesai',
+        ]);
+
+        // Maintenance 3: Sedang berlangsung (raket)
+        $raketUnits[8]->update(['status' => 'maintenance', 'kondisi' => 'rusak_ringan']);
+        
+        Maintenance::create([
+            'sarpras_unit_id' => $raketUnits[8]->id,
+            'petugas_id' => $petugas1->id,
+            'jenis' => 'penggantian_komponen',
+            'deskripsi' => 'Senar putus, perlu ganti senar baru',
+            'tanggal_mulai' => Carbon::now()->subDays(1),
+            'biaya' => 75000,
+            'status' => 'sedang_berlangsung',
         ]);
 
         // =============================================
         // OUTPUT INFO
         // =============================================
         
+        $totalUnits = SarprasUnit::count();
+        $tersedia = SarprasUnit::where('status', 'tersedia')->count();
+        $dipinjam = SarprasUnit::where('status', 'dipinjam')->count();
+        $maintenance = SarprasUnit::where('status', 'maintenance')->count();
+
         $this->command->info('');
         $this->command->info('========================================');
         $this->command->info('   SEEDER BERHASIL DIJALANKAN!');
+        $this->command->info('   (Unit-Based Asset Management)');
         $this->command->info('========================================');
         $this->command->info('');
         $this->command->info('📊 Data yang telah dibuat:');
-        $this->command->info('   - Users       : 8 (1 Admin, 2 Petugas, 5 Siswa)');
-        $this->command->info('   - Lokasi      : 6');
-        $this->command->info('   - Kategori    : 5');
-        $this->command->info('   - Sarpras     : 17');
-        $this->command->info('   - Peminjaman  : 8');
-        $this->command->info('   - Pengembalian: 2');
+        $this->command->info("   - Users         : 8 (1 Admin, 2 Petugas, 5 Siswa)");
+        $this->command->info("   - Lokasi        : 6");
+        $this->command->info("   - Kategori      : 5");
+        $this->command->info("   - Jenis Barang  : " . Sarpras::count());
+        $this->command->info("   - Total Unit    : {$totalUnits}");
+        $this->command->info("     └─ Tersedia   : {$tersedia}");
+        $this->command->info("     └─ Dipinjam   : {$dipinjam}");
+        $this->command->info("     └─ Maintenance: {$maintenance}");
+        $this->command->info("   - Peminjaman    : " . Peminjaman::count());
+        $this->command->info("   - Maintenance   : " . Maintenance::count());
         $this->command->info('');
         $this->command->info('🔑 Akun Login:');
         $this->command->info('   ┌────────────┬────────────────────────────┬──────────┐');

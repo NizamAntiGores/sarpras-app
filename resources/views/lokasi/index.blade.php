@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Manajemen Lokasi</h2>
-            <a href="{{ route('lokasi.create') }}" class="mt-3 sm:mt-0 inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold uppercase hover:bg-indigo-700">
+            <a href="{{ route('lokasi.create') }}" class="mt-3 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold uppercase hover:bg-blue-700">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 Tambah Lokasi
             </a>
@@ -26,7 +26,7 @@
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Lokasi</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Keterangan</th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Jumlah Sarpras</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Jumlah Unit</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
                             </tr>
                         </thead>
@@ -36,13 +36,13 @@
                                     <td class="px-4 py-4 font-medium text-gray-900">{{ $lok->nama_lokasi }}</td>
                                     <td class="px-4 py-4 text-gray-500 text-sm">{{ $lok->keterangan ?? '-' }}</td>
                                     <td class="px-4 py-4 text-center">
-                                        <span class="px-2 py-1 text-xs rounded-full {{ $lok->sarpras_count > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600' }}">
-                                            {{ $lok->sarpras_count }} item
+                                        <span class="px-2 py-1 text-xs rounded-full {{ $lok->units_count > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600' }}">
+                                            {{ $lok->units_count }} unit
                                         </span>
                                     </td>
                                     <td class="px-4 py-4 text-center">
                                         <div class="flex items-center justify-center space-x-2">
-                                            <a href="{{ route('lokasi.edit', $lok) }}" class="text-indigo-600 hover:text-indigo-900" title="Edit">
+                                            <a href="{{ route('lokasi.edit', $lok) }}" class="text-blue-600 hover:text-blue-900" title="Edit">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                             </a>
                                             <form action="{{ route('lokasi.destroy', $lok) }}" method="POST" class="inline" onsubmit="return confirm('Yakin hapus lokasi ini?');">

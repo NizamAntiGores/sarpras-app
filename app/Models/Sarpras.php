@@ -24,30 +24,9 @@ class Sarpras extends Model
         'kode_barang',
         'nama_barang',
         'foto',
+        'deskripsi',
         'kategori_id',
-        'lokasi_id',
-        'stok',
-        'stok_rusak',
-        'kondisi_awal',
     ];
-
-    /**
-     * The attributes that should be cast.
-     */
-    protected $casts = [
-        'stok' => 'integer',
-        'stok_rusak' => 'integer',
-    ];
-
-    /**
-     * Accessor untuk menghitung total aset (stok tersedia + stok rusak)
-     */
-    protected function totalAset(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => $this->stok + $this->stok_rusak,
-        );
-    }
 
     /**
      * Get kategori dari sarpras ini
@@ -58,19 +37,78 @@ class Sarpras extends Model
     }
 
     /**
-     * Get lokasi dari sarpras ini
+     * Get semua unit untuk sarpras ini
      */
-    public function lokasi(): BelongsTo
+    public function units(): HasMany
     {
-        return $this->belongsTo(Lokasi::class, 'lokasi_id');
+        return $this->hasMany(SarprasUnit::class, 'sarpras_id');
     }
 
     /**
-     * Get all peminjaman untuk sarpras ini
+     * Get unit yang aktif (tidak dihapusbukukan)
      */
-    public function peminjaman(): HasMany
+    public function activeUnits(): HasMany
     {
-        return $this->hasMany(Peminjaman::class, 'sarpras_id');
+        return $this->units()->where('status', '!=', SarprasUnit::STATUS_DIHAPUSBUKUKAN);
+    }
+
+    /**
+     * Accessor untuk total unit aktif
+     */
+    protected function totalUnit(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->activeUnits()->count(),
+        );
+    }
+
+    /**
+     * Accessor untuk stok tersedia (unit yang bisa dipinjam)
+     */
+    protected function stokTersedia(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->units()
+                ->where('status', SarprasUnit::STATUS_TERSEDIA)
+                ->where('kondisi', '!=', SarprasUnit::KONDISI_RUSAK_BERAT)
+                ->count(),
+        );
+    }
+
+    /**
+     * Accessor untuk jumlah unit dipinjam
+     */
+    protected function jumlahDipinjam(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->units()
+                ->where('status', SarprasUnit::STATUS_DIPINJAM)
+                ->count(),
+        );
+    }
+
+    /**
+     * Accessor untuk jumlah unit maintenance
+     */
+    protected function jumlahMaintenance(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->units()
+                ->where('status', SarprasUnit::STATUS_MAINTENANCE)
+                ->count(),
+        );
+    }
+
+    /**
+     * Accessor untuk jumlah unit rusak (semua jenis kerusakan)
+     */
+    protected function jumlahRusak(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->units()
+                ->where('kondisi', '!=', SarprasUnit::KONDISI_BAIK)
+                ->where('status', '!=', SarprasUnit::STATUS_DIHAPUSBUKUKAN)
+                ->count(),
+        );
     }
 }
-

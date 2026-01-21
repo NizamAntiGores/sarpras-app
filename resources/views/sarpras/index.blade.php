@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Manajemen Sarpras</h2>
-            <a href="{{ route('sarpras.create') }}" class="mt-3 sm:mt-0 inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold uppercase hover:bg-indigo-700">
+            <a href="{{ route('sarpras.create') }}" class="mt-3 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold uppercase hover:bg-blue-700">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 Tambah Barang
             </a>
@@ -21,24 +21,56 @@
 
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6">
-                    {{-- Stats Cards --}}
+                    {{-- Global Stats Cards --}}
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white shadow">
                             <p class="text-blue-100 text-sm">Jenis Barang</p>
-                            <p class="text-2xl font-bold">{{ $sarpras->total() }}</p>
+                            <p class="text-2xl font-bold">{{ $stats['total_jenis'] }}</p>
                         </div>
-                        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-4 text-white">
-                            <p class="text-green-100 text-sm">Stok Tersedia</p>
-                            <p class="text-2xl font-bold">{{ $sarpras->sum('stok') }}</p>
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-4 text-white shadow">
+                            <p class="text-green-100 text-sm">Total Unit Siap Pakai</p>
+                            <p class="text-2xl font-bold">{{ $stats['total_tersedia'] }}</p>
                         </div>
-                        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-4 text-white">
-                            <p class="text-red-100 text-sm">Stok Rusak</p>
-                            <p class="text-2xl font-bold">{{ $sarpras->sum('stok_rusak') }}</p>
+                        <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-4 text-white shadow">
+                            <p class="text-orange-100 text-sm">Total Unit Dipinjam</p>
+                            <p class="text-2xl font-bold">{{ $stats['total_dipinjam'] }}</p>
                         </div>
-                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-4 text-white">
-                            <p class="text-purple-100 text-sm">Total Unit</p>
-                            <p class="text-2xl font-bold">{{ $sarpras->sum('stok') + $sarpras->sum('stok_rusak') }}</p>
+                        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-4 text-white shadow">
+                            <p class="text-red-100 text-sm">Total Unit Maintenance</p>
+                            <p class="text-2xl font-bold">{{ $stats['total_maintenance'] }}</p>
                         </div>
+                    </div>
+
+                    {{-- Search Bar --}}
+                    <div class="mb-6">
+                        <form action="{{ route('sarpras.index') }}" method="GET" class="flex flex-col md:flex-row gap-4">
+                            <div class="flex-1 min-w-[200px]">
+                                <select name="kategori_id" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm" onchange="this.form.submit()">
+                                    <option value="">Semua Kategori</option>
+                                    @foreach($kategoriList as $kat)
+                                        <option value="{{ $kat->id }}" {{ request('kategori_id') == $kat->id ? 'selected' : '' }}>
+                                            {{ $kat->nama_kategori }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="flex-grow relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                </span>
+                                <input type="text" name="search" value="{{ request('search') }}" 
+                                       class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+                                       placeholder="Cari nama atau kode barang...">
+                            </div>
+                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                Cari
+                            </button>
+                            @if(request('search') || request('kategori_id'))
+                                <a href="{{ route('sarpras.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:ring ring-blue-200 active:text-gray-800 active:bg-gray-50 disabled:opacity-25 transition ease-in-out duration-150">
+                                    Reset
+                                </a>
+                            @endif
+                        </form>
                     </div>
 
                     {{-- Table --}}
@@ -50,18 +82,12 @@
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kode</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Barang</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Tersedia</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Rusak</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dipinjam Oleh</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total Unit</th>
                                     <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse ($sarpras as $item)
-                                    @php
-                                        $activePeminjaman = $item->peminjaman->where('status', 'disetujui');
-                                        $totalDipinjam = $activePeminjaman->sum('jumlah_pinjam');
-                                    @endphp
                                     <tr class="hover:bg-gray-50">
                                         <td class="px-4 py-4">
                                             @if ($item->foto)
@@ -78,55 +104,65 @@
                                         <td class="px-4 py-4"><span class="px-2 py-1 text-xs font-mono bg-gray-100 rounded">{{ $item->kode_barang }}</span></td>
                                         <td class="px-4 py-4">
                                             <div class="text-sm font-medium text-gray-900">{{ $item->nama_barang }}</div>
-                                            <div class="text-xs text-gray-500">{{ $item->lokasi->nama_lokasi ?? '-' }}</div>
                                         </td>
-                                        <td class="px-4 py-4"><span class="px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-800">{{ $item->kategori->nama_kategori ?? '-' }}</span></td>
+                                        <td class="px-4 py-4"><span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">{{ $item->kategori->nama_kategori ?? '-' }}</span></td>
                                         <td class="px-4 py-4 text-center">
-                                            <span class="text-lg font-semibold {{ $item->stok > 0 ? 'text-green-600' : 'text-gray-400' }}">{{ $item->stok }}</span>
-                                        </td>
-                                        <td class="px-4 py-4 text-center">
-                                            <span class="text-lg font-semibold {{ $item->stok_rusak > 0 ? 'text-red-600' : 'text-gray-400' }}">{{ $item->stok_rusak }}</span>
-                                        </td>
-                                        <td class="px-4 py-4">
-                                            @if ($activePeminjaman->count() > 0)
-                                                <div class="space-y-1">
-                                                    @foreach ($activePeminjaman->take(3) as $pinjam)
-                                                        <div class="flex items-center text-xs">
-                                                            <span class="w-2 h-2 bg-orange-400 rounded-full mr-2"></span>
-                                                            <span class="text-gray-700">{{ $pinjam->user->name ?? '-' }}</span>
-                                                            <span class="text-gray-400 ml-1">({{ $pinjam->jumlah_pinjam }})</span>
-                                                        </div>
-                                                    @endforeach
-                                                    @if ($activePeminjaman->count() > 3)
-                                                        <span class="text-xs text-gray-400">+{{ $activePeminjaman->count() - 3 }} lainnya</span>
+                                            {{-- Ringkasan Unit --}}
+                                            <div class="flex flex-col items-center">
+                                                <span class="text-lg font-bold text-gray-700">{{ $item->total_unit ?? 0 }}</span>
+                                                <div class="flex gap-1 mt-1">
+                                                    @if (($item->tersedia_count ?? 0) > 0)
+                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-green-100 text-green-700" title="Tersedia">{{ $item->tersedia_count }}</span>
+                                                    @endif
+                                                    @if (($item->dipinjam_count ?? 0) > 0)
+                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-orange-100 text-orange-700" title="Dipinjam">{{ $item->dipinjam_count }}</span>
+                                                    @endif
+                                                    @if (($item->maintenance_count ?? 0) > 0)
+                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-red-100 text-red-700" title="Maintenance">{{ $item->maintenance_count }}</span>
                                                     @endif
                                                 </div>
-                                            @else
-                                                <span class="text-xs text-gray-400">-</span>
-                                            @endif
+                                            </div>
                                         </td>
                                         <td class="px-4 py-4 text-center">
-                                            <div class="flex items-center justify-center space-x-2">
-                                                <a href="{{ route('sarpras.show', $item) }}" class="text-gray-600 hover:text-gray-900" title="Detail">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                                </a>
-                                                <a href="{{ route('sarpras.edit', $item) }}" class="text-indigo-600 hover:text-indigo-900" title="Edit">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                                </a>
-                                                @if (auth()->user()->role === 'admin')
-                                                    <form action="{{ route('sarpras.destroy', $item) }}" method="POST" class="inline" onsubmit="return confirm('Yakin hapus barang ini?');">
-                                                        @csrf @method('DELETE')
-                                                        <button type="submit" class="text-red-600 hover:text-red-900" title="Hapus">
-                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                        </button>
-                                                    </form>
-                                                @endif
+                                            <div class="flex flex-col items-center gap-2">
+                                                {{-- Tombol Lihat Unit & Tambah Unit --}}
+                                                <div class="flex gap-2">
+                                                    <a href="{{ route('sarpras.units.index', $item) }}" 
+                                                       class="inline-flex items-center px-2 py-1 bg-teal-100 text-teal-700 rounded text-xs font-medium hover:bg-teal-200"
+                                                       title="Lihat unit {{ $item->nama_barang }}">
+                                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                                                        Lihat Unit
+                                                    </a>
+                                                    <a href="{{ route('sarpras.units.create', $item) }}" 
+                                                       class="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium hover:bg-green-200"
+                                                       title="Tambah unit {{ $item->nama_barang }}">
+                                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                        Tambah Unit
+                                                    </a>
+                                                </div>
+                                                {{-- Tombol Detail, Edit, Hapus --}}
+                                                <div class="flex items-center justify-center space-x-2">
+                                                    <a href="{{ route('sarpras.show', $item) }}" class="text-gray-600 hover:text-gray-900" title="Detail">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                    </a>
+                                                    <a href="{{ route('sarpras.edit', $item) }}" class="text-blue-600 hover:text-blue-900" title="Edit">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                    </a>
+                                                    @if (auth()->user()->role === 'admin')
+                                                        <form action="{{ route('sarpras.destroy', $item) }}" method="POST" class="inline" onsubmit="return confirm('Yakin hapus barang ini?');">
+                                                            @csrf @method('DELETE')
+                                                            <button type="submit" class="text-red-600 hover:text-red-900" title="Hapus">
+                                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="px-6 py-12 text-center text-gray-500">Belum ada data sarpras</td>
+                                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">Belum ada data sarpras</td>
                                     </tr>
                                 @endforelse
                             </tbody>

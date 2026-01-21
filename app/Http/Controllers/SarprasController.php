@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Sarpras;
 use App\Models\Kategori;
-use App\Models\Lokasi;
+use App\Models\SarprasUnit;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -15,15 +15,52 @@ class SarprasController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $sarpras = Sarpras::with(['kategori', 'peminjaman' => function ($query) {
-                $query->where('status', 'disetujui')->with('user');
-            }])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $query = Sarpras::with(['kategori'])
+            ->withCount([
+                'units as total_unit' => function ($query) {
+                    $query->aktif();
+                },
+                'units as tersedia_count' => function ($query) {
+                    $query->bisaDipinjam();
+                },
+                'units as dipinjam_count' => function ($query) {
+                    $query->where('status', SarprasUnit::STATUS_DIPINJAM);
+                },
+                'units as maintenance_count' => function ($query) {
+                    $query->where('status', SarprasUnit::STATUS_MAINTENANCE);
+                },
+            ]);
 
-        return view('sarpras.index', compact('sarpras'));
+        // Search logic
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('nama_barang', 'like', '%' . $request->search . '%')
+                  ->orWhere('kode_barang', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        // Filter by Kategori
+        if ($request->filled('kategori_id')) {
+            $query->where('kategori_id', $request->kategori_id);
+        }
+
+        // Calculate totals across ALL records for stats cards
+        $stats = [
+            'total_jenis' => Sarpras::count(),
+            'total_tersedia' => SarprasUnit::bisaDipinjam()->count(),
+            'total_dipinjam' => SarprasUnit::where('status', SarprasUnit::STATUS_DIPINJAM)->count(),
+            'total_maintenance' => SarprasUnit::where('status', SarprasUnit::STATUS_MAINTENANCE)->count(),
+        ];
+
+        $sarpras = $query->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+            
+        $kategoriList = Kategori::orderBy('nama_kategori')->get();
+
+        return view('sarpras.index', compact('sarpras', 'stats', 'kategoriList'));
     }
 
     /**
@@ -32,13 +69,13 @@ class SarprasController extends Controller
     public function create(): View
     {
         $kategori = Kategori::orderBy('nama_kategori')->get();
-        $lokasi = Lokasi::orderBy('nama_lokasi')->get();
         
-        return view('sarpras.create', compact('kategori', 'lokasi'));
+        return view('sarpras.create', compact('kategori'));
     }
 
     /**
      * Store a newly created resource in storage.
+     * Catatan: Stok tidak lagi diinput di sini, tapi ditambahkan melalui unit management
      */
     public function store(Request $request): RedirectResponse
     {
@@ -47,10 +84,7 @@ class SarprasController extends Controller
             'nama_barang' => 'required|string|max:255',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'kategori_id' => 'required|exists:kategori,id',
-            'lokasi_id' => 'required|exists:lokasi,id',
-            'stok' => 'required|integer|min:0',
-            'stok_rusak' => 'nullable|integer|min:0',
-            'kondisi_awal' => 'required|in:baik,rusak',
+            'deskripsi' => 'nullable|string|max:1000',
         ], [
             'kode_barang.required' => 'Kode barang wajib diisi.',
             'kode_barang.unique' => 'Kode barang sudah digunakan.',
@@ -59,10 +93,6 @@ class SarprasController extends Controller
             'foto.mimes' => 'Format gambar harus JPEG, PNG, JPG, atau WebP.',
             'foto.max' => 'Ukuran gambar maksimal 2MB.',
             'kategori_id.required' => 'Kategori wajib dipilih.',
-            'lokasi_id.required' => 'Lokasi wajib dipilih.',
-            'stok.required' => 'Stok wajib diisi.',
-            'stok.min' => 'Stok tidak boleh negatif.',
-            'stok_rusak.min' => 'Stok rusak tidak boleh negatif.',
         ]);
 
         // Handle foto upload
@@ -71,20 +101,17 @@ class SarprasController extends Controller
             $fotoPath = $request->file('foto')->store('sarpras', 'public');
         }
 
-        Sarpras::create([
+        $sarpras = Sarpras::create([
             'kode_barang' => $validated['kode_barang'],
             'nama_barang' => $validated['nama_barang'],
             'foto' => $fotoPath,
             'kategori_id' => $validated['kategori_id'],
-            'lokasi_id' => $validated['lokasi_id'],
-            'stok' => $validated['stok'],
-            'stok_rusak' => $validated['stok_rusak'] ?? 0,
-            'kondisi_awal' => $validated['kondisi_awal'],
+            'deskripsi' => $validated['deskripsi'] ?? null,
         ]);
 
         return redirect()
-            ->route('sarpras.index')
-            ->with('success', 'Data sarpras berhasil ditambahkan.');
+            ->route('sarpras.units.create', $sarpras)
+            ->with('success', 'Master barang berhasil ditambahkan. Silakan tambahkan unit barang.');
     }
 
     /**
@@ -92,9 +119,24 @@ class SarprasController extends Controller
      */
     public function show(Sarpras $sarpras): View
     {
-        $sarpras->load('kategori', 'peminjaman.user');
+        $sarpras->load([
+            'kategori',
+            'units' => function ($query) {
+                $query->aktif()->with('lokasi')->orderBy('kode_unit');
+            }
+        ]);
         
-        return view('sarpras.show', compact('sarpras'));
+        // Summary statistics
+        $statistics = [
+            'total_unit' => $sarpras->units->count(),
+            'tersedia' => $sarpras->units->where('status', SarprasUnit::STATUS_TERSEDIA)
+                ->where('kondisi', '!=', SarprasUnit::KONDISI_RUSAK_BERAT)->count(),
+            'dipinjam' => $sarpras->units->where('status', SarprasUnit::STATUS_DIPINJAM)->count(),
+            'maintenance' => $sarpras->units->where('status', SarprasUnit::STATUS_MAINTENANCE)->count(),
+            'rusak' => $sarpras->units->where('kondisi', '!=', SarprasUnit::KONDISI_BAIK)->count(),
+        ];
+        
+        return view('sarpras.show', compact('sarpras', 'statistics'));
     }
 
     /**
@@ -103,9 +145,8 @@ class SarprasController extends Controller
     public function edit(Sarpras $sarpras): View
     {
         $kategori = Kategori::orderBy('nama_kategori')->get();
-        $lokasi = Lokasi::orderBy('nama_lokasi')->get();
         
-        return view('sarpras.edit', compact('sarpras', 'kategori', 'lokasi'));
+        return view('sarpras.edit', compact('sarpras', 'kategori'));
     }
 
     /**
@@ -118,10 +159,7 @@ class SarprasController extends Controller
             'nama_barang' => 'required|string|max:255',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'kategori_id' => 'required|exists:kategori,id',
-            'lokasi_id' => 'required|exists:lokasi,id',
-            'stok' => 'required|integer|min:0',
-            'stok_rusak' => 'nullable|integer|min:0',
-            'kondisi_awal' => 'required|in:baik,rusak',
+            'deskripsi' => 'nullable|string|max:1000',
         ], [
             'kode_barang.required' => 'Kode barang wajib diisi.',
             'kode_barang.unique' => 'Kode barang sudah digunakan.',
@@ -130,10 +168,6 @@ class SarprasController extends Controller
             'foto.mimes' => 'Format gambar harus JPEG, PNG, JPG, atau WebP.',
             'foto.max' => 'Ukuran gambar maksimal 2MB.',
             'kategori_id.required' => 'Kategori wajib dipilih.',
-            'lokasi_id.required' => 'Lokasi wajib dipilih.',
-            'stok.required' => 'Stok wajib diisi.',
-            'stok.min' => 'Stok tidak boleh negatif.',
-            'stok_rusak.min' => 'Stok rusak tidak boleh negatif.',
         ]);
 
         // Handle foto upload
@@ -159,10 +193,7 @@ class SarprasController extends Controller
             'nama_barang' => $validated['nama_barang'],
             'foto' => $fotoPath,
             'kategori_id' => $validated['kategori_id'],
-            'lokasi_id' => $validated['lokasi_id'],
-            'stok' => $validated['stok'],
-            'stok_rusak' => $validated['stok_rusak'] ?? 0,
-            'kondisi_awal' => $validated['kondisi_awal'],
+            'deskripsi' => $validated['deskripsi'] ?? null,
         ]);
 
         return redirect()
@@ -181,18 +212,25 @@ class SarprasController extends Controller
             abort(403, 'Hanya admin yang dapat menghapus data sarpras.');
         }
 
-        // Cek apakah ada peminjaman aktif
-        $activePeminjaman = $sarpras->peminjaman()
-            ->whereIn('status', ['menunggu', 'disetujui'])
+        // Cek apakah ada unit yang sedang dipinjam
+        $activeUnits = $sarpras->units()
+            ->where('status', SarprasUnit::STATUS_DIPINJAM)
             ->exists();
 
-        if ($activePeminjaman) {
+        if ($activeUnits) {
             return redirect()
                 ->route('sarpras.index')
-                ->with('error', 'Tidak dapat menghapus sarpras yang sedang dipinjam atau memiliki peminjaman aktif.');
+                ->with('error', 'Tidak dapat menghapus sarpras yang memiliki unit sedang dipinjam.');
         }
 
+        // Soft delete: hapusbukukan semua unit
+        $sarpras->units()->update(['status' => SarprasUnit::STATUS_DIHAPUSBUKUKAN]);
+        
+        // Delete master sarpras (atau bisa juga soft delete jika mau)
+        $namaBarang = $sarpras->nama_barang;
         $sarpras->delete();
+
+        \App\Helpers\LogHelper::record('delete', "Menghapus sarpras: {$namaBarang}");
 
         return redirect()
             ->route('sarpras.index')

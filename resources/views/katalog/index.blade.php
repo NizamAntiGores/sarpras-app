@@ -17,7 +17,7 @@
                     <div class="flex items-center gap-2">
                         <label for="kategori" class="text-sm font-medium text-gray-700">Filter Kategori:</label>
                         <select name="kategori" id="kategori" onchange="this.form.submit()"
-                                class="rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                class="rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
                             <option value="">Semua Kategori</option>
                             @foreach ($kategori as $kat)
                                 <option value="{{ $kat->id }}" {{ $kategoriId == $kat->id ? 'selected' : '' }}>
@@ -27,7 +27,7 @@
                         </select>
                     </div>
                     @if ($kategoriId)
-                        <a href="{{ route('katalog.index') }}" class="text-sm text-indigo-600 hover:text-indigo-800">
+                        <a href="{{ route('katalog.index') }}" class="text-sm text-blue-600 hover:text-blue-800">
                             &times; Reset Filter
                         </a>
                     @endif
@@ -38,12 +38,12 @@
             @if ($sarpras->count() > 0)
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     @foreach ($sarpras as $item)
-                        <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                            {{-- Foto --}}
-                            <div class="aspect-square bg-gray-100 relative">
+                        <div class="group bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300">
+                            {{-- Foto with Hover Overlay --}}
+                            <div class="aspect-square bg-gray-100 relative overflow-hidden">
                                 @if ($item->foto)
                                     <img src="{{ Storage::url($item->foto) }}" alt="{{ $item->nama_barang }}" 
-                                         class="w-full h-full object-cover">
+                                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center">
                                         <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,40 +53,52 @@
                                 @endif
                                 
                                 {{-- Stok Badge --}}
-                                <div class="absolute top-2 right-2">
-                                    @if ($item->stok > 5)
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-500 text-white">
-                                            Stok: {{ $item->stok }}
+                                <div class="absolute top-2 right-2 z-10">
+                                    @if ($item->available_count > 5)
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full text-white shadow-sm" style="background-color: #3b82f6;">
+                                            Tersedia: {{ $item->available_count }}
                                         </span>
-                                    @elseif ($item->stok > 0)
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-500 text-white">
-                                            Stok: {{ $item->stok }}
+                                    @elseif ($item->available_count > 0)
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full text-white shadow-sm" style="background-color: #fb923c;">
+                                            Sisa: {{ $item->available_count }}
                                         </span>
                                     @else
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-500 text-white">
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full text-white shadow-sm" style="background-color: #ef4444;">
                                             Habis
                                         </span>
                                     @endif
                                 </div>
+
+                                {{-- Hover Overlay with Quick Action --}}
+                                @if ($item->available_count > 0)
+                                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
+                                        <a href="{{ route('peminjaman.create', ['sarpras_id' => $item->id, 'from' => 'katalog']) }}" 
+                                           class="inline-flex items-center px-5 py-2.5 text-blue-600 rounded-full text-sm font-bold shadow-lg hover:bg-gray-50 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300"
+                                           style="background-color: #ffffff;">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                                            Pinjam Sekarang
+                                        </a>
+                                    </div>
+                                @endif
                             </div>
                             
                             {{-- Content --}}
                             <div class="p-4">
-                                <span class="text-xs text-indigo-600 font-medium">{{ $item->kategori->nama_kategori ?? '-' }}</span>
-                                <h3 class="font-semibold text-gray-900 mt-1 line-clamp-2">{{ $item->nama_barang }}</h3>
-                                <p class="text-xs text-gray-500 mt-1">{{ $item->lokasi->nama_lokasi ?? '-' }}</p>
-                                <p class="text-xs text-gray-400 mt-1">Kode: {{ $item->kode_barang }}</p>
+                                <span class="text-xs font-bold uppercase tracking-wider" style="color: #2563eb;">{{ $item->kategori->nama_kategori ?? '-' }}</span>
+                                <h3 class="font-bold text-gray-900 mt-1 line-clamp-2 leading-tight h-10">{{ $item->nama_barang }}</h3>
+                                <p class="text-xs text-gray-400 mt-2 font-mono">ID: {{ $item->kode_barang }}</p>
                                 
-                                {{-- Tombol Pinjam --}}
+                                {{-- Tombol Pinjam (Always Visible) --}}
                                 <div class="mt-4">
-                                    @if ($item->stok > 0)
-                                        <a href="{{ route('peminjaman.create', ['sarpras_id' => $item->id]) }}" 
-                                           class="block w-full text-center px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                                    @if ($item->available_count > 0)
+                                        <a href="{{ route('peminjaman.create', ['sarpras_id' => $item->id, 'from' => 'katalog']) }}" 
+                                           class="block w-full text-center px-4 py-2.5 text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg"
+                                           style="background-color: #2563eb;">
                                             Pinjam Barang
                                         </a>
                                     @else
                                         <button disabled 
-                                                class="block w-full text-center px-4 py-2 bg-gray-300 text-gray-500 rounded-lg text-sm font-medium cursor-not-allowed">
+                                                class="block w-full text-center px-4 py-2.5 bg-gray-100 text-gray-400 rounded-xl text-sm font-bold cursor-not-allowed border border-gray-200">
                                             Stok Habis
                                         </button>
                                     @endif
@@ -104,7 +116,7 @@
                     <p class="mt-2 text-gray-500">
                         @if ($kategoriId)
                             Tidak ada barang tersedia untuk kategori ini.
-                            <a href="{{ route('katalog.index') }}" class="text-indigo-600 hover:underline">Lihat semua barang</a>
+                            <a href="{{ route('katalog.index') }}" class="text-blue-600 hover:underline">Lihat semua barang</a>
                         @else
                             Belum ada barang yang tersedia untuk dipinjam.
                         @endif

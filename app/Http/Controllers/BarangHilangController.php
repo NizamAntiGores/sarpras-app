@@ -14,7 +14,7 @@ class BarangHilangController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = BarangHilang::with(['sarpras', 'user', 'pengembalian'])
+        $query = BarangHilang::with(['pengembalianDetail.sarprasUnit.sarpras', 'user'])
             ->orderBy('created_at', 'desc');
 
         // Filter by status
@@ -25,9 +25,9 @@ class BarangHilangController extends Controller
         $barangHilang = $query->paginate(10)->withQueryString();
 
         // Statistik
-        $totalHilang = BarangHilang::sum('jumlah');
-        $belumDiganti = BarangHilang::where('status', 'belum_diganti')->sum('jumlah');
-        $sudahDiganti = BarangHilang::where('status', 'sudah_diganti')->sum('jumlah');
+        $totalHilang = BarangHilang::count();
+        $belumDiganti = BarangHilang::where('status', BarangHilang::STATUS_BELUM_DIGANTI)->count();
+        $sudahDiganti = BarangHilang::where('status', BarangHilang::STATUS_SUDAH_DIGANTI)->count();
 
         return view('barang-hilang.index', compact(
             'barangHilang', 
@@ -43,7 +43,7 @@ class BarangHilangController extends Controller
     public function update(Request $request, BarangHilang $barangHilang): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => 'required|in:belum_diganti,sudah_diganti',
+            'status' => 'required|in:belum_diganti,sudah_diganti,diputihkan',
             'keterangan' => 'nullable|string|max:500',
         ]);
 
@@ -52,9 +52,11 @@ class BarangHilangController extends Controller
             'keterangan' => $validated['keterangan'] ?? $barangHilang->keterangan,
         ]);
 
-        $message = $validated['status'] === 'sudah_diganti' 
-            ? 'Barang telah ditandai sebagai sudah diganti.'
-            : 'Status barang dikembalikan ke belum diganti.';
+        $message = match($validated['status']) {
+            'sudah_diganti' => 'Barang telah ditandai sebagai sudah diganti.',
+            'diputihkan' => 'Barang telah diputihkan.',
+            default => 'Status barang dikembalikan ke belum diganti.',
+        };
 
         return redirect()
             ->route('barang-hilang.index')

@@ -17,8 +17,11 @@ class KatalogController extends Controller
     {
         $kategoriId = $request->query('kategori');
         
-        $query = Sarpras::with('kategori')
-            ->where('stok', '>', 0)
+        $query = Sarpras::with(['kategori'])
+            ->withCount(['units as available_count' => function ($query) {
+                $query->bisaDipinjam();
+            }])
+            ->having('available_count', '>', 0)
             ->orderBy('nama_barang');
         
         // Filter by kategori jika ada
@@ -30,7 +33,9 @@ class KatalogController extends Controller
         $kategori = Kategori::orderBy('nama_kategori')->get();
         
         // Stats untuk header
-        $totalBarang = Sarpras::where('stok', '>', 0)->count();
+        $totalBarang = Sarpras::whereHas('units', function($q) {
+                $q->bisaDipinjam();
+            })->count();
         $totalKategori = Kategori::count();
         
         return view('katalog.index', compact('sarpras', 'kategori', 'kategoriId', 'totalBarang', 'totalKategori'));

@@ -1,7 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center">
-            <a href="{{ route('peminjaman.index') }}" class="text-gray-500 hover:text-gray-700 mr-3">
+            @if(request('from') == 'katalog')
+                <a href="{{ route('katalog.index') }}" class="text-gray-500 hover:text-gray-700 mr-3">
+            @else
+                <a href="{{ route('peminjaman.index') }}" class="text-gray-500 hover:text-gray-700 mr-3">
+            @endif
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
@@ -13,7 +17,7 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6 sm:p-8">
                     
@@ -48,8 +52,8 @@
                             <div class="ml-3">
                                 <h3 class="text-sm font-medium text-blue-800">Informasi</h3>
                                 <p class="mt-1 text-sm text-blue-700">
-                                    Setelah mengajukan peminjaman, tunggu persetujuan dari petugas. 
-                                    Anda dapat memantau status peminjaman di halaman daftar peminjaman.
+                                    Pilih unit barang spesifik yang ingin Anda pinjam. Setiap unit memiliki kode unik.
+                                    Setelah mengajukan, tunggu persetujuan dari petugas.
                                 </p>
                             </div>
                         </div>
@@ -58,38 +62,67 @@
                     <form action="{{ route('peminjaman.store') }}" method="POST" class="space-y-6">
                         @csrf
 
-                        {{-- Pilih Barang --}}
+                        {{-- Pilih Unit Barang --}}
                         <div>
-                            <label for="sarpras_id" class="block text-sm font-medium text-gray-700 mb-1">
-                                Pilih Barang <span class="text-red-500">*</span>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                Pilih Unit Barang <span class="text-red-500">*</span>
                             </label>
-                            <select name="sarpras_id" id="sarpras_id" 
-                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('sarpras_id') border-red-500 @enderror">
-                                <option value="">-- Pilih Barang yang Ingin Dipinjam --</option>
-                                @foreach ($sarpras as $item)
-                                    <option value="{{ $item->id }}" {{ (old('sarpras_id') ?? request('sarpras_id')) == $item->id ? 'selected' : '' }}
-                                            data-stok="{{ $item->stok }}">
-                                        {{ $item->nama_barang }} ({{ $item->kode_barang }}) - Stok: {{ $item->stok }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('sarpras_id')
+                            
+                            @if ($sarprasList->isEmpty())
+                                <p class="text-sm text-yellow-600">Tidak ada barang yang tersedia untuk dipinjam saat ini.</p>
+                            @else
+                                {{-- Search Filter --}}
+                                <div class="mb-4">
+                                    <input type="text" id="searchUnit" placeholder="Cari barang atau kode unit..."
+                                           class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+
+                                {{-- Unit Selection --}}
+                                <div class="border border-gray-200 rounded-lg max-h-80 overflow-y-auto p-3 space-y-4" id="unitList">
+                                    @foreach ($sarprasList as $sarpras)
+                                        @if (isset($availableUnits[$sarpras->id]) && $availableUnits[$sarpras->id]->count() > 0)
+                                            <div class="sarpras-group" data-id="{{ $sarpras->id }}" data-nama="{{ strtolower($sarpras->nama_barang) }}">
+                                                <p class="font-medium text-gray-800 text-sm mb-2">
+                                                    {{ $sarpras->nama_barang }} 
+                                                    <span class="text-gray-500">({{ $sarpras->kode_barang }})</span>
+                                                    <span class="text-green-600 ml-2">{{ $sarpras->available_units_count }} tersedia</span>
+                                                </p>
+                                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 ml-4">
+                                                    @foreach ($availableUnits[$sarpras->id] as $unit)
+                                                        <label class="unit-item flex items-center p-2 border rounded hover:bg-gray-50 cursor-pointer {{ in_array($unit->id, old('unit_ids', [])) ? 'border-blue-500 bg-blue-50' : 'border-gray-200' }}"
+                                                               data-kode="{{ strtolower($unit->kode_unit) }}">
+                                                            <input type="checkbox" name="unit_ids[]" value="{{ $unit->id }}" 
+                                                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                                   {{ in_array($unit->id, old('unit_ids', [])) ? 'checked' : '' }}>
+                                                            <span class="ml-2 text-sm">
+                                                                <span class="font-mono font-medium">{{ $unit->kode_unit }}</span>
+                                                                <br>
+                                                                <span class="text-xs text-gray-500">
+                                                                    @if ($unit->kondisi === 'baik')
+                                                                        <span class="text-green-600">●</span> Baik
+                                                                    @elseif ($unit->kondisi === 'rusak_ringan')
+                                                                        <span class="text-yellow-600">●</span> Rusak Ringan
+                                                                    @endif
+                                                                </span>
+                                                            </span>
+                                                        </label>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                                
+                                {{-- Selected Count --}}
+                                <p class="mt-2 text-sm text-gray-600">
+                                    Unit terpilih: <span id="selectedCount" class="font-semibold">0</span>
+                                </p>
+                            @endif
+                            
+                            @error('unit_ids')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
-                            @if ($sarpras->isEmpty())
-                                <p class="mt-1 text-sm text-yellow-600">Tidak ada barang yang tersedia untuk dipinjam saat ini.</p>
-                            @endif
-                        </div>
-
-                        {{-- Jumlah Pinjam --}}
-                        <div>
-                            <label for="jumlah_pinjam" class="block text-sm font-medium text-gray-700 mb-1">
-                                Jumlah Pinjam <span class="text-red-500">*</span>
-                            </label>
-                            <input type="number" name="jumlah_pinjam" id="jumlah_pinjam" 
-                                   value="{{ old('jumlah_pinjam', 1) }}" min="1"
-                                   class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('jumlah_pinjam') border-red-500 @enderror">
-                            @error('jumlah_pinjam')
+                            @error('unit_ids.*')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -103,7 +136,7 @@
                                 <input type="date" name="tgl_pinjam" id="tgl_pinjam" 
                                        value="{{ old('tgl_pinjam', date('Y-m-d')) }}"
                                        min="{{ date('Y-m-d') }}"
-                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('tgl_pinjam') border-red-500 @enderror">
+                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('tgl_pinjam') border-red-500 @enderror">
                                 @error('tgl_pinjam')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -115,7 +148,7 @@
                                 <input type="date" name="tgl_kembali_rencana" id="tgl_kembali_rencana" 
                                        value="{{ old('tgl_kembali_rencana') }}"
                                        min="{{ date('Y-m-d', strtotime('+1 day')) }}"
-                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('tgl_kembali_rencana') border-red-500 @enderror">
+                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('tgl_kembali_rencana') border-red-500 @enderror">
                                 @error('tgl_kembali_rencana')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -129,7 +162,7 @@
                             </label>
                             <textarea name="keterangan" id="keterangan" rows="3"
                                       placeholder="Jelaskan keperluan peminjaman barang..."
-                                      class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('keterangan') border-red-500 @enderror">{{ old('keterangan') }}</textarea>
+                                      class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('keterangan') border-red-500 @enderror">{{ old('keterangan') }}</textarea>
                             @error('keterangan')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -137,13 +170,20 @@
 
                         {{-- Buttons --}}
                         <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
-                            <a href="{{ route('peminjaman.index') }}" 
-                               class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 transition ease-in-out duration-150">
-                                Batal
-                            </a>
+                            @if(request('from') == 'katalog')
+                                <a href="{{ route('katalog.index') }}" 
+                                   class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 transition ease-in-out duration-150">
+                                    Kembali ke Katalog
+                                </a>
+                            @else
+                                <a href="{{ route('peminjaman.index') }}" 
+                                   class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 transition ease-in-out duration-150">
+                                    Batal
+                                </a>
+                            @endif
                             <button type="submit" 
-                                    class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 transition ease-in-out duration-150"
-                                    {{ $sarpras->isEmpty() ? 'disabled' : '' }}>
+                                    class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 transition ease-in-out duration-150"
+                                    {{ $sarprasList->isEmpty() ? 'disabled' : '' }}>
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                                 </svg>
@@ -155,4 +195,64 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // Update selected count
+        function updateSelectedCount() {
+            const checkboxes = document.querySelectorAll('input[name="unit_ids[]"]:checked');
+            document.getElementById('selectedCount').textContent = checkboxes.length;
+        }
+
+        // Add event listeners to checkboxes
+        document.querySelectorAll('input[name="unit_ids[]"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const label = this.closest('label');
+                if (this.checked) {
+                    label.classList.add('border-blue-500', 'bg-blue-50');
+                    label.classList.remove('border-gray-200');
+                } else {
+                    label.classList.remove('border-blue-500', 'bg-blue-50');
+                    label.classList.add('border-gray-200');
+                }
+                updateSelectedCount();
+            });
+        });
+
+        // Search functionality
+        document.getElementById('searchUnit').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            document.querySelectorAll('.sarpras-group').forEach(group => {
+                const namaBarang = group.dataset.nama;
+                const units = group.querySelectorAll('.unit-item');
+                let hasVisibleUnit = false;
+
+                units.forEach(unit => {
+                    const kodeUnit = unit.dataset.kode;
+                    if (namaBarang.includes(searchTerm) || kodeUnit.includes(searchTerm)) {
+                        unit.style.display = '';
+                        hasVisibleUnit = true;
+                    } else {
+                        unit.style.display = 'none';
+                    }
+                });
+
+                group.style.display = hasVisibleUnit || namaBarang.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        // Initial filter if sarpras_id is provided
+        const selectedSarprasId = "{{ $selectedSarprasId ?? '' }}";
+        if (selectedSarprasId) {
+            const searchInput = document.getElementById('searchUnit');
+            const group = document.querySelector(`.sarpras-group[data-id="${selectedSarprasId}"]`);
+            if (group) {
+                searchInput.value = group.dataset.nama;
+                // Trigger search manually
+                searchInput.dispatchEvent(new Event('input'));
+            }
+        }
+
+        // Initial count
+        updateSelectedCount();
+    </script>
 </x-app-layout>

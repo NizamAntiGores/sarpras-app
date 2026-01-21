@@ -7,15 +7,14 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             
             {{-- Welcome Card --}}
-            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg p-6 mb-6 text-white">
+            <div class="bg-gradient-to-r from-blue-500 to-blue-700 rounded-xl shadow-lg p-6 mb-6 text-white">
                 <div class="flex items-center justify-between">
                     <div>
                         <h3 class="text-2xl font-bold">Selamat Datang, {{ auth()->user()->name }}!</h3>
-                        <p class="text-indigo-100 mt-1">Role: <span class="font-semibold capitalize">{{ auth()->user()->role }}</span></p>
+                        <p class="text-blue-100 mt-1">Role: <span class="font-semibold capitalize">{{ auth()->user()->role }}</span></p>
                     </div>
                     <div class="text-right">
-                        <p class="text-indigo-100 text-sm">{{ now()->format('l, d F Y') }}</p>
-                        <p class="text-indigo-100 text-sm">{{ now()->format('H:i') }} WIB</p>
+                        <p class="text-blue-100 text-sm">{{ now()->format('l, d F Y') }}</p>
                     </div>
                 </div>
             </div>
@@ -29,28 +28,28 @@
                     {{-- Barang Siap Pakai --}}
                     <div class="bg-gradient-to-br from-green-400 to-green-600 rounded-xl shadow-lg p-5 text-white">
                         <p class="text-green-100 text-xs font-medium uppercase tracking-wide">Barang Siap Pakai</p>
-                        <p class="text-3xl font-bold mt-1">{{ number_format($data['stokTersedia'] ?? 0) }}</p>
+                        <p class="text-3xl font-bold mt-1">{{ number_format($data['tersedia'] ?? 0) }}</p>
                         <p class="text-green-100 text-xs mt-1">unit tersedia</p>
                     </div>
 
                     {{-- Barang Rusak --}}
                     <div class="bg-gradient-to-br from-red-400 to-red-600 rounded-xl shadow-lg p-5 text-white">
                         <p class="text-red-100 text-xs font-medium uppercase tracking-wide">Barang Rusak</p>
-                        <p class="text-3xl font-bold mt-1">{{ number_format($data['stokRusak'] ?? 0) }}</p>
+                        <p class="text-3xl font-bold mt-1">{{ number_format($data['rusak'] ?? 0) }}</p>
                         <p class="text-red-100 text-xs mt-1">unit rusak</p>
                     </div>
 
                     {{-- Sedang Dipinjam --}}
                     <div class="bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl shadow-lg p-5 text-white">
                         <p class="text-orange-100 text-xs font-medium uppercase tracking-wide">Sedang Dipinjam</p>
-                        <p class="text-3xl font-bold mt-1">{{ number_format($data['sedangDipinjam'] ?? 0) }}</p>
+                        <p class="text-3xl font-bold mt-1">{{ number_format($data['dipinjam'] ?? 0) }}</p>
                         <p class="text-orange-100 text-xs mt-1">unit dipinjam</p>
                     </div>
 
                     {{-- Total Inventaris --}}
                     <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl shadow-lg p-5 text-white">
                         <p class="text-blue-100 text-xs font-medium uppercase tracking-wide">Total Inventaris</p>
-                        <p class="text-3xl font-bold mt-1">{{ number_format($data['totalInventaris'] ?? 0) }}</p>
+                        <p class="text-3xl font-bold mt-1">{{ number_format($data['totalUnit'] ?? 0) }}</p>
                         <p class="text-blue-100 text-xs mt-1">unit total aset</p>
                     </div>
                 </div>
@@ -127,7 +126,7 @@
                                         <h3 class="text-yellow-800 font-semibold">⚠️ Stok Menipis ({{ $data['stokMenipis']->count() }} barang, stok ≤ 5)</h3>
                                         <ul class="mt-2 text-sm text-yellow-700 space-y-1">
                                             @foreach ($data['stokMenipis']->take(5) as $item)
-                                                <li>• {{ $item->nama_barang }} <span class="font-semibold text-yellow-600">(sisa {{ $item->stok }})</span></li>
+                                                <li>• {{ $item->nama_barang }} <span class="font-semibold text-yellow-600">(sisa {{ $item->available_count }} unit)</span></li>
                                             @endforeach
                                             @if ($data['stokMenipis']->count() > 5)
                                                 <li class="text-yellow-600">... dan {{ $data['stokMenipis']->count() - 5 }} lainnya</li>
@@ -170,19 +169,19 @@
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div class="bg-gradient-to-br from-green-400 to-green-600 rounded-xl shadow-lg p-5 text-white">
                         <p class="text-green-100 text-xs">Barang Siap Pakai</p>
-                        <p class="text-3xl font-bold mt-1">{{ number_format($data['stokTersedia'] ?? 0) }}</p>
+                        <p class="text-3xl font-bold mt-1">{{ number_format($data['tersedia'] ?? 0) }}</p>
                     </div>
                     <div class="bg-gradient-to-br from-red-400 to-red-600 rounded-xl shadow-lg p-5 text-white">
                         <p class="text-red-100 text-xs">Barang Rusak</p>
-                        <p class="text-3xl font-bold mt-1">{{ number_format($data['stokRusak'] ?? 0) }}</p>
+                        <p class="text-3xl font-bold mt-1">{{ number_format($data['maintenance'] ?? 0) }}</p>
                     </div>
                     <div class="bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl shadow-lg p-5 text-white">
                         <p class="text-orange-100 text-xs">Sedang Dipinjam</p>
-                        <p class="text-3xl font-bold mt-1">{{ number_format($data['sedangDipinjam'] ?? 0) }}</p>
+                        <p class="text-3xl font-bold mt-1">{{ number_format($data['dipinjam'] ?? 0) }}</p>
                     </div>
                     <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl shadow-lg p-5 text-white">
                         <p class="text-blue-100 text-xs">Total Inventaris</p>
-                        <p class="text-3xl font-bold mt-1">{{ number_format($data['totalInventaris'] ?? 0) }}</p>
+                        <p class="text-3xl font-bold mt-1">{{ number_format($data['totalUnit'] ?? 0) }}</p>
                     </div>
                 </div>
 
@@ -262,17 +261,17 @@
                                                     </svg>
                                                 </div>
                                             @endif
-                                            <span class="absolute top-2 right-2 px-2 py-0.5 text-xs font-semibold rounded-full {{ $item->stok > 5 ? 'bg-green-500' : 'bg-yellow-500' }} text-white">
-                                                {{ $item->stok }}
+                                            <span class="absolute top-2 right-2 px-2 py-0.5 text-xs font-semibold rounded-full {{ $item->available_count > 5 ? 'bg-green-500' : 'bg-yellow-500' }} text-white">
+                                                {{ $item->available_count }}
                                             </span>
                                         </div>
                                         {{-- Content --}}
                                         <div class="p-3">
-                                            <p class="text-xs text-indigo-600 font-medium">{{ $item->kategori->nama_kategori ?? '-' }}</p>
+                                            <p class="text-xs text-blue-600 font-medium">{{ $item->kategori->nama_kategori ?? '-' }}</p>
                                             <h5 class="font-medium text-gray-900 text-sm line-clamp-2 mt-1">{{ $item->nama_barang }}</h5>
                                             <p class="text-xs text-gray-500 mt-1">{{ $item->lokasi->nama_lokasi ?? '-' }}</p>
                                             <a href="{{ route('peminjaman.create', ['sarpras_id' => $item->id]) }}" 
-                                               class="mt-3 block w-full text-center px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 transition">
+                                               class="mt-3 block w-full text-center px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition">
                                                 Pinjam
                                             </a>
                                         </div>
@@ -291,7 +290,7 @@
                 <div class="bg-white rounded-xl shadow overflow-hidden">
                     <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
                         <h4 class="font-semibold text-gray-800">📋 Riwayat Peminjaman Saya</h4>
-                        <a href="{{ route('peminjaman.index') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                        <a href="{{ route('peminjaman.index') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                             Lihat Semua →
                         </a>
                     </div>
@@ -311,10 +310,15 @@
                                         @foreach ($data['riwayatPeminjaman'] as $pinjam)
                                             <tr class="hover:bg-gray-50">
                                                 <td class="py-3">
-                                                    <p class="font-medium text-gray-800 text-sm">{{ $pinjam->sarpras->nama_barang ?? '-' }}</p>
-                                                    <p class="text-xs text-gray-500">{{ $pinjam->sarpras->kode_barang ?? '-' }}</p>
+                                                    @if ($pinjam->details->count() > 0)
+                                                        @php $firstDetail = $pinjam->details->first(); @endphp
+                                                        <p class="font-medium text-gray-800 text-sm">{{ $firstDetail->sarprasUnit->sarpras->nama_barang ?? '-' }}</p>
+                                                        <p class="text-xs text-gray-500">{{ $firstDetail->sarprasUnit->kode_unit ?? '-' }}</p>
+                                                    @else
+                                                        <p class="text-gray-400">-</p>
+                                                    @endif
                                                 </td>
-                                                <td class="py-3 text-sm font-semibold text-gray-700">{{ $pinjam->jumlah_pinjam }}</td>
+                                                <td class="py-3 text-sm font-semibold text-gray-700">{{ $pinjam->details->count() }}</td>
                                                 <td class="py-3 text-xs text-gray-500">
                                                     <p>{{ $pinjam->tgl_pinjam?->format('d M Y') }}</p>
                                                     <p class="text-gray-400">s/d {{ $pinjam->tgl_kembali_rencana?->format('d M Y') }}</p>
@@ -346,7 +350,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                 </svg>
                                 <p>Belum ada riwayat peminjaman</p>
-                                <a href="{{ route('katalog.index') }}" class="text-indigo-600 hover:underline text-sm mt-2 inline-block">Mulai pinjam barang →</a>
+                                <a href="{{ route('katalog.index') }}" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Mulai pinjam barang →</a>
                             </div>
                         @endif
                     </div>
@@ -370,12 +374,16 @@
                             @foreach ($data['recentPeminjaman'] as $pinjam)
                                 <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                     <div>
-                                        <p class="font-medium text-gray-800">{{ $pinjam->sarpras->nama_barang ?? '-' }}</p>
+                                        @php
+                                            $unitNames = $pinjam->details->take(2)->map(fn($d) => $d->sarprasUnit->kode_unit ?? '-')->join(', ');
+                                            $moreCount = $pinjam->details->count() > 2 ? ' +' . ($pinjam->details->count() - 2) : '';
+                                        @endphp
+                                        <p class="font-medium text-gray-800">{{ $unitNames }}{{ $moreCount }}</p>
                                         <p class="text-sm text-gray-500">
                                             @if (auth()->user()->role !== 'peminjam')
                                                 {{ $pinjam->user->name ?? '-' }} •
                                             @endif
-                                            {{ $pinjam->jumlah_pinjam }} unit • {{ $pinjam->created_at->diffForHumans() }}
+                                            {{ $pinjam->details->count() }} unit • {{ $pinjam->created_at->diffForHumans() }}
                                         </p>
                                     </div>
                                     <span class="px-2 py-1 text-xs rounded-full 
@@ -411,11 +419,11 @@
                                 label: 'Total Dipinjam',
                                 data: {!! json_encode(($data['top5Barang'] ?? collect())->pluck('total_dipinjam')) !!},
                                 backgroundColor: [
-                                    'rgba(99, 102, 241, 0.8)',
-                                    'rgba(139, 92, 246, 0.8)',
-                                    'rgba(168, 85, 247, 0.8)',
-                                    'rgba(192, 132, 252, 0.8)',
-                                    'rgba(216, 180, 254, 0.8)'
+                                    'rgba(59, 130, 246, 0.8)',
+                                    'rgba(37, 99, 235, 0.8)',
+                                    'rgba(29, 78, 216, 0.8)',
+                                    'rgba(30, 64, 175, 0.8)',
+                                    'rgba(30, 58, 138, 0.8)'
                                 ],
                                 borderRadius: 6
                             }]

@@ -93,6 +93,44 @@
                         </div>
                     @endif
 
+                    {{-- QR Code Bukti Peminjaman (hanya jika disetujui DAN hanya untuk peminjam yang bersangkutan) --}}
+                    @if ($peminjaman->status === 'disetujui' && $peminjaman->qr_code && auth()->id() === $peminjaman->user_id)
+                        <div class="mt-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+                            <h3 class="font-semibold text-gray-800 mb-4 text-center">📱 QR Code Bukti Peminjaman</h3>
+                            <div class="flex flex-col items-center">
+                                <div class="bg-white p-4 rounded-lg shadow-md">
+                                    {!! QrCode::size(180)->generate($peminjaman->qr_code) !!}
+                                </div>
+                                <p class="mt-3 font-mono text-lg font-bold text-blue-800">{{ $peminjaman->qr_code }}</p>
+                                <p class="text-sm text-gray-500 mt-2 text-center">Tunjukkan QR code ini saat pengembalian barang</p>
+                                <button onclick="window.print()" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 flex items-center gap-2 print:hidden">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                    </svg>
+                                    Cetak Bukti
+                                </button>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Kode QR untuk Admin/Petugas (hanya menampilkan kode, tidak visual QR) --}}
+                    @if ($peminjaman->status === 'disetujui' && $peminjaman->qr_code && in_array(auth()->user()->role, ['admin', 'petugas']))
+                        <div class="mt-6 bg-gray-50 rounded-lg p-4 border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500">Kode QR Peminjaman:</p>
+                                    <p class="font-mono text-lg font-bold text-gray-800">{{ $peminjaman->qr_code }}</p>
+                                </div>
+                                <a href="{{ route('pengembalian.create', $peminjaman) }}" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Proses Pengembalian
+                                </a>
+                            </div>
+                        </div>
+                    @endif
+
                     {{-- Info Pengembalian jika sudah selesai --}}
                     @if ($peminjaman->status === 'selesai' && $peminjaman->pengembalian)
                         <div class="mt-6 bg-blue-50 rounded-lg p-4">

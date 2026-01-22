@@ -23,44 +23,6 @@
             {{-- DASHBOARD ADMIN --}}
             {{-- ========================================== --}}
             @if (auth()->user()->role === 'admin')
-                {{-- KARTU INVENTARIS UTAMA - 4 Kolom --}}
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    {{-- Barang Siap Pakai --}}
-                    <a href="{{ route('sarpras.index') }}" class="block transform hover:scale-105 transition-transform duration-200">
-                        <div class="bg-gradient-to-br from-green-400 to-green-600 rounded-xl shadow-lg p-5 text-white h-full">
-                            <p class="text-green-100 text-xs font-medium uppercase tracking-wide">Barang Siap Pakai</p>
-                            <p class="text-3xl font-bold mt-1">{{ number_format($data['tersedia'] ?? 0) }}</p>
-                            <p class="text-green-100 text-xs mt-1">unit tersedia</p>
-                        </div>
-                    </a>
-
-                    {{-- Barang Rusak --}}
-                    <a href="{{ route('laporan.asset-health') }}" class="block transform hover:scale-105 transition-transform duration-200">
-                        <div class="bg-gradient-to-br from-red-400 to-red-600 rounded-xl shadow-lg p-5 text-white h-full">
-                            <p class="text-red-100 text-xs font-medium uppercase tracking-wide">Barang Rusak</p>
-                            <p class="text-3xl font-bold mt-1">{{ number_format($data['rusak'] ?? 0) }}</p>
-                            <p class="text-red-100 text-xs mt-1">unit rusak</p>
-                        </div>
-                    </a>
-
-                    {{-- Sedang Dipinjam --}}
-                    <a href="{{ route('peminjaman.index', ['status' => 'disetujui']) }}" class="block transform hover:scale-105 transition-transform duration-200">
-                        <div class="bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl shadow-lg p-5 text-white h-full">
-                            <p class="text-orange-100 text-xs font-medium uppercase tracking-wide">Sedang Dipinjam</p>
-                            <p class="text-3xl font-bold mt-1">{{ number_format($data['dipinjam'] ?? 0) }}</p>
-                            <p class="text-orange-100 text-xs mt-1">unit dipinjam</p>
-                        </div>
-                    </a>
-
-                    {{-- Total Inventaris --}}
-                    <a href="{{ route('sarpras.index') }}" class="block transform hover:scale-105 transition-transform duration-200">
-                        <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl shadow-lg p-5 text-white h-full">
-                            <p class="text-blue-100 text-xs font-medium uppercase tracking-wide">Total Inventaris</p>
-                            <p class="text-3xl font-bold mt-1">{{ number_format($data['totalUnit'] ?? 0) }}</p>
-                            <p class="text-blue-100 text-xs mt-1">unit total aset</p>
-                        </div>
-                    </a>
-                </div>
 
                 {{-- Statistik Lainnya --}}
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

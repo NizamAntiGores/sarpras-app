@@ -85,6 +85,29 @@
                         </form>
                     </div>
 
+                    {{-- QR CODE QUICK LOOKUP - Hanya untuk Admin/Petugas --}}
+                    @if(in_array(auth()->user()->role, ['admin', 'petugas']))
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mb-6 border border-blue-200">
+                        <form method="POST" action="{{ route('pengembalian.lookup-qr') }}" class="flex flex-wrap items-end gap-4">
+                            @csrf
+                            <div class="flex-1">
+                                <label for="qr_code" class="block text-xs font-medium text-gray-700 mb-1">
+                                    📱 Cari Peminjaman dengan Kode QR
+                                </label>
+                                <input type="text" name="qr_code" id="qr_code" 
+                                       class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                       placeholder="Masukkan atau scan kode QR peminjaman..." autofocus>
+                            </div>
+                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                                Cari & Proses Pengembalian
+                            </button>
+                        </form>
+                    </div>
+                    @endif
+
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                         <div class="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-lg p-4 text-white">
                             <p class="text-yellow-100 text-sm">Menunggu</p>

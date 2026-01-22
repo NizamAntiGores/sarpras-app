@@ -340,6 +340,25 @@ class PeminjamanController extends Controller
 
             \App\Helpers\LogHelper::record('update', "Mengubah status peminjaman (ID: {$peminjaman->id}) menjadi: {$newStatus} oleh " . auth()->user()->name);
 
+            // Send notification to user
+            if ($newStatus === 'disetujui') {
+                \App\Models\Notification::send(
+                    $peminjaman->user_id,
+                    \App\Models\Notification::TYPE_PEMINJAMAN_APPROVED,
+                    'Peminjaman Disetujui ✅',
+                    'Peminjaman Anda telah disetujui oleh ' . auth()->user()->name . '. Silakan ambil barang sesuai jadwal.',
+                    route('peminjaman.show', $peminjaman)
+                );
+            } elseif ($newStatus === 'ditolak') {
+                \App\Models\Notification::send(
+                    $peminjaman->user_id,
+                    \App\Models\Notification::TYPE_PEMINJAMAN_REJECTED,
+                    'Peminjaman Ditolak ❌',
+                    'Peminjaman Anda ditolak. Alasan: ' . ($validated['catatan_petugas'] ?? 'Tidak ada keterangan'),
+                    route('peminjaman.show', $peminjaman)
+                );
+            }
+
             DB::commit();
 
             $statusMessages = [

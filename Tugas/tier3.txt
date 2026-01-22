@@ -1,0 +1,196 @@
+TIER 3 – Fitur Advanced (OPSIONAL, Nilai Maksimal)
+Alokasi Waktu Tambahan: 10 jam | Total jika full Tier 1+2+3: 40 jam
+Catatan: Tier 3 dirancang untuk siswa yang ingin challenge dengan aspek integrasi eksternal, business intelligence, dan multi-user collaboration.
+Fitur Tambahan Tier 3
+1. External API Integration (Notifikasi & File Storage)
+Integrasi dengan layanan eksternal untuk meningkatkan automasi & scalability.
+•	Notification API (WhatsApp, Email, Telegram): 
+o	Auto-notify pengguna saat: 
+	Peminjaman disetujui/ditolak.
+	H-1 sebelum jatuh tempo pengembalian.
+	Pengaduan status berubah (Diproses/Selesai).
+	Maintenance reminder (untuk alat yang akan dirawat).
+o	Implementasi: Gunakan API seperti Twilio (SMS/WA), SendGrid (Email), atau Telegram Bot API.
+•	Cloud File Storage API (optional): 
+o	Foto kerusakan/baseline alat di-upload ke cloud storage (S3-compatible, atau Google Cloud Storage) daripada local server.
+o	Sistem hanya menyimpan URL file di database.
+•	QR Code / Barcode Generator API: 
+o	Generate QR code unik untuk setiap alat (untuk inventory management).
+o	Saat scan QR di UI peminjaman/pengembalian, form otomatis terisi data alat.
+Tabel Fitur Tambahan Tier 3.1
+Fitur	Admin	Petugas	Pengguna
+Integration with Notification API (WA/Email/Telegram)	✓	-	-
+Auto-Notify on Key Events (Approval, Status Change)	✓	-	✓
+Cloud File Storage Integration (Photo Upload)	✓	✓	-
+QR Code Generation & Scanning for Assets	✓	✓	-
+Webhook/Event-Driven Architecture	✓	-	-
+________________________________________
+2. Multi-Location & Departmental Management
+Sistem dapat mengelola multiple lokasi/ruang & departemen dalam satu aplikasi.
+•	Multi-Location Support: 
+o	Aplikasi dapat handle multiple ruang/area (misal: Lab RPL, Lab Komputer, Perpustakaan, Studio, dsb.) dalam satu sistem.
+o	Setiap lokasi memiliki: 
+	Inventory alat sendiri (atau shared alat dengan lokasi lain).
+	Petugas/Admin lokal dengan privilege terbatas.
+	Konfigurasi peminjaman sendiri (jam operasional, durasi max, dsb.).
+•	Departmental Analytics: 
+o	Laporan agregat per departemen (Lab RPL, Lab IPA, Perpustakaan, dsb.).
+o	Perbandingan performa departemen (mana yang paling sering pinjam, mana yang paling sering rusak, dsb.).
+•	Cross-Location Borrowing: 
+o	Support peminjaman alat antar lokasi (misal: Lab RPL pinjam proyektor dari Perpustakaan).
+o	Track lokasi alat real-time.
+Tabel Fitur Tambahan Tier 3.2
+Fitur	Admin	Petugas	Pengguna
+Create & Manage Multiple Locations/Departments	✓	-	-
+Assign Petugas to Specific Location	✓	-	-
+Location-Specific Asset Inventory	✓	-	-
+Departmental Analytics & Comparison	✓	-	-
+Cross-Location Borrowing & Asset Tracking	✓	✓	-
+________________________________________
+3. Predictive & Prescriptive Analytics
+Advanced dashboard dengan predictive intelligence & automated recommendations.
+•	Predictive Analytics: 
+o	Predict Failure Rate: Berdasarkan historical damage data, prediksi alat mana yang kemungkinan rusak dalam 1 bulan ke depan.
+o	Predict Optimal Maintenance Schedule: Ajak optimal waktu maintenance berdasarkan usage pattern & damage history.
+o	Forecast Borrowing Demand: Prediksi alat mana yang akan sering dipinjam & kapan, untuk perencanaan stok.
+•	Prescriptive Recommendations: 
+o	Sistem otomatis recommend: 
+	“Alat XYZ kemungkinan akan rusak dalam 30 hari. Saran: lakukan maintenance sekarang.”
+	“Stok Proyektor tinggal 1. Saran: rencanakan pengadaan untuk menghindari kehabisan stok.”
+	“Alat ABC sudah berumur 7 tahun (expected 10 tahun). Saran: pertimbangkan penggantian dalam 1-2 tahun.”
+•	Dashboard Executive: 
+o	KPI Cards: Total assets, Assets in good condition %, Assets needing maintenance, Maintenance cost YoY.
+o	Charts: Asset health distribution (Pie), Maintenance cost trend (Line), Top damaged assets (Bar).
+Tabel Fitur Tambahan Tier 3.3
+Fitur	Admin	Petugas	Pengguna
+Predictive Failure Rate Analysis	✓	-	-
+Predict Optimal Maintenance Schedule	✓	-	-
+Predict Borrowing Demand Forecast	✓	-	-
+Automated Prescriptive Recommendations	✓	-	-
+Executive Dashboard with KPI Cards	✓	-	✓
+Advanced Chart & Visualization	✓	-	✓
+________________________________________
+4. Role-Based Access Control (RBAC) & Audit
+Implementasi otorisasi yang lebih detail pada level fitur/aksi, plus compliance logging.
+•	Granular RBAC: 
+o	Super Admin: Full access ke semua fitur.
+o	Admin Sarpras: Manage alat, user, laporan (tidak boleh delete permanen data).
+o	Kepala Lab/Ruang: Hanya manage asset & pinjam/kembalian di area mereka sendiri.
+o	Petugas: Proses peminjaman, input pengembalian, manage pengaduan (tidak bisa CRUD master data).
+o	Guru/Staf: Hanya bisa pinjam alat, lihat riwayat sendiri.
+o	Siswa: Terbatas pinjam alat (hanya tertentu), lihat riwayat sendiri.
+•	Audit & Compliance: 
+o	Full audit trail: siapa, kapan, apa, detail lengkap.
+o	Compliance report: Log perubahan data master, log penghapusan, export log untuk compliance.
+o	Encryption: Sensitive data (photo kerusakan, riwayat alat mahal) encrypted di database.
+Tabel Fitur Tambahan Tier 3.4
+Fitur	Admin	Petugas	Pengguna
+Granular Role-Based Access Control (RBAC)	✓	-	-
+Assign Custom Permission per Role	✓	-	-
+Full Audit Trail & Compliance Logging	✓	-	-
+Export Audit Log for Compliance	✓	-	-
+Data Encryption & Security Hardening	✓	-	-
+________________________________________
+VI. LANGKAH-LANGKAH KERJA
+A. FASE ANALISIS KEBUTUHAN
+1.	Pelajari soal dengan cermat, identifikasi requirement fungsional dan non-fungsional.
+2.	Buat use case diagram menunjukkan interaksi antara user (Admin, Petugas, Pengguna) dengan sistem.
+3.	Buatkan daftar requirement dalam format tabel dengan kolom: ID, Deskripsi, Actor, Tier, Priority.
+B. FASE DESAIN
+1.	Buat Entity Relationship Diagram (ERD) yang menggambarkan struktur database: 
+o	Tabel utama (Tier 1): 
+	users (id, username, password_hash, email, nama_lengkap, role, created_at)
+	kategori_sarpras (id, nama, deskripsi, created_at)
+	sarpras (id, kode, nama, kategori_id, lokasi, jumlah_stok, kondisi_saat_ini, created_at, updated_at)
+	peminjaman (id, user_id, sarpras_id, jumlah, tgl_pinjam, tgl_kembali_rencana, tgl_kembali_actual, status, created_at)
+	pengembalian (id, peminjaman_id, tgl_pengembalian, kondisi_alat, deskripsi_kerusakan, foto_url, created_at)
+	pengaduan (id, user_id, judul, deskripsi, lokasi, jenis_sarpras, status, created_at, updated_at)
+	catatan_pengaduan (id, pengaduan_id, user_id, catatan, created_at)
+	activity_log (id, user_id, aksi, deskripsi, timestamp)
+o	Tabel tambahan (Tier 2+): 
+	inspection_checklist (id, sarpras_id, item, baseline_photo, kondisi_baseline)
+	maintenance_schedule (id, sarpras_id, tgl_maintenance, deskripsi, teknisi, status)
+o	Tentukan primary key, foreign key, dan constraint untuk setiap tabel.
+2.	Buat diagram alur (Flowchart) untuk minimal: 
+o	Proses login.
+o	Proses peminjaman (dari pengajuan hingga persetujuan).
+o	Proses pengembalian & pencatatan kondisi alat.
+o	Proses pengaduan & perubahan status.
+3.	Rancang tampilan UI/Mockup untuk: 
+o	Login page.
+o	Dashboard (berbeda per role).
+o	Form peminjaman.
+o	Form pengembalian dengan kondisi alat.
+o	Halaman pengaduan.
+o	Halaman laporan asset health.
+4.	Dokumentasi desain dengan deskripsi modul & use case.
+C. FASE IMPLEMENTASI
+1.	Siapkan environment development dengan stack teknologi pilihan.
+2.	Buat database berdasarkan ERD dengan file .sql.
+3.	Implementasi kode aplikasi dengan struktur layer (presentation, business logic, data access).
+4.	Gunakan stored procedure, function, trigger untuk: 
+o	Auto-update kondisi alat saat pengembalian.
+o	Auto-generate laporan asset health.
+o	Auto-update stok saat peminjaman/pengembalian.
+o	Track activity log.
+5.	Implementasi fitur Tier 2 & 3 jika dipilih siswa.
+D. FASE PENGUJIAN
+1.	Tentukan test case minimal 8-10 skenario: 
+o	Login dengan berbagai role.
+o	Ajukan & setujui peminjaman.
+o	Pengembalian dengan kondisi alat baik.
+o	Pengembalian dengan kondisi alat rusak.
+o	Input pengaduan.
+o	Verifikasi laporan asset health.
+o	Test privilege (akses menu unauthorized).
+2.	Lakukan testing & tangkap screenshot hasil.
+E. FASE DOKUMENTASI
+1.	Dokumentasi Lengkap: 
+o	Analisis kebutuhan, use case diagram.
+o	ERD, Flowchart, UI Mockup.
+o	Deskripsi modul per halaman.
+o	Manual pengguna (step-by-step per role).
+o	Test Report dengan screenshot.
+o	Laporan evaluasi (fitur berjalan, bug, rencana pengembangan).
+________________________________________
+VII. OUTPUT/DELIVERABLES YANG DIHARAPKAN
+[NAMA_SISWA]_Sarpras_Management_App/
+├── Aplikasi/
+│   ├── public/
+│   ├── src/
+│   │   ├── config/
+│   │   ├── models/
+│   │   ├── controllers/
+│   │   ├── views/
+│   │   └── routes/
+│   ├── database/
+│   │   ├── schema.sql
+│   │   └── seed.sql
+│   ├── package.json / composer.json
+│   └── README.md
+│
+├── Dokumentasi/
+│   ├── 01_Analisis_Kebutuhan.pdf
+│   ├── 02_Desain_Sistem.pdf
+│   ├── 03_Deskripsi_Program.pdf
+│   ├── 04_Manual_Pengguna.pdf
+│   ├── 05_Test_Report.pdf
+│   └── 06_Laporan_Evaluasi.pdf
+│
+└── LAMPIRAN/
+    ├── Source_Code_Snippets.pdf
+    └── Running_Screenshots/
+________________________________________
+VIII. KRITERIA PENILAIAN
+Aspek	Persentase
+Fungsionalitas Tier 1	50%
+Fungsionalitas Tier 2	15% (jika dikerjakan)
+Fungsionalitas Tier 3	20% (jika dikerjakan)
+Kualitas Kode & Struktur	20%
+Dokumentasi & Manual	20%
+Pengujian & Bug Handling	10%
+________________________________________
+IX. CATATAN KHUSUS
+1.	Fokus Tier 1: Asset Condition Tracking (bukan financial penalty) → lebih relevan untuk konteks sekolah.
+
+s

@@ -71,42 +71,86 @@
                             @if ($sarprasList->isEmpty())
                                 <p class="text-sm text-yellow-600">Tidak ada barang yang tersedia untuk dipinjam saat ini.</p>
                             @else
-                                {{-- Search Filter --}}
-                                <div class="mb-4">
-                                    <input type="text" id="searchUnit" placeholder="Cari barang atau kode unit..."
-                                           class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                {{-- Search & Filter Section --}}
+                                <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div class="flex flex-col md:flex-row gap-3">
+                                        {{-- Category Filter --}}
+                                        <div class="w-full md:w-48">
+                                            <select id="filterKategori" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                <option value="">Semua Kategori</option>
+                                                @foreach ($sarprasList->pluck('kategori')->unique('id')->filter() as $kategori)
+                                                    <option value="{{ $kategori->id }}">{{ $kategori->nama_kategori }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        {{-- Search Box --}}
+                                        <div class="flex-1 relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                                </svg>
+                                            </div>
+                                            <input type="text" id="searchUnit" placeholder="Cari nama barang atau kode unit..."
+                                                   class="w-full pl-10 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        </div>
+                                    </div>
+                                    <p class="mt-2 text-xs text-gray-500">💡 Klik nama barang untuk expand/collapse unit</p>
                                 </div>
 
-                                {{-- Unit Selection --}}
-                                <div class="border border-gray-200 rounded-lg max-h-80 overflow-y-auto p-3 space-y-4" id="unitList">
+                                {{-- Unit Selection with Accordion Style --}}
+                                <div class="border border-gray-200 rounded-lg max-h-96 overflow-y-auto" id="unitList">
                                     @foreach ($sarprasList as $sarpras)
                                         @if (isset($availableUnits[$sarpras->id]) && $availableUnits[$sarpras->id]->count() > 0)
-                                            <div class="sarpras-group" data-id="{{ $sarpras->id }}" data-nama="{{ strtolower($sarpras->nama_barang) }}">
-                                                <p class="font-medium text-gray-800 text-sm mb-2">
-                                                    {{ $sarpras->nama_barang }} 
-                                                    <span class="text-gray-500">({{ $sarpras->kode_barang }})</span>
-                                                    <span class="text-green-600 ml-2">{{ $sarpras->available_units_count }} tersedia</span>
-                                                </p>
-                                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 ml-4">
-                                                    @foreach ($availableUnits[$sarpras->id] as $unit)
-                                                        <label class="unit-item flex items-center p-2 border rounded hover:bg-gray-50 cursor-pointer {{ in_array($unit->id, old('unit_ids', [])) ? 'border-blue-500 bg-blue-50' : 'border-gray-200' }}"
-                                                               data-kode="{{ strtolower($unit->kode_unit) }}">
-                                                            <input type="checkbox" name="unit_ids[]" value="{{ $unit->id }}" 
-                                                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                                   {{ in_array($unit->id, old('unit_ids', [])) ? 'checked' : '' }}>
-                                                            <span class="ml-2 text-sm">
-                                                                <span class="font-mono font-medium">{{ $unit->kode_unit }}</span>
-                                                                <br>
-                                                                <span class="text-xs text-gray-500">
-                                                                    @if ($unit->kondisi === 'baik')
-                                                                        <span class="text-green-600">●</span> Baik
-                                                                    @elseif ($unit->kondisi === 'rusak_ringan')
-                                                                        <span class="text-yellow-600">●</span> Rusak Ringan
-                                                                    @endif
+                                            <div class="sarpras-group border-b border-gray-100 last:border-b-0" 
+                                                 data-id="{{ $sarpras->id }}" 
+                                                 data-nama="{{ strtolower($sarpras->nama_barang) }}"
+                                                 data-kategori="{{ $sarpras->kategori_id }}">
+                                                {{-- Collapsible Header --}}
+                                                <button type="button" 
+                                                        class="w-full flex items-center justify-between p-3 bg-white hover:bg-gray-50 transition sarpras-header"
+                                                        onclick="toggleGroup(this)">
+                                                    <div class="flex items-center gap-3">
+                                                        <svg class="w-5 h-5 text-gray-400 transform transition-transform chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                                        </svg>
+                                                        <div class="text-left">
+                                                            <span class="font-medium text-gray-800">{{ $sarpras->nama_barang }}</span>
+                                                            <span class="text-gray-500 text-sm ml-2">({{ $sarpras->kode_barang }})</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                                                            {{ $availableUnits[$sarpras->id]->count() }} tersedia
+                                                        </span>
+                                                        <span class="selected-badge text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hidden">
+                                                            0 dipilih
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                                {{-- Collapsible Content --}}
+                                                <div class="sarpras-content hidden bg-gray-50 p-3">
+                                                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                                                        @foreach ($availableUnits[$sarpras->id] as $unit)
+                                                            <label class="unit-item flex items-center p-2 bg-white border rounded hover:border-blue-300 cursor-pointer transition {{ in_array($unit->id, old('unit_ids', [])) ? 'border-blue-500 bg-blue-50' : 'border-gray-200' }}"
+                                                                   data-kode="{{ strtolower($unit->kode_unit) }}"
+                                                                   data-sarpras="{{ $sarpras->id }}">
+                                                                <input type="checkbox" name="unit_ids[]" value="{{ $unit->id }}" 
+                                                                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                                       {{ in_array($unit->id, old('unit_ids', [])) ? 'checked' : '' }}>
+                                                                <span class="ml-2 text-sm">
+                                                                    <span class="font-mono font-medium">{{ $unit->kode_unit }}</span>
+                                                                    <br>
+                                                                    <span class="text-xs text-gray-500">
+                                                                        @if ($unit->kondisi === 'baik')
+                                                                            <span class="text-green-600">●</span> Baik
+                                                                        @elseif ($unit->kondisi === 'rusak_ringan')
+                                                                            <span class="text-yellow-600">●</span> Rusak Ringan
+                                                                        @endif
+                                                                    </span>
                                                                 </span>
-                                                            </span>
-                                                        </label>
-                                                    @endforeach
+                                                            </label>
+                                                        @endforeach
+                                                    </div>
                                                 </div>
                                             </div>
                                         @endif
@@ -114,9 +158,14 @@
                                 </div>
                                 
                                 {{-- Selected Count --}}
-                                <p class="mt-2 text-sm text-gray-600">
-                                    Unit terpilih: <span id="selectedCount" class="font-semibold">0</span>
-                                </p>
+                                <div class="mt-3 flex items-center justify-between">
+                                    <p class="text-sm text-gray-600">
+                                        Unit terpilih: <span id="selectedCount" class="font-bold text-blue-600">0</span>
+                                    </p>
+                                    <button type="button" onclick="clearAllSelections()" class="text-sm text-red-600 hover:text-red-800 hover:underline">
+                                        Hapus Semua Pilihan
+                                    </button>
+                                </div>
                             @endif
                             
                             @error('unit_ids')
@@ -197,10 +246,47 @@
     </div>
 
     <script>
+        // Toggle accordion group
+        function toggleGroup(button) {
+            const group = button.closest('.sarpras-group');
+            const content = group.querySelector('.sarpras-content');
+            const chevron = button.querySelector('.chevron');
+            
+            content.classList.toggle('hidden');
+            chevron.classList.toggle('rotate-90');
+        }
+
+        // Clear all selections
+        function clearAllSelections() {
+            document.querySelectorAll('input[name="unit_ids[]"]').forEach(checkbox => {
+                checkbox.checked = false;
+                const label = checkbox.closest('label');
+                label.classList.remove('border-blue-500', 'bg-blue-50');
+                label.classList.add('border-gray-200');
+            });
+            updateSelectedCount();
+            updateGroupBadges();
+        }
+
         // Update selected count
         function updateSelectedCount() {
             const checkboxes = document.querySelectorAll('input[name="unit_ids[]"]:checked');
             document.getElementById('selectedCount').textContent = checkboxes.length;
+        }
+
+        // Update badge on each group header
+        function updateGroupBadges() {
+            document.querySelectorAll('.sarpras-group').forEach(group => {
+                const checkedCount = group.querySelectorAll('input[name="unit_ids[]"]:checked').length;
+                const badge = group.querySelector('.selected-badge');
+                
+                if (checkedCount > 0) {
+                    badge.textContent = checkedCount + ' dipilih';
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            });
         }
 
         // Add event listeners to checkboxes
@@ -215,44 +301,77 @@
                     label.classList.add('border-gray-200');
                 }
                 updateSelectedCount();
+                updateGroupBadges();
             });
         });
 
-        // Search functionality
-        document.getElementById('searchUnit').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
+        // Combined filter function (search + category)
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchUnit').value.toLowerCase();
+            const kategoriFilter = document.getElementById('filterKategori');
+            const kategoriId = kategoriFilter ? kategoriFilter.value : '';
+            
             document.querySelectorAll('.sarpras-group').forEach(group => {
                 const namaBarang = group.dataset.nama;
+                const groupKategori = group.dataset.kategori;
+                
+                // Check category filter
+                const matchesKategori = !kategoriId || groupKategori === kategoriId;
+                
+                // Check search filter
                 const units = group.querySelectorAll('.unit-item');
                 let hasVisibleUnit = false;
-
+                
                 units.forEach(unit => {
                     const kodeUnit = unit.dataset.kode;
-                    if (namaBarang.includes(searchTerm) || kodeUnit.includes(searchTerm)) {
+                    const matchesSearch = !searchTerm || namaBarang.includes(searchTerm) || kodeUnit.includes(searchTerm);
+                    
+                    if (matchesSearch && matchesKategori) {
                         unit.style.display = '';
                         hasVisibleUnit = true;
                     } else {
                         unit.style.display = 'none';
                     }
                 });
-
-                group.style.display = hasVisibleUnit || namaBarang.includes(searchTerm) ? '' : 'none';
+                
+                // Show/hide group
+                if (matchesKategori && (hasVisibleUnit || namaBarang.includes(searchTerm) || !searchTerm)) {
+                    group.style.display = '';
+                    // Auto-expand if searching
+                    if (searchTerm && hasVisibleUnit) {
+                        group.querySelector('.sarpras-content').classList.remove('hidden');
+                        group.querySelector('.chevron').classList.add('rotate-90');
+                    }
+                } else {
+                    group.style.display = 'none';
+                }
             });
-        });
+        }
+
+        // Search functionality
+        document.getElementById('searchUnit').addEventListener('input', applyFilters);
+        
+        // Category filter
+        const filterKategori = document.getElementById('filterKategori');
+        if (filterKategori) {
+            filterKategori.addEventListener('change', applyFilters);
+        }
 
         // Initial filter if sarpras_id is provided
         const selectedSarprasId = "{{ $selectedSarprasId ?? '' }}";
         if (selectedSarprasId) {
-            const searchInput = document.getElementById('searchUnit');
             const group = document.querySelector(`.sarpras-group[data-id="${selectedSarprasId}"]`);
             if (group) {
-                searchInput.value = group.dataset.nama;
-                // Trigger search manually
-                searchInput.dispatchEvent(new Event('input'));
+                // Auto-expand this group
+                group.querySelector('.sarpras-content').classList.remove('hidden');
+                group.querySelector('.chevron').classList.add('rotate-90');
+                // Scroll into view
+                group.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
 
-        // Initial count
+        // Initial counts
         updateSelectedCount();
+        updateGroupBadges();
     </script>
 </x-app-layout>

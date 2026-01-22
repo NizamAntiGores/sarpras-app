@@ -49,6 +49,7 @@
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Barang</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Kondisi</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -65,14 +66,21 @@
                                         @elseif($unit->kondisi === 'rusak_ringan')
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Rusak Ringan</span>
                                         @endif
+                                    </td>
+                                    <td class="px-4 py-2">
                                         @if($unit->status === 'maintenance')
-                                            <div class="text-xs text-blue-600 mt-1">Sedang Maintenance</div>
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Sedang Maintenance</span>
+                                        @else
+                                            <a href="{{ route('maintenance.create', ['unit_id' => $unit->id]) }}" 
+                                               class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                Maintenance
+                                            </a>
                                         @endif
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="3" class="px-4 py-4 text-center text-sm text-gray-500">Tidak ada aset rusak saat ini.</td>
+                                    <td colspan="4" class="px-4 py-4 text-center text-sm text-gray-500">Tidak ada aset rusak saat ini.</td>
                                 </tr>
                             @endforelse
                         </tbody>

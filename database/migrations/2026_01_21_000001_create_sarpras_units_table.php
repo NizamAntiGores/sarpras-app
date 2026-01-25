@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('kode_unit', 100)->unique();
             $table->foreignId('lokasi_id')->nullable()->constrained('lokasi')->onDelete('set null');
             $table->enum('kondisi', ['baik', 'rusak_ringan', 'rusak_berat'])->default('baik');
-            $table->enum('status', ['tersedia', 'dipinjam', 'maintenance', 'dihapusbukukan'])->default('tersedia');
+            $table->enum('status', ['tersedia', 'dipinjam', 'maintenance', 'dihapusbukukan', 'terpakai'])->default('tersedia');
             $table->date('tanggal_perolehan')->nullable();
             $table->integer('nilai_perolehan')->nullable();
             $table->timestamps();

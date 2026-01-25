@@ -23,71 +23,55 @@
             {{-- DASHBOARD ADMIN --}}
             {{-- ========================================== --}}
             @if (auth()->user()->role === 'admin')
-                {{-- KARTU INVENTARIS UTAMA - 4 Kolom --}}
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    {{-- Barang Siap Pakai --}}
-                    <div class="bg-gradient-to-br from-green-400 to-green-600 rounded-xl shadow-lg p-5 text-white">
-                        <p class="text-green-100 text-xs font-medium uppercase tracking-wide">Barang Siap Pakai</p>
-                        <p class="text-3xl font-bold mt-1">{{ number_format($data['tersedia'] ?? 0) }}</p>
-                        <p class="text-green-100 text-xs mt-1">unit tersedia</p>
-                    </div>
-
-                    {{-- Barang Rusak --}}
-                    <div class="bg-gradient-to-br from-red-400 to-red-600 rounded-xl shadow-lg p-5 text-white">
-                        <p class="text-red-100 text-xs font-medium uppercase tracking-wide">Barang Rusak</p>
-                        <p class="text-3xl font-bold mt-1">{{ number_format($data['rusak'] ?? 0) }}</p>
-                        <p class="text-red-100 text-xs mt-1">unit rusak</p>
-                    </div>
-
-                    {{-- Sedang Dipinjam --}}
-                    <div class="bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl shadow-lg p-5 text-white">
-                        <p class="text-orange-100 text-xs font-medium uppercase tracking-wide">Sedang Dipinjam</p>
-                        <p class="text-3xl font-bold mt-1">{{ number_format($data['dipinjam'] ?? 0) }}</p>
-                        <p class="text-orange-100 text-xs mt-1">unit dipinjam</p>
-                    </div>
-
-                    {{-- Total Inventaris --}}
-                    <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl shadow-lg p-5 text-white">
-                        <p class="text-blue-100 text-xs font-medium uppercase tracking-wide">Total Inventaris</p>
-                        <p class="text-3xl font-bold mt-1">{{ number_format($data['totalUnit'] ?? 0) }}</p>
-                        <p class="text-blue-100 text-xs mt-1">unit total aset</p>
-                    </div>
-                </div>
 
                 {{-- Statistik Lainnya --}}
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-white rounded-xl shadow p-4">
-                        <p class="text-sm text-gray-500">Total User</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ $data['totalUsers'] ?? 0 }}</p>
-                    </div>
-                    <div class="bg-white rounded-xl shadow p-4">
-                        <p class="text-sm text-gray-500">Jenis Barang</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ $data['totalJenisSarpras'] ?? 0 }}</p>
-                    </div>
-                    <div class="bg-white rounded-xl shadow p-4">
-                        <p class="text-sm text-gray-500">Menunggu Verifikasi</p>
-                        <p class="text-2xl font-bold text-yellow-600">{{ $data['peminjamanMenunggu'] ?? 0 }}</p>
-                    </div>
-                    <div class="bg-white rounded-xl shadow p-4">
-                        <p class="text-sm text-gray-500">Total Transaksi</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ $data['totalPeminjaman'] ?? 0 }}</p>
-                    </div>
+                    <a href="{{ route('users.index') }}" class="block transform hover:scale-105 transition-transform duration-200">
+                        <div class="bg-white rounded-xl shadow p-4 h-full border-b-4 border-gray-400">
+                            <p class="text-sm text-gray-500">Total User</p>
+                            <p class="text-2xl font-bold text-gray-800">{{ $data['totalUsers'] ?? 0 }}</p>
+                        </div>
+                    </a>
+                    <a href="{{ route('sarpras.index') }}" class="block transform hover:scale-105 transition-transform duration-200">
+                        <div class="bg-white rounded-xl shadow p-4 h-full border-b-4 border-blue-500">
+                            <p class="text-sm text-gray-500">Jenis Barang</p>
+                            <p class="text-2xl font-bold text-gray-800">{{ $data['totalJenisSarpras'] ?? 0 }}</p>
+                        </div>
+                    </a>
+                    <a href="{{ route('peminjaman.index', ['status' => 'menunggu']) }}" class="block transform hover:scale-105 transition-transform duration-200">
+                        <div class="bg-white rounded-xl shadow p-4 h-full border-b-4 border-yellow-500">
+                            <p class="text-sm text-gray-500">Menunggu Verifikasi</p>
+                            <p class="text-2xl font-bold text-yellow-600">{{ $data['peminjamanMenunggu'] ?? 0 }}</p>
+                        </div>
+                    </a>
+                    <a href="{{ route('peminjaman.index') }}" class="block transform hover:scale-105 transition-transform duration-200">
+                        <div class="bg-white rounded-xl shadow p-4 h-full border-b-4 border-purple-500">
+                            <p class="text-sm text-gray-500">Total Transaksi</p>
+                            <p class="text-2xl font-bold text-gray-800">{{ $data['totalPeminjaman'] ?? 0 }}</p>
+                        </div>
+                    </a>
                 </div>
 
                 {{-- User Stats --}}
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <p class="text-red-600 font-medium">Admin</p>
-                        <p class="text-3xl font-bold text-red-700">{{ $data['totalAdmin'] ?? 0 }}</p>
-                    </div>
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <p class="text-blue-600 font-medium">Petugas</p>
-                        <p class="text-3xl font-bold text-blue-700">{{ $data['totalPetugas'] ?? 0 }}</p>
-                    </div>
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <p class="text-green-600 font-medium">Peminjam/Siswa</p>
-                        <p class="text-3xl font-bold text-green-700">{{ $data['totalPeminjam'] ?? 0 }}</p>
-                    </div>
+                    <a href="{{ route('users.index', ['role' => 'admin']) }}" class="block transform hover:scale-105 transition-transform duration-200">
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4 h-full hover:bg-red-100 transition">
+                            <p class="text-red-600 font-medium">Admin</p>
+                            <p class="text-3xl font-bold text-red-700">{{ $data['totalAdmin'] ?? 0 }}</p>
+                        </div>
+                    </a>
+                    <a href="{{ route('users.index', ['role' => 'petugas']) }}" class="block transform hover:scale-105 transition-transform duration-200">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 h-full hover:bg-blue-100 transition">
+                            <p class="text-blue-600 font-medium">Petugas</p>
+                            <p class="text-3xl font-bold text-blue-700">{{ $data['totalPetugas'] ?? 0 }}</p>
+                        </div>
+                    </a>
+                    <a href="{{ route('users.index', ['role' => 'peminjam']) }}" class="block transform hover:scale-105 transition-transform duration-200">
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4 h-full hover:bg-green-100 transition">
+                            <p class="text-green-600 font-medium">Peminjam/Siswa</p>
+                            <p class="text-3xl font-bold text-green-700">{{ $data['totalPeminjam'] ?? 0 }}</p>
+                        </div>
+                    </a>
                 </div>
 
                 {{-- STOK ALERT SECTION --}}
@@ -100,14 +84,25 @@
                                     <svg class="w-6 h-6 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                                     </svg>
-                                    <div class="ml-3">
-                                        <h3 class="text-red-800 font-semibold">🚨 Stok Habis ({{ $data['stokHabis']->count() }} barang)</h3>
-                                        <ul class="mt-2 text-sm text-red-700 space-y-1">
+                                    <div class="ml-3 w-full">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <h3 class="text-red-800 font-semibold">🚨 Stok Habis ({{ $data['stokHabis']->count() }} barang)</h3>
+                                            <a href="{{ route('sarpras.index', ['filter' => 'stok_habis']) }}" class="text-xs text-red-600 font-bold hover:underline">Lihat Selengkapnya →</a>
+                                        </div>
+                                        <ul class="space-y-2">
                                             @foreach ($data['stokHabis']->take(5) as $item)
-                                                <li>• {{ $item->nama_barang }} <span class="text-red-500">({{ $item->lokasi->nama_lokasi ?? '-' }})</span></li>
+                                                <li class="flex items-center justify-between bg-white p-2 rounded shadow-sm">
+                                                    <div>
+                                                        <span class="font-medium text-gray-800">{{ $item->nama_barang }}</span>
+                                                        <span class="text-xs text-gray-500 block">{{ $item->lokasi->nama_lokasi ?? '-' }}</span>
+                                                    </div>
+                                                    <a href="{{ route('sarpras.units.create', $item->id) }}" class="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase rounded hover:bg-red-200 transition">
+                                                        + Restock
+                                                    </a>
+                                                </li>
                                             @endforeach
                                             @if ($data['stokHabis']->count() > 5)
-                                                <li class="text-red-600">... dan {{ $data['stokHabis']->count() - 5 }} lainnya</li>
+                                                <li class="text-red-600 text-sm mt-1">... dan {{ $data['stokHabis']->count() - 5 }} lainnya</li>
                                             @endif
                                         </ul>
                                     </div>
@@ -122,14 +117,25 @@
                                     <svg class="w-6 h-6 text-yellow-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
                                     </svg>
-                                    <div class="ml-3">
-                                        <h3 class="text-yellow-800 font-semibold">⚠️ Stok Menipis ({{ $data['stokMenipis']->count() }} barang, stok ≤ 5)</h3>
-                                        <ul class="mt-2 text-sm text-yellow-700 space-y-1">
+                                    <div class="ml-3 w-full">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <h3 class="text-yellow-800 font-semibold">⚠️ Stok Menipis ({{ $data['stokMenipis']->count() }} barang)</h3>
+                                            <a href="{{ route('sarpras.index', ['filter' => 'stok_menipis']) }}" class="text-xs text-yellow-700 font-bold hover:underline">Lihat Selengkapnya →</a>
+                                        </div>
+                                        <ul class="space-y-2">
                                             @foreach ($data['stokMenipis']->take(5) as $item)
-                                                <li>• {{ $item->nama_barang }} <span class="font-semibold text-yellow-600">(sisa {{ $item->available_count }} unit)</span></li>
+                                                <li class="flex items-center justify-between bg-white p-2 rounded shadow-sm">
+                                                    <div>
+                                                        <span class="font-medium text-gray-800">{{ $item->nama_barang }}</span>
+                                                        <span class="text-xs font-bold text-yellow-600 block">Sisa {{ $item->available_count }} unit</span>
+                                                    </div>
+                                                    <a href="{{ route('sarpras.units.create', $item->id) }}" class="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold uppercase rounded hover:bg-yellow-200 transition">
+                                                        + Tambah Stok
+                                                    </a>
+                                                </li>
                                             @endforeach
                                             @if ($data['stokMenipis']->count() > 5)
-                                                <li class="text-yellow-600">... dan {{ $data['stokMenipis']->count() - 5 }} lainnya</li>
+                                                <li class="text-yellow-600 text-sm mt-1">... dan {{ $data['stokMenipis']->count() - 5 }} lainnya</li>
                                             @endif
                                         </ul>
                                     </div>
@@ -167,22 +173,37 @@
             {{-- ========================================== --}}
             @elseif (auth()->user()->role === 'petugas')
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-gradient-to-br from-green-400 to-green-600 rounded-xl shadow-lg p-5 text-white">
-                        <p class="text-green-100 text-xs">Barang Siap Pakai</p>
-                        <p class="text-3xl font-bold mt-1">{{ number_format($data['tersedia'] ?? 0) }}</p>
-                    </div>
-                    <div class="bg-gradient-to-br from-red-400 to-red-600 rounded-xl shadow-lg p-5 text-white">
-                        <p class="text-red-100 text-xs">Barang Rusak</p>
-                        <p class="text-3xl font-bold mt-1">{{ number_format($data['maintenance'] ?? 0) }}</p>
-                    </div>
-                    <div class="bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl shadow-lg p-5 text-white">
-                        <p class="text-orange-100 text-xs">Sedang Dipinjam</p>
-                        <p class="text-3xl font-bold mt-1">{{ number_format($data['dipinjam'] ?? 0) }}</p>
-                    </div>
-                    <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl shadow-lg p-5 text-white">
-                        <p class="text-blue-100 text-xs">Total Inventaris</p>
-                        <p class="text-3xl font-bold mt-1">{{ number_format($data['totalUnit'] ?? 0) }}</p>
-                    </div>
+                    {{-- Barang Siap Pakai --}}
+                    <a href="{{ route('sarpras.index') }}" class="block transform hover:scale-105 transition-transform duration-200">
+                        <div class="bg-gradient-to-br from-green-400 to-green-600 rounded-xl shadow-lg p-5 text-white h-full">
+                            <p class="text-green-100 text-xs">Barang Siap Pakai</p>
+                            <p class="text-3xl font-bold mt-1">{{ number_format($data['tersedia'] ?? 0) }}</p>
+                        </div>
+                    </a>
+
+                    {{-- Barang Rusak --}}
+                    <a href="{{ route('laporan.asset-health') }}" class="block transform hover:scale-105 transition-transform duration-200">
+                        <div class="bg-gradient-to-br from-red-400 to-red-600 rounded-xl shadow-lg p-5 text-white h-full">
+                            <p class="text-red-100 text-xs">Barang Rusak</p>
+                            <p class="text-3xl font-bold mt-1">{{ number_format($data['maintenance'] ?? 0) }}</p>
+                        </div>
+                    </a>
+
+                    {{-- Sedang Dipinjam --}}
+                    <a href="{{ route('peminjaman.index', ['status' => 'disetujui']) }}" class="block transform hover:scale-105 transition-transform duration-200">
+                        <div class="bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl shadow-lg p-5 text-white h-full">
+                            <p class="text-orange-100 text-xs">Sedang Dipinjam</p>
+                            <p class="text-3xl font-bold mt-1">{{ number_format($data['dipinjam'] ?? 0) }}</p>
+                        </div>
+                    </a>
+
+                    {{-- Total Inventaris --}}
+                    <a href="{{ route('sarpras.index') }}" class="block transform hover:scale-105 transition-transform duration-200">
+                        <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl shadow-lg p-5 text-white h-full">
+                            <p class="text-blue-100 text-xs">Total Inventaris</p>
+                            <p class="text-3xl font-bold mt-1">{{ number_format($data['totalUnit'] ?? 0) }}</p>
+                        </div>
+                    </a>
                 </div>
 
                 @if (($data['peminjamanMenungguHariIni'] ?? 0) > 0)

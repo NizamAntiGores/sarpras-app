@@ -75,7 +75,22 @@
 
                             <hr class="border-gray-200">
 
-                            <h3 class="font-semibold text-gray-800 text-lg">Inspeksi Kondisi Barang</h3>
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-semibold text-gray-800 text-lg">Inspeksi Kondisi Barang</h3>
+                                <button type="button" onclick="checkAllGood()" class="px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-lg text-sm hover:bg-green-100 flex items-center gap-2 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    Pilih Semua "Baik"
+                                </button>
+                            </div>
+
+                            <script>
+                                function checkAllGood() {
+                                    // Select all radio buttons with value 'baik'
+                                    document.querySelectorAll('input[value="baik"]').forEach(radio => {
+                                        radio.checked = true;
+                                    });
+                                }
+                            </script>
 
                             @foreach ($peminjaman->details as $index => $detail)
                                 <div class="bg-white border rounded-xl overflow-hidden shadow-sm">

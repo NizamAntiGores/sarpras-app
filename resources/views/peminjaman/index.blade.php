@@ -70,8 +70,28 @@
                                 <label for="search" class="block text-xs font-medium text-gray-700 mb-1">Cari</label>
                                 <input type="text" name="search" id="search" value="{{ request('search') }}" 
                                        class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                       placeholder="Nama Peminjam / Barang...">
+                                       placeholder="Nama Peminjam / Barang..."
+                                       oninput="debounceSubmit()">
                             </div>
+                            <script>
+                                let timeout = null;
+                                function debounceSubmit() {
+                                    clearTimeout(timeout);
+                                    timeout = setTimeout(function () {
+                                        const form = document.getElementById('search').closest('form');
+                                        form.submit();
+                                    }, 600);
+                                }
+                                document.addEventListener("DOMContentLoaded", function() {
+                                    const searchInput = document.getElementById('search');
+                                    if(searchInput && searchInput.value) {
+                                        searchInput.focus();
+                                        const val = searchInput.value;
+                                        searchInput.value = '';
+                                        searchInput.value = val;
+                                    }
+                                });
+                            </script>
                             <div class="flex gap-2">
                                 <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
                                     Filter
@@ -84,6 +104,29 @@
                             </div>
                         </form>
                     </div>
+
+                    {{-- QR CODE QUICK LOOKUP - Hanya untuk Admin/Petugas --}}
+                    @if(in_array(auth()->user()->role, ['admin', 'petugas']))
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mb-6 border border-blue-200">
+                        <form method="POST" action="{{ route('pengembalian.lookup-qr') }}" class="flex flex-wrap items-end gap-4">
+                            @csrf
+                            <div class="flex-1">
+                                <label for="qr_code" class="block text-xs font-medium text-gray-700 mb-1">
+                                    📱 Cari Peminjaman dengan Kode QR
+                                </label>
+                                <input type="text" name="qr_code" id="qr_code" 
+                                       class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                       placeholder="Masukkan atau scan kode QR peminjaman..." autofocus>
+                            </div>
+                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                                Cari & Proses Pengembalian
+                            </button>
+                        </form>
+                    </div>
+                    @endif
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                         <div class="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-lg p-4 text-white">
@@ -122,7 +165,7 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse ($peminjaman as $pinjam)
                                     <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4 text-sm text-gray-500">{{ $loop->iteration }}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500 font-mono">#{{ $pinjam->id }}</td>
                                         @if (auth()->user()->role !== 'peminjam')
                                             <td class="px-6 py-4">
                                                 <div class="text-sm font-medium text-gray-900">{{ $pinjam->user->name ?? '-' }}</div>
@@ -155,9 +198,73 @@
                                                     @break
                                                 @case('disetujui')
                                                     <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Disetujui</span>
+                                                    @if ($pinjam->tgl_kembali_rencana)
+                                                        @php
+                                                            $daysLeft = now()->diffInDays($pinjam->tgl_kembali_rencana, false);
+                                                        @endphp
+                                                        
+                                                        <div class="mt-1">
+                                                            @if ($daysLeft < 0)
+                                                                {{-- Terlambat --}}
+                                                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-red-600 text-white">
+                                                                    ⚠️ Terlambat {{ abs(intval($daysLeft)) }} Hari
+                                                                </span>
+                                                            @elseif ($daysLeft < 1)
+                                                                {{-- Hari Ini Terakhir (hitung jam jika perlu, tapi '0' days diff usually means < 24h same day or close) --}}
+                                                                @if(now()->isSameDay($pinjam->tgl_kembali_rencana))
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-bold bg-orange-500 text-white">
+                                                                        📅 Tenggat Hari Ini!
+                                                                    </span>
+                                                                @else
+                                                                     {{-- Besok (diffInDays rounds down, so 0.9 is 0) --}}
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-bold bg-yellow-500 text-white">
+                                                                        ⏳ Besok Terakhir
+                                                                    </span>
+                                                                @endif
+                                                            @elseif ($daysLeft <= 3)
+                                                                {{-- Kurang dari 3 hari (Warning) --}}
+                                                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-yellow-400 text-yellow-900">
+                                                                    ⏳ Sisa {{ intval($daysLeft) }} Hari
+                                                                </span>
+                                                            @else
+                                                                {{-- Masih lama (Aman) --}}
+                                                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                                                                    Sisa {{ intval($daysLeft) }} Hari
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                    @endif
                                                     @break
                                                 @case('selesai')
                                                     <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Selesai</span>
+                                                    @if ($pinjam->pengembalian && $pinjam->tgl_kembali_rencana)
+                                                        @php
+                                                            // Hitung keterlambatan berdasarkan tanggal kembali AKTUAL vs Rencana
+                                                            $tglAktual = \Carbon\Carbon::parse($pinjam->pengembalian->tgl_kembali_aktual);
+                                                            $tglRencana = \Carbon\Carbon::parse($pinjam->tgl_kembali_rencana);
+                                                            
+                                                            // Kita hitung selisih hari (ignore hours)
+                                                            // Jika Aktual > Rencana => Terlambat
+                                                            $isLate = $tglAktual->gt($tglRencana);
+                                                            $daysLate = $tglAktual->diffInDays($tglRencana);
+                                                        @endphp
+
+                                                        @if ($isLate && $daysLate > 0)
+                                                            <div class="mt-1">
+                                                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200" title="Dikembalikan terlambat {{ $daysLate }} hari">
+                                                                    ⚠️ Telat {{ $daysLate }} Hari
+                                                                </span>
+                                                            </div>
+                                                        @elseif ($daysLate == 0 && $isLate)
+                                                            {{-- Kembali di hari yang sama tapi mungkin beda jam (opsional, biasanya dianggap tepat waktu kalau hari sama) --}}
+                                                        @else
+                                                            <div class="mt-1">
+                                                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-green-50 text-green-600 border border-green-200">
+                                                                    ✅ Tepat Waktu
+                                                                </span>
+                                                            </div>
+                                                        @endif
+                                                    @endif
                                                     @break
                                                 @case('ditolak')
                                                     <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Ditolak</span>
@@ -166,18 +273,29 @@
                                         </td>
                                         <td class="px-6 py-4 text-center">
                                             <div class="flex items-center justify-center space-x-2">
-                                                <a href="{{ route('peminjaman.show', $pinjam) }}" class="text-gray-600 hover:text-gray-900" title="Detail">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                                </a>
                                                 @if (auth()->user()->role !== 'peminjam')
+                                                    {{-- TOMBOL AKSI UTAMA BERDASARKAN STATUS --}}
                                                     @if ($pinjam->status === 'menunggu')
-                                                        <a href="{{ route('peminjaman.edit', $pinjam) }}" class="text-blue-600 hover:text-blue-900" title="Proses">
-                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                        <a href="{{ route('peminjaman.edit', array_merge(['peminjaman' => $pinjam->id], request()->query())) }}" class="inline-flex items-center px-3 py-1.5 bg-yellow-500 text-white text-xs font-bold rounded hover:bg-yellow-600 transition shadow-sm" title="Verifikasi Pengajuan">
+                                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                            Verifikasi
                                                         </a>
                                                     @elseif ($pinjam->status === 'disetujui')
-                                                        <a href="{{ route('pengembalian.create', ['peminjaman' => $pinjam->id]) }}" class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-md hover:bg-blue-200">Proses Kembali</a>
+                                                        <a href="{{ route('pengembalian.create', array_merge(['peminjaman' => $pinjam->id], request()->query())) }}" class="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700 transition shadow-sm" title="Proses Pengembalian">
+                                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                                            Terima Unit
+                                                        </a>
                                                     @endif
                                                 @endif
+
+                                                {{-- TOMBOL DETAIL (SELALU ADA) --}}
+                                                <a href="{{ route('peminjaman.show', array_merge(['peminjaman' => $pinjam->id], request()->query())) }}" class="inline-flex items-center px-2 py-1.5 {{ (auth()->user()->role !== 'peminjam' && in_array($pinjam->status, ['menunggu', 'disetujui'])) ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-blue-50 text-blue-600 hover:bg-blue-100' }} text-xs font-medium rounded transition" title="Lihat Detail">
+                                                    @if (auth()->user()->role !== 'peminjam' && in_array($pinjam->status, ['menunggu', 'disetujui']))
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                    @else
+                                                        Detail
+                                                    @endif
+                                                </a>
                                             </div>
                                         </td>
                                     </tr>

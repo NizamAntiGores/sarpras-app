@@ -7,6 +7,14 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
+    <!-- Error Alert for Invalid Credentials -->
+    @if ($errors->has('email') || $errors->has('password'))
+        <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong class="font-bold">Login Gagal!</strong>
+            <span class="block sm:inline">Email atau password yang Anda masukkan salah.</span>
+        </div>
+    @endif
+
     <form method="POST" action="{{ route('login') }}">
         @csrf
 

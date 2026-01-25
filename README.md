@@ -1,108 +1,44 @@
-# Aplikasi Sarptas
+# 🏫 Sarpras SMK - Sistem Informasi Sarana & Prasarana
 
-Sistem Peminjaman Sarana dan Prasarana berbasis Laravel.
-
-## Fitur Utama
-
-- 📦 Manajemen Inventaris (CRUD Sarpras)
-- 📋 Peminjaman & Pengembalian Barang
-- 👥 Multi-role: Admin, Petugas, Peminjam
-- 📊 Dashboard dengan statistik
-- 📄 Cetak bukti peminjaman (PDF + QR Code)
-- 📸 Upload foto kondisi barang
+Sistem manajemen inventaris, peminjaman, dan pengaduan sarana prasarana sekolah berbasis Web. Aplikasi ini dirancang untuk mempermudah pengelolaan aset sekolah secara digital, transparan, dan efisien.
 
 
-- Laravel 10
-- MySQL
-- Vite + Tailwind CSS
-- DomPDF + Simple QR Code
+## ✨ Fitur Unggulan
 
-<!--- 
-## Setup
+### 📦 Manajemen Aset (Sarpras)
+- **Katalog Terpadu**: Visualisasi aset dengan filter kategori dan lokasi.
+- **Unit Tracking**: Pengelolaan barang berdasarkan unit unik (misal: Laptop-01, Laptop-02).
+- **Stok & Kondisi**: Pemantauan real-time stok tersedia, rusak, atau dipinjam.
+- **Alert Stok Menipis**: Notifikasi otomatis di dashboard jika stok barang di bawah ambang batas.
 
-### Syarat
+### 📋 Peminjaman & Pengembalian
+- **Sistem QR Code**: Setiap peminjaman memiliki QR Code unik untuk verifikasi cepat.
+- **Validasi Status**: Peminjaman otomatis ditolak jika unit tidak tersedia atau sedang dalam perbaikan.
+- **Laporan Kondisi**: Upload bukti foto pada saat pengambilan dan pengembalian barang.
+- **Histori Lengkap**: Rekam jejak peminjaman untuk setiap pengguna.
 
-Pastikan komputer sudah terinstall:
-1. **PHP 8.1+** (cek dengan: `php -v`)
-2. **Composer** (cek dengan: `composer -V`)
-3. **Node.js & NPM** (cek dengan: `node -v` dan `npm -v`)
-4. **XAMPP/Laragon** (untuk MySQL)
+### ⚠️ Pengaduan Kerusakan (Maintenance)
+- **Laporan Cepat**: Siswa/Guru dapat melaporkan kerusakan sarpras dengan menyertakan deskripsi dan foto.
+- **Workflow Status**: Admin dapat mengubah status laporan dari `pending` ke `proses` hingga `selesai`.
 
-### Langkah-langkah Instalasi
+### 📊 Dashboard & Monitoring
+- **Statistik Visual**: Grafik jumlah peminjaman, sarpras terpopuler, dan kondisi aset.
+- **Ringkasan Cepat**: Widget informatif untuk status hari ini.
 
-#### 1. Clone Repo
+### 👤 Manajemen Pengguna (Multi-Role)
+- **Admin**: Akses penuh ke semua fitur dan master data.
+- **Petugas**: Fokus pada validasi peminjaman dan pengembalian.
+- **Peminjam (Siswa/Guru)**: Akses katalog dan pengajuan peminjaman/pengaduan.
+- **Soft Deletes**: Pengamanan data user agar tidak terhapus permanen secara tidak sengaja.
 
-```bash
-git clone https://github.com/USERNAME/sarpras-smk.git
-cd sarpras-smk
-```
+---
 
-#### 2. Install Dependencies
+## 🛠️ Teknologi yang Digunakan
 
-```bash
-composer install
-npm install
-```
+- **Framework**: Laravel 10 (PHP 8.1+)
+- **Frontend**: Vite, Tailwind CSS, Blade Templates
+- **Database**: MySQL / MariaDB
+- **Library Utama**:
+  - `simple-qrcode`: Untuk generate QR Code.
+  - `Laravel Breeze`: Untuk sistem autentikasi.
 
-#### 3. Setup Environment
-
-```bash
-# Copy file konfigurasi
-copy .env.example .env
-
-# Generate app key
-php artisan key:generate
-```
-
-#### 4. Buat Database
-
-Buka **phpMyAdmin** atau command line MySQL:
-
-```sql
-CREATE DATABASE db_sarpras_smk;
-```
-
-#### 5. Jalankan Migrasi & Seeder
-
-```bash
-php artisan migrate --seed
-```
-
-Jika berhasil, akan muncul akun default:
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@smk.sch.id | password |
-| Petugas | petugas@smk.sch.id | password |
-| Peminjam | siswa@smk.sch.id | password |
-
-#### 6. Buat Storage Link
-
-```bash
-php artisan storage:link
-```
-
-#### 7. Jalankan Aplikasi
-
-Buka **2 terminal** terpisah:
-
-**Terminal 1 - Backend:**
-```bash
-php artisan serve
-```
-
-**Terminal 2 - Frontend (Vite):**
-```bash
-npm run dev
-```
-
-#### 8. Buka Browser
-
-Akses: [http://localhost:8000](http://localhost:8000)
-
-
-## Teknologi
-
-- Laravel 10
-- MySQL
-- Vite + Tailwind CSS
-- DomPDF + Simple QR Code

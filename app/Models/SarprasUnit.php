@@ -51,13 +51,14 @@ class SarprasUnit extends Model
     const STATUS_DIPINJAM = 'dipinjam';
     const STATUS_MAINTENANCE = 'maintenance';
     const STATUS_DIHAPUSBUKUKAN = 'dihapusbukukan';
+    const STATUS_TERPAKAI = 'terpakai'; // Untuk bahan habis pakai yang sudah dikonsumsi
 
     /**
      * Get master barang (sarpras)
      */
     public function sarpras(): BelongsTo
     {
-        return $this->belongsTo(Sarpras::class, 'sarpras_id');
+        return $this->belongsTo(Sarpras::class, 'sarpras_id')->withTrashed();
     }
 
     /**
@@ -105,7 +106,7 @@ class SarprasUnit extends Model
      */
     public function scopeAktif($query)
     {
-        return $query->where('status', '!=', self::STATUS_DIHAPUSBUKUKAN);
+        return $query->whereNotIn('status', [self::STATUS_DIHAPUSBUKUKAN, self::STATUS_TERPAKAI]);
     }
 
     /**
@@ -130,7 +131,12 @@ class SarprasUnit extends Model
     public function scopeBisaDipinjam($query)
     {
         return $query->where('status', self::STATUS_TERSEDIA)
-            ->where('kondisi', '!=', self::KONDISI_RUSAK_BERAT);
+            ->where('kondisi', '!=', self::KONDISI_RUSAK_BERAT)
+            ->whereDoesntHave('peminjamanDetails', function($q) {
+                $q->whereHas('peminjaman', function($subQ) {
+                    $subQ->where('status', 'menunggu');
+                });
+            });
     }
 
     /**
@@ -140,6 +146,14 @@ class SarprasUnit extends Model
     {
         return $this->status === self::STATUS_TERSEDIA 
             && $this->kondisi !== self::KONDISI_RUSAK_BERAT;
+    }
+
+    /**
+     * Cek apakah unit adalah bahan habis pakai
+     */
+    public function isBahan(): bool
+    {
+        return $this->sarpras->tipe === 'bahan';
     }
 
     /**

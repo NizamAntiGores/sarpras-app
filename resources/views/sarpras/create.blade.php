@@ -56,6 +56,29 @@
                             </div>
                         </div>
 
+                        {{-- TIPE BARANG (NEW) --}}
+                        <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                            <h4 class="font-semibold text-gray-800 mb-3">Tipe Barang</h4>
+                            <div class="flex space-x-4">
+                                <label class="flex items-center space-x-3 cursor-pointer">
+                                    <input type="radio" name="tipe" value="asset" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                           {{ old('tipe', 'asset') === 'asset' ? 'checked' : '' }}>
+                                    <div class="text-sm">
+                                        <span class="font-medium text-gray-900 block">Aset / Inventaris</span>
+                                        <span class="text-xs text-gray-500">Barang modal yang memiliki nomor seri unik (Contoh: Laptop, Proyektor).</span>
+                                    </div>
+                                </label>
+                                <label class="flex items-center space-x-3 cursor-pointer">
+                                    <input type="radio" name="tipe" value="bahan" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                           {{ old('tipe') === 'bahan' ? 'checked' : '' }}>
+                                    <div class="text-sm">
+                                        <span class="font-medium text-gray-900 block">Bahan Habis Pakai</span>
+                                        <span class="text-xs text-gray-500">Barang sekali pakai atau quantity-based (Contoh: Spidol, Tisu, Kertas).</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
                         {{-- FOTO BARANG --}}
                         <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
                             <h4 class="font-semibold text-gray-800 mb-3">Foto Barang</h4>

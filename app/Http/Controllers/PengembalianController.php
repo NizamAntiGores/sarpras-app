@@ -16,6 +16,30 @@ use Illuminate\Support\Facades\Storage;
 class PengembalianController extends Controller
 {
     /**
+     * Lookup peminjaman by QR code and redirect to pengembalian form.
+     */
+    public function lookupByQrCode(Request $request)
+    {
+        $qrCode = $request->input('qr_code');
+        
+        if (!$qrCode) {
+            return redirect()->route('peminjaman.index')->with('error', 'Kode QR tidak boleh kosong.');
+        }
+
+        $peminjaman = Peminjaman::where('qr_code', $qrCode)->first();
+
+        if (!$peminjaman) {
+            return redirect()->route('peminjaman.index')->with('error', 'Peminjaman dengan kode QR tersebut tidak ditemukan.');
+        }
+
+        if ($peminjaman->status !== 'disetujui') {
+            return redirect()->route('peminjaman.show', $peminjaman)->with('error', 'Peminjaman ini tidak dalam status aktif untuk dikembalikan.');
+        }
+
+        return redirect()->route('pengembalian.create', $peminjaman);
+    }
+
+    /**
      * Show the form for creating a new pengembalian.
      * Setiap unit harus diinspeksi kondisinya.
      */

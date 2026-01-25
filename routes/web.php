@@ -13,6 +13,8 @@ use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\BarangHilangController;
 use App\Http\Controllers\BarangRusakController;
 use App\Http\Controllers\MaintenanceController;
+use App\Http\Controllers\PengaduanController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -43,6 +45,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // =============================================
+    // NOTIFICATION ROUTES (Semua user yang login)
+    // =============================================
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
 
     // =============================================
     // SARPRAS ROUTES (Admin & Petugas)
@@ -129,6 +139,7 @@ Route::middleware('auth')->group(function () {
         Route::patch('/peminjaman/{peminjaman}', [PeminjamanController::class, 'update']);
         
         // Pengembalian Routes
+        Route::post('/pengembalian/lookup-qr', [PengembalianController::class, 'lookupByQrCode'])->name('pengembalian.lookup-qr');
         Route::get('/pengembalian/{peminjaman}/create', [PengembalianController::class, 'create'])->name('pengembalian.create');
         Route::post('/pengembalian/{peminjaman}', [PengembalianController::class, 'store'])->name('pengembalian.store');
 
@@ -157,6 +168,27 @@ Route::middleware('auth')->group(function () {
 
 
     // =============================================
+    // PENGADUAN ROUTES
+    // =============================================
+    
+    // Create & Store: Peminjam Only
+    Route::middleware('role:peminjam')->group(function () {
+        Route::get('/pengaduan/create', [PengaduanController::class, 'create'])->name('pengaduan.create');
+        Route::post('/pengaduan', [PengaduanController::class, 'store'])->name('pengaduan.store');
+    });
+
+    // Edit & Update: Admin & Petugas Only
+    Route::middleware('role:admin,petugas')->group(function () {
+        Route::get('/pengaduan/{pengaduan}/edit', [PengaduanController::class, 'edit'])->name('pengaduan.edit');
+        Route::put('/pengaduan/{pengaduan}', [PengaduanController::class, 'update'])->name('pengaduan.update');
+    });
+
+    // Index & Show: Semua user
+    Route::get('/pengaduan', [PengaduanController::class, 'index'])->name('pengaduan.index');
+    Route::get('/pengaduan/{pengaduan}', [PengaduanController::class, 'show'])->name('pengaduan.show');
+
+
+    // =============================================
     // USER MANAGEMENT ROUTES (Admin only)
     // =============================================
     Route::middleware('role:admin')->group(function () {
@@ -170,7 +202,8 @@ Route::middleware('auth')->group(function () {
         // TRASH ROUTES (Admin only)
         // =============================================
         Route::get('/trash', [App\Http\Controllers\TrashController::class, 'index'])->name('trash.index');
-        Route::patch('/trash/{id}/restore', [App\Http\Controllers\TrashController::class, 'restore'])->name('trash.restore');
+        Route::patch('/trash/unit/{id}/restore', [App\Http\Controllers\TrashController::class, 'restoreUnit'])->name('trash.restore');
+        Route::patch('/trash/sarpras/{id}/restore', [App\Http\Controllers\TrashController::class, 'restoreSarpras'])->name('trash.sarpras.restore');
 
         Route::resource('users', UserController::class)->except(['show']);
     });

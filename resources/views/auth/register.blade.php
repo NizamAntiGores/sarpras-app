@@ -21,6 +21,13 @@
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
+        <!-- Nomor Induk -->
+        <div class="mt-4">
+            <x-input-label for="nomor_induk" value="Nomor Induk Siswa/Karyawan (Opsional)" />
+            <x-text-input id="nomor_induk" class="block mt-1 w-full" type="text" name="nomor_induk" :value="old('nomor_induk')" placeholder="NIS / NIP (Jika ada)" />
+            <x-input-error :messages="$errors->get('nomor_induk')" class="mt-2" />
+        </div>
+
         <!-- Kontak/No HP -->
         <div class="mt-4">
             <x-input-label for="kontak" value="No. HP/WhatsApp (Opsional)" />

@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center">
-            <a href="{{ route('peminjaman.index') }}" class="text-gray-500 hover:text-gray-700 mr-3">
+            <a href="{{ route('peminjaman.index', request()->query()) }}" class="text-gray-500 hover:text-gray-700 mr-3">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
@@ -74,15 +74,33 @@
                     <form action="{{ route('peminjaman.update', $peminjaman) }}" method="POST" class="space-y-6">
                         @csrf
                         @method('PUT')
+                        
+                        {{-- Preserve filter params --}}
+                        <input type="hidden" name="page" value="{{ request('page') }}">
+                        <input type="hidden" name="status" value="{{ request('status') }}"> {{-- Note: This conflicts with the select name='status'. We should rename the filter param in hidden input --}}
+                        {{-- Correction: The request filter key is 'status', but the select name is also 'status' (the data being updated). --}}
+                        {{-- To avoid conflict, we shouldn't pass 'status' (the filter) as 'status' (the form data). --}}
+                        {{-- But wait, standard behavior is the form data overrides. --}}
+                        {{-- However, in controller we look for query string OR body. If we post it, it enters request. --}}
+                        {{-- We need to pass the FILTER status with a different name if we want to redirect back to it. --}}
+                        
+                        {{-- Let's rename the hidden inputs to avoid collision with actual form fields --}}
+                        {{-- PeminjamanController logic: $request->only(['redirect_status', 'page'...]) --}}
+                        
+                        <input type="hidden" name="redirect_status" value="{{ request('status') }}">
+                        <input type="hidden" name="search" value="{{ request('search') }}">
+                        <input type="hidden" name="tanggal_mulai" value="{{ request('tanggal_mulai') }}">
+                        <input type="hidden" name="tanggal_selesai" value="{{ request('tanggal_selesai') }}">
 
                         {{-- Status --}}
                         <div>
                             <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status Peminjaman <span class="text-red-500">*</span></label>
                             <select name="status" id="status" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
-                                <option value="menunggu" {{ $peminjaman->status === 'menunggu' ? 'selected' : '' }}>⏳ Menunggu</option>
-                                <option value="disetujui" {{ $peminjaman->status === 'disetujui' ? 'selected' : '' }}>✅ Disetujui</option>
-                                <option value="ditolak" {{ $peminjaman->status === 'ditolak' ? 'selected' : '' }}>❌ Ditolak</option>
-                                <option value="selesai" {{ $peminjaman->status === 'selesai' ? 'selected' : '' }}>📦 Selesai</option>
+                                <option value="menunggu" {{ $peminjaman->status === 'menunggu' ? 'selected' : '' }} class="bg-yellow-50 text-yellow-800">⏳ Menunggu</option>
+                                {{-- Auto-select 'Disetujui' if current status is 'Menunggu' --}}
+                                <option value="disetujui" {{ $peminjaman->status === 'disetujui' || $peminjaman->status === 'menunggu' ? 'selected' : '' }} class="bg-green-50 text-green-800 font-bold">✅ Disetujui (Terima Pengajuan)</option>
+                                <option value="ditolak" {{ $peminjaman->status === 'ditolak' ? 'selected' : '' }} class="bg-red-50 text-red-800">❌ Ditolak</option>
+                                <option value="selesai" {{ $peminjaman->status === 'selesai' ? 'selected' : '' }} class="bg-blue-50 text-blue-800">📦 Selesai</option>
                             </select>
                             @error('status')
                                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -110,7 +128,7 @@
 
                         {{-- Buttons --}}
                         <div class="flex justify-end gap-3 pt-4 border-t">
-                            <a href="{{ route('peminjaman.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Batal</a>
+                            <a href="{{ route('peminjaman.index', request()->query()) }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Batal</a>
                             <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
                                 Simpan Perubahan
                             </button>

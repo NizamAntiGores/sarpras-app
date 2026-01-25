@@ -45,66 +45,12 @@ Sistem manajemen inventaris, peminjaman, dan pengaduan sarana prasarana sekolah 
 
 ---
 
-## 🚀 Setup & Instalasi
+## 🔒 Informasi Akses
+Aplikasi ini merupakan proyek internal dan tidak ditujukan untuk penggunaan publik. Instruksi instalasi dan konfigurasi sistem hanya tersedia bagi pengembang resmi. 
 
-### 📋 Prasyarat
-- PHP >= 8.1
-- Composer
-- Node.js & NPM
-- MySQL Server (XAMPP / Laragon)
-
-### 💻 Langkah Instalasi
-
-1. **Clone Repository**
-   ```bash
-   git clone https://github.com/NizamAntiGores/sarpras-app.git
-   cd sarpras-app
-   ```
-
-2. **Instalasi Dependency**
-   ```bash
-   composer install
-   npm install
-   ```
-
-3. **Konfigurasi Environment**
-   ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
-   *Sesuaikan `DB_DATABASE`, `DB_USERNAME`, dan `DB_PASSWORD` di file `.env`.*
-
-4. **Migrasi & Seeding**
-   ```bash
-   php artisan migrate --seed
-   ```
-
-5. **Storage Link**
-   ```bash
-   php artisan storage:link
-   ```
-
-6. **Menjalankan Aplikasi**
-   Jalankan server Laravel:
-   ```bash
-   php artisan serve
-   ```
-   Jalankan asset bundler (Vite):
-   ```bash
-   npm run dev
-   ```
-
----
-
-## 🔐 Akun Default (Login)
-
-| Role | Email | Password |
-| :--- | :--- | :--- |
-| **Admin** | `admin@smk.sch.id` | `password` |
-| **Petugas** | `petugas@smk.sch.id` | `password` |
-| **Peminjam** | `siswa@smk.sch.id` | `password` |
+Jika Anda adalah pengembang yang ditunjuk, silakan hubungi administrator untuk mendapatkan file konfigurasi sistem.
 
 ---
 
 ## 📄 Lisensi
-Dibuat untuk keperluan internal SMK. Hak Cipta &copy; 2024.
+Dibuat untuk keperluan internal SMK. Hak Cipta &copy; 2024. Seluruh hak cipta dilindungi undang-undang. Dokumentasi dan kode sumber bersifat rahasia.

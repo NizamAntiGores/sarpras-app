@@ -2,7 +2,6 @@
 
 Sistem manajemen inventaris, peminjaman, dan pengaduan sarana prasarana sekolah berbasis Web. Aplikasi ini dirancang untuk mempermudah pengelolaan aset sekolah secara digital, transparan, dan efisien.
 
----
 
 ## ✨ Fitur Unggulan
 

@@ -3,10 +3,13 @@
 
 Sistem manajemen inventaris, peminjaman, dan pengaduan sarana prasarana sekolah berbasis Web. Aplikasi ini dirancang untuk mempermudah pengelolaan aset sekolah secara digital, transparan, dan efisien.
 
+<<<<<<< HEAD
 > **Ingin menjalankan aplikasi ini?**  
 > Silakan baca panduan lengkap di [📄 SETUP.md](./SETUP.md) untuk langkah-langkah instalasi.
 
 ---
+=======
+>>>>>>> 5fadec10eee5c8fd7076e9a3234aa98e8bfc42ca
 
 ## ✨ Fitur Unggulan
 

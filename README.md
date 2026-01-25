@@ -43,14 +43,3 @@ Sistem manajemen inventaris, peminjaman, dan pengaduan sarana prasarana sekolah 
   - `simple-qrcode`: Untuk generate QR Code.
   - `Laravel Breeze`: Untuk sistem autentikasi.
 
----
-
-## 🔒 Informasi Akses
-Aplikasi ini merupakan proyek internal dan tidak ditujukan untuk penggunaan publik. Instruksi instalasi dan konfigurasi sistem hanya tersedia bagi pengembang resmi. 
-
-Jika Anda adalah pengembang yang ditunjuk, silakan hubungi administrator untuk mendapatkan file konfigurasi sistem.
-
----
-
-## 📄 Lisensi
-Dibuat untuk keperluan internal SMK. Hak Cipta &copy; 2024. Seluruh hak cipta dilindungi undang-undang. Dokumentasi dan kode sumber bersifat rahasia.

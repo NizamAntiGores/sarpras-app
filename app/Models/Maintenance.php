@@ -42,15 +42,20 @@ class Maintenance extends Model
      * Konstanta untuk jenis maintenance
      */
     const JENIS_PERBAIKAN = 'perbaikan';
+
     const JENIS_SERVIS_RUTIN = 'servis_rutin';
+
     const JENIS_KALIBRASI = 'kalibrasi';
+
     const JENIS_PENGGANTIAN_KOMPONEN = 'penggantian_komponen';
 
     /**
      * Konstanta untuk status
      */
     const STATUS_SEDANG_BERLANGSUNG = 'sedang_berlangsung';
+
     const STATUS_SELESAI = 'selesai';
+
     const STATUS_DIBATALKAN = 'dibatalkan';
 
     /**

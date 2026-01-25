@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Kategori;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class KategoriController extends Controller
@@ -62,7 +62,7 @@ class KategoriController extends Controller
     public function update(Request $request, Kategori $kategori): RedirectResponse
     {
         $validated = $request->validate([
-            'nama_kategori' => 'required|string|max:255|unique:kategori,nama_kategori,' . $kategori->id,
+            'nama_kategori' => 'required|string|max:255|unique:kategori,nama_kategori,'.$kategori->id,
         ], [
             'nama_kategori.required' => 'Nama kategori wajib diisi.',
             'nama_kategori.unique' => 'Nama kategori sudah ada.',
@@ -88,6 +88,8 @@ class KategoriController extends Controller
         }
 
         $kategori->delete();
+
+        \App\Helpers\LogHelper::record('delete', "Menghapus kategori: {$kategori->nama_kategori}");
 
         return redirect()
             ->route('kategori.index')

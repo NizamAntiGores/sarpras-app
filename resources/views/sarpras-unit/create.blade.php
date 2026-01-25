@@ -68,14 +68,7 @@
                             @error('tanggal_perolehan') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
-                        {{-- Nilai Perolehan --}}
-                        <div class="mb-6">
-                            <label for="nilai_perolehan" class="block text-sm font-medium text-gray-700 mb-2">Nilai Perolehan (Rp)</label>
-                            <input type="number" name="nilai_perolehan" id="nilai_perolehan" value="{{ old('nilai_perolehan') }}" min="0"
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                   placeholder="Opsional">
-                            @error('nilai_perolehan') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                        </div>
+
 
                         {{-- Submit Button --}}
                         <div class="flex justify-end">

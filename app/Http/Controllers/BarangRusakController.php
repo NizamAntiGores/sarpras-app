@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sarpras;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class BarangRusakController extends Controller
@@ -32,11 +32,11 @@ class BarangRusakController extends Controller
     public function perbaiki(Request $request, Sarpras $sarpras): RedirectResponse
     {
         $validated = $request->validate([
-            'jumlah' => 'required|integer|min:1|max:' . $sarpras->stok_rusak,
+            'jumlah' => 'required|integer|min:1|max:'.$sarpras->stok_rusak,
         ], [
             'jumlah.required' => 'Jumlah wajib diisi.',
             'jumlah.min' => 'Jumlah minimal 1.',
-            'jumlah.max' => 'Jumlah tidak boleh melebihi stok rusak (' . $sarpras->stok_rusak . ').',
+            'jumlah.max' => 'Jumlah tidak boleh melebihi stok rusak ('.$sarpras->stok_rusak.').',
         ]);
 
         $sarpras->decrement('stok_rusak', $validated['jumlah']);
@@ -53,11 +53,11 @@ class BarangRusakController extends Controller
     public function hapus(Request $request, Sarpras $sarpras): RedirectResponse
     {
         $validated = $request->validate([
-            'jumlah' => 'required|integer|min:1|max:' . $sarpras->stok_rusak,
+            'jumlah' => 'required|integer|min:1|max:'.$sarpras->stok_rusak,
         ], [
             'jumlah.required' => 'Jumlah wajib diisi.',
             'jumlah.min' => 'Jumlah minimal 1.',
-            'jumlah.max' => 'Jumlah tidak boleh melebihi stok rusak (' . $sarpras->stok_rusak . ').',
+            'jumlah.max' => 'Jumlah tidak boleh melebihi stok rusak ('.$sarpras->stok_rusak.').',
         ]);
 
         $sarpras->decrement('stok_rusak', $validated['jumlah']);

@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Sarpras;
 use App\Models\Kategori;
+use App\Models\Sarpras;
 use App\Models\SarprasUnit;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 
 class SarprasController extends Controller
 {
@@ -17,33 +17,46 @@ class SarprasController extends Controller
      */
     public function index(Request $request): View
     {
+        // Helper closure for location filtering
+        $lokasiId = $request->lokasi_id;
+        $lokasiFilter = function ($q) use ($lokasiId) {
+            if ($lokasiId) {
+                $q->where('lokasi_id', $lokasiId);
+            }
+        };
+
         $query = Sarpras::with(['kategori'])
             ->withCount([
-                'units as total_unit' => function ($query) {
+                'units as total_unit' => function ($query) use ($lokasiFilter) {
                     $query->aktif();
+                    $lokasiFilter($query);
                 },
-                'units as tersedia_count' => function ($query) {
+                'units as tersedia_count' => function ($query) use ($lokasiFilter) {
                     $query->bisaDipinjam();
+                    $lokasiFilter($query);
                 },
-                'units as dipinjam_count' => function ($query) {
+                'units as dipinjam_count' => function ($query) use ($lokasiFilter) {
                     $query->where('status', SarprasUnit::STATUS_DIPINJAM);
+                    $lokasiFilter($query);
                 },
-                'units as maintenance_count' => function ($query) {
+                'units as maintenance_count' => function ($query) use ($lokasiFilter) {
                     $query->where('status', SarprasUnit::STATUS_MAINTENANCE);
+                    $lokasiFilter($query);
                 },
-                'units as rusak_berat_count' => function ($query) {
+                'units as rusak_berat_count' => function ($query) use ($lokasiFilter) {
                     $query->where('kondisi', SarprasUnit::KONDISI_RUSAK_BERAT);
+                    $lokasiFilter($query);
                 },
             ]);
 
         // Search logic
         if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('nama_barang', 'like', '%' . $request->search . '%')
-                  ->orWhere('kode_barang', 'like', '%' . $request->search . '%')
-                  ->orWhereHas('units', function($u) use ($request) {
-                      $u->where('kode_unit', 'like', '%' . $request->search . '%');
-                  });
+            $query->where(function ($q) use ($request) {
+                $q->where('nama_barang', 'like', '%'.$request->search.'%')
+                    ->orWhere('kode_barang', 'like', '%'.$request->search.'%')
+                    ->orWhereHas('units', function ($u) use ($request) {
+                        $u->where('kode_unit', 'like', '%'.$request->search.'%');
+                    });
             });
         }
 
@@ -52,18 +65,25 @@ class SarprasController extends Controller
             $query->where('kategori_id', $request->kategori_id);
         }
 
+        // Filter by Lokasi (only show Sarpras that have units in this location)
+        if ($lokasiId) {
+            $query->whereHas('units', function ($q) use ($lokasiId) {
+                $q->aktif()->where('lokasi_id', $lokasiId);
+            });
+        }
+
         // Special Filter for Stok Menipis (Threshold <= 3)
         if ($request->filled('filter') && $request->filter === 'stok_menipis') {
             // Kita sudah menghitung tersedia_count di atas, jadi kita bisa pakai HAVING
             // Note: untuk menggunakan HAVING pada aggregate count custom, pastikan query builder mendukungnya
             // Alternatifnya duplicate logic di HAVING
-             $query->having('tersedia_count', '<=', 3)
-                   ->having('tersedia_count', '>', 0); // Opsional: kalau mau yg 0 masuk 'Stok Habis'
+            $query->having('tersedia_count', '<=', 3)
+                ->having('tersedia_count', '>', 0); // Opsional: kalau mau yg 0 masuk 'Stok Habis'
         }
-        
+
         // Special Filter for Stok Habis
         if ($request->filled('filter') && $request->filter === 'stok_habis') {
-             $query->having('tersedia_count', '=', 0);
+            $query->having('tersedia_count', '=', 0);
         }
 
         // Calculate totals across ALL records for stats cards
@@ -77,7 +97,7 @@ class SarprasController extends Controller
         $sarpras = $query->orderBy('created_at', 'desc')
             ->paginate(10)
             ->withQueryString();
-            
+
         $kategoriList = Kategori::orderBy('nama_kategori')->get();
 
         return view('sarpras.index', compact('sarpras', 'stats', 'kategoriList'));
@@ -89,7 +109,7 @@ class SarprasController extends Controller
     public function create(): View
     {
         $kategori = Kategori::orderBy('nama_kategori')->get();
-        
+
         return view('sarpras.create', compact('kategori'));
     }
 
@@ -145,9 +165,9 @@ class SarprasController extends Controller
             'kategori',
             'units' => function ($query) {
                 $query->aktif()->with('lokasi')->orderBy('kode_unit');
-            }
+            },
         ]);
-        
+
         // Summary statistics
         $statistics = [
             'total_unit' => $sarpras->units->count(),
@@ -157,7 +177,7 @@ class SarprasController extends Controller
             'maintenance' => $sarpras->units->where('status', SarprasUnit::STATUS_MAINTENANCE)->count(),
             'rusak' => $sarpras->units->where('kondisi', '!=', SarprasUnit::KONDISI_BAIK)->count(),
         ];
-        
+
         return view('sarpras.show', compact('sarpras', 'statistics'));
     }
 
@@ -167,7 +187,7 @@ class SarprasController extends Controller
     public function edit(Sarpras $sarpras): View
     {
         $kategori = Kategori::orderBy('nama_kategori')->get();
-        
+
         return view('sarpras.edit', compact('sarpras', 'kategori'));
     }
 
@@ -177,7 +197,7 @@ class SarprasController extends Controller
     public function update(Request $request, Sarpras $sarpras): RedirectResponse
     {
         $validated = $request->validate([
-            'kode_barang' => 'required|string|max:50|unique:sarpras,kode_barang,' . $sarpras->id,
+            'kode_barang' => 'required|string|max:50|unique:sarpras,kode_barang,'.$sarpras->id,
             'nama_barang' => 'required|string|max:255',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'kategori_id' => 'required|exists:kategori,id',
@@ -249,7 +269,7 @@ class SarprasController extends Controller
 
         // Soft delete: hapusbukukan semua unit
         $sarpras->units()->update(['status' => SarprasUnit::STATUS_DIHAPUSBUKUKAN]);
-        
+
         // Delete master sarpras (atau bisa juga soft delete jika mau)
         $namaBarang = $sarpras->nama_barang;
         $sarpras->delete();

@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\Sarpras;
-use App\Models\SarprasUnit;
 use App\Models\BarangHilang;
 use App\Models\Maintenance;
+use App\Models\SarprasUnit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -35,9 +33,9 @@ class LaporanController extends Controller
 
         // 2. Daftar Aset Rusak Berat / Butuh Maintenance
         $asetRusak = (clone $unitQuery)->with(['sarpras', 'lokasi'])
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereIn('kondisi', ['rusak_berat', 'rusak_ringan'])
-                  ->orWhere('status', 'maintenance');
+                    ->orWhere('status', 'maintenance');
             })
             ->get();
 
@@ -46,11 +44,11 @@ class LaporanController extends Controller
             ->join('sarpras_units', 'pengembalian_details.sarpras_unit_id', '=', 'sarpras_units.id')
             ->join('sarpras', 'sarpras_units.sarpras_id', '=', 'sarpras.id')
             ->where('pengembalian_details.kondisi_akhir', '!=', 'baik');
-        
+
         if ($lokasiId) {
             $seringRusakQuery->where('sarpras_units.lokasi_id', $lokasiId);
         }
-        
+
         $seringRusak = $seringRusakQuery
             ->select('sarpras.nama_barang', DB::raw('count(*) as total_kerusakan'))
             ->groupBy('sarpras.id', 'sarpras.nama_barang')
@@ -61,7 +59,7 @@ class LaporanController extends Controller
         // 4. Daftar Aset Hilang
         $asetHilangQuery = BarangHilang::with(['pengembalianDetail.sarprasUnit.sarpras', 'user']);
         if ($lokasiId) {
-            $asetHilangQuery->whereHas('pengembalianDetail.sarprasUnit', function($q) use ($lokasiId) {
+            $asetHilangQuery->whereHas('pengembalianDetail.sarprasUnit', function ($q) use ($lokasiId) {
                 $q->where('lokasi_id', $lokasiId);
             });
         }
@@ -70,7 +68,7 @@ class LaporanController extends Controller
         // 5. Riwayat Maintenance Terakhir
         $maintenanceQuery = Maintenance::with(['sarprasUnit.sarpras', 'sarprasUnit.lokasi']);
         if ($lokasiId) {
-            $maintenanceQuery->whereHas('sarprasUnit', function($q) use ($lokasiId) {
+            $maintenanceQuery->whereHas('sarprasUnit', function ($q) use ($lokasiId) {
                 $q->where('lokasi_id', $lokasiId);
             });
         }
@@ -78,19 +76,19 @@ class LaporanController extends Controller
 
         // 6. Per-Location Summary (only when no filter applied)
         $lokasiSummary = [];
-        if (!$lokasiId) {
+        if (! $lokasiId) {
             $lokasiSummary = \App\Models\Lokasi::withCount([
                 'units as total_unit',
-                'units as tersedia' => function($q) {
+                'units as tersedia' => function ($q) {
                     $q->where('status', 'tersedia')->where('kondisi', 'baik');
                 },
-                'units as dipinjam' => function($q) {
+                'units as dipinjam' => function ($q) {
                     $q->where('status', 'dipinjam');
                 },
-                'units as rusak' => function($q) {
+                'units as rusak' => function ($q) {
                     $q->whereIn('kondisi', ['rusak_ringan', 'rusak_berat']);
                 },
-                'units as maintenance' => function($q) {
+                'units as maintenance' => function ($q) {
                     $q->where('status', 'maintenance');
                 },
             ])->get();

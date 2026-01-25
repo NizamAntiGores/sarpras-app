@@ -29,7 +29,7 @@ return new class extends Migration
         });
 
         // Tambah kolom baru jika belum ada
-        if (!Schema::hasColumn('barang_hilang', 'pengembalian_detail_id')) {
+        if (! Schema::hasColumn('barang_hilang', 'pengembalian_detail_id')) {
             Schema::table('barang_hilang', function (Blueprint $table) {
                 $table->foreignId('pengembalian_detail_id')
                     ->after('id')
@@ -47,7 +47,7 @@ return new class extends Migration
         Schema::table('barang_hilang', function (Blueprint $table) {
             $table->dropForeign(['pengembalian_detail_id']);
             $table->dropColumn('pengembalian_detail_id');
-            
+
             $table->foreignId('pengembalian_id')->nullable()->constrained('pengembalian')->onDelete('cascade');
             $table->foreignId('sarpras_id')->nullable()->constrained('sarpras')->onDelete('cascade');
             $table->integer('jumlah')->default(1);

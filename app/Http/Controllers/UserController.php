@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\View\View;
 
 class UserController extends Controller
 {
@@ -27,13 +27,13 @@ class UserController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('nomor_induk', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('nomor_induk', 'like', "%{$search}%");
             });
         }
 
         $users = $query->paginate(10)->withQueryString();
-        
+
         return view('users.index', compact('users'));
     }
 
@@ -99,8 +99,8 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'nomor_induk' => 'nullable|string|max:50|unique:users,nomor_induk,' . $user->id,
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'nomor_induk' => 'nullable|string|max:50|unique:users,nomor_induk,'.$user->id,
+            'email' => 'required|email|unique:users,email,'.$user->id,
             'password' => 'nullable|string|min:8|confirmed',
             'role' => 'required|in:admin,petugas,peminjam',
             'kontak' => 'nullable|string|max:20',
@@ -123,7 +123,7 @@ class UserController extends Controller
 
         \App\Helpers\LogHelper::record('update', "Memperbarui data user: {$user->name}");
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $user->update(['password' => Hash::make($validated['password'])]);
         }
 

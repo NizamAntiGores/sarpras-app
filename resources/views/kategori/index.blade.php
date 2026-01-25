@@ -34,9 +34,12 @@
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-4 py-4 font-medium text-gray-900">{{ $kat->nama_kategori }}</td>
                                     <td class="px-4 py-4 text-center">
-                                        <span class="px-2 py-1 text-xs rounded-full {{ $kat->sarpras_count > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600' }}">
-                                            {{ $kat->sarpras_count }} item
-                                        </span>
+                                        <a href="{{ route('sarpras.index', ['kategori_id' => $kat->id]) }}" class="inline-block hover:opacity-75 transition">
+                                            <span class="px-2 py-1 text-xs rounded-full {{ $kat->sarpras_count > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600' }}">
+                                                {{ $kat->sarpras_count }} item
+                                                <svg class="w-3 h-3 inline ml-0.5 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                            </span>
+                                        </a>
                                     </td>
                                     <td class="px-4 py-4 text-center">
                                         <div class="flex items-center justify-center space-x-2">

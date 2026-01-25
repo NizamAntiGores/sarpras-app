@@ -28,7 +28,7 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
-        
+
         \App\Helpers\LogHelper::record('login', 'Pengguna melakukan login ke sistem.');
 
         return redirect()->intended(RouteServiceProvider::HOME);

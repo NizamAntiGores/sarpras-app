@@ -24,8 +24,11 @@ class Pengaduan extends Model
 
     // Status Constants
     const STATUS_BELUM = 'belum_ditindaklanjuti';
+
     const STATUS_PROSES = 'sedang_diproses';
+
     const STATUS_SELESAI = 'selesai';
+
     const STATUS_TUTUP = 'ditutup';
 
     /**

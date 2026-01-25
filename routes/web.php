@@ -1,20 +1,20 @@
 <?php
 
+use App\Http\Controllers\BarangHilangController;
+use App\Http\Controllers\BarangRusakController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\KatalogController;
+use App\Http\Controllers\KategoriController;
+use App\Http\Controllers\LokasiController;
+use App\Http\Controllers\MaintenanceController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PeminjamanController;
+use App\Http\Controllers\PengaduanController;
+use App\Http\Controllers\PengembalianController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SarprasController;
 use App\Http\Controllers\SarprasUnitController;
-use App\Http\Controllers\PeminjamanController;
-use App\Http\Controllers\PengembalianController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\KatalogController;
-use App\Http\Controllers\LokasiController;
-use App\Http\Controllers\KategoriController;
-use App\Http\Controllers\BarangHilangController;
-use App\Http\Controllers\BarangRusakController;
-use App\Http\Controllers\MaintenanceController;
-use App\Http\Controllers\PengaduanController;
-use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,14 +31,13 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-
 /*
 |--------------------------------------------------------------------------
 | Authenticated Routes
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
-    
+
     // =============================================
     // PROFILE ROUTES (Semua user yang login)
     // =============================================
@@ -78,7 +77,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/sarpras/{sarpras}/units/{unit}', [SarprasUnitController::class, 'update'])->name('sarpras.units.update');
         Route::delete('/sarpras/{sarpras}/units/{unit}', [SarprasUnitController::class, 'destroy'])->name('sarpras.units.destroy');
         Route::post('/sarpras/{sarpras}/units/bulk-update-kondisi', [SarprasUnitController::class, 'bulkUpdateKondisi'])->name('sarpras.units.bulk-update-kondisi');
-        
+
         // =============================================
         // MAINTENANCE ROUTES
         // =============================================
@@ -94,7 +93,7 @@ Route::middleware('auth')->group(function () {
     // Destroy Sarpras - Hanya Admin
     Route::middleware('role:admin')->group(function () {
         Route::delete('/sarpras/{sarpras}', [SarprasController::class, 'destroy'])->name('sarpras.destroy');
-        
+
         // =============================================
         // LOKASI ROUTES (Admin only)
         // =============================================
@@ -104,7 +103,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/lokasi/{lokasi}/edit', [LokasiController::class, 'edit'])->name('lokasi.edit');
         Route::put('/lokasi/{lokasi}', [LokasiController::class, 'update'])->name('lokasi.update');
         Route::delete('/lokasi/{lokasi}', [LokasiController::class, 'destroy'])->name('lokasi.destroy');
-        
+
         // =============================================
         // KATEGORI ROUTES (Admin only)
         // =============================================
@@ -114,7 +113,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/kategori/{kategori}/edit', [KategoriController::class, 'edit'])->name('kategori.edit');
         Route::put('/kategori/{kategori}', [KategoriController::class, 'update'])->name('kategori.update');
         Route::delete('/kategori/{kategori}', [KategoriController::class, 'destroy'])->name('kategori.destroy');
-        
+
         // =============================================
         // LAPORAN ROUTES
         // =============================================
@@ -124,20 +123,20 @@ Route::middleware('auth')->group(function () {
     // =============================================
     // PEMINJAMAN ROUTES
     // =============================================
-    
+
     // Create & Store: Khusus Peminjam (siswa)
     Route::middleware('role:peminjam')->group(function () {
         Route::get('/katalog', [KatalogController::class, 'index'])->name('katalog.index');
         Route::get('/peminjaman/create', [PeminjamanController::class, 'create'])->name('peminjaman.create');
         Route::post('/peminjaman', [PeminjamanController::class, 'store'])->name('peminjaman.store');
     });
-    
+
     // Edit & Update: Admin & Petugas (untuk approve/reject/selesai)
     Route::middleware('role:admin,petugas')->group(function () {
         Route::get('/peminjaman/{peminjaman}/edit', [PeminjamanController::class, 'edit'])->name('peminjaman.edit');
         Route::put('/peminjaman/{peminjaman}', [PeminjamanController::class, 'update'])->name('peminjaman.update');
         Route::patch('/peminjaman/{peminjaman}', [PeminjamanController::class, 'update']);
-        
+
         // Pengembalian Routes
         Route::post('/pengembalian/lookup-qr', [PengembalianController::class, 'lookupByQrCode'])->name('pengembalian.lookup-qr');
         Route::get('/pengembalian/{peminjaman}/create', [PengembalianController::class, 'create'])->name('pengembalian.create');
@@ -156,21 +155,20 @@ Route::middleware('auth')->group(function () {
         Route::patch('/barang-rusak/{sarpras}/perbaiki', [BarangRusakController::class, 'perbaiki'])->name('barang-rusak.perbaiki');
         Route::patch('/barang-rusak/{sarpras}/hapus', [BarangRusakController::class, 'hapus'])->name('barang-rusak.hapus');
     });
-    
+
     // Delete Peminjaman: Khusus Admin only
     Route::middleware('role:admin')->group(function () {
         Route::delete('/peminjaman/{peminjaman}', [PeminjamanController::class, 'destroy'])->name('peminjaman.destroy');
     });
-    
-    // Index & Show: Semua user yang login 
+
+    // Index & Show: Semua user yang login
     Route::get('/peminjaman', [PeminjamanController::class, 'index'])->name('peminjaman.index');
     Route::get('/peminjaman/{peminjaman}', [PeminjamanController::class, 'show'])->name('peminjaman.show');
-
 
     // =============================================
     // PENGADUAN ROUTES
     // =============================================
-    
+
     // Create & Store: Peminjam Only
     Route::middleware('role:peminjam')->group(function () {
         Route::get('/pengaduan/create', [PengaduanController::class, 'create'])->name('pengaduan.create');
@@ -186,7 +184,6 @@ Route::middleware('auth')->group(function () {
     // Index & Show: Semua user
     Route::get('/pengaduan', [PengaduanController::class, 'index'])->name('pengaduan.index');
     Route::get('/pengaduan/{pengaduan}', [PengaduanController::class, 'show'])->name('pengaduan.show');
-
 
     // =============================================
     // USER MANAGEMENT ROUTES (Admin only)
@@ -204,6 +201,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/trash', [App\Http\Controllers\TrashController::class, 'index'])->name('trash.index');
         Route::patch('/trash/unit/{id}/restore', [App\Http\Controllers\TrashController::class, 'restoreUnit'])->name('trash.restore');
         Route::patch('/trash/sarpras/{id}/restore', [App\Http\Controllers\TrashController::class, 'restoreSarpras'])->name('trash.sarpras.restore');
+        Route::patch('/trash/lokasi/{id}/restore', [App\Http\Controllers\TrashController::class, 'restoreLokasi'])->name('trash.lokasi.restore');
+        Route::patch('/trash/kategori/{id}/restore', [App\Http\Controllers\TrashController::class, 'restoreKategori'])->name('trash.kategori.restore');
 
         Route::resource('users', UserController::class)->except(['show']);
     });

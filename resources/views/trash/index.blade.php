@@ -61,6 +61,94 @@
                     </div>
                 </div>
             </div>
+            
+            {{-- SECTION 3: KATEGORI --}}
+            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
+                <div class="p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                        Kategori Dihapus
+                    </h3>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-purple-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-purple-800 uppercase">Nama Kategori</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-purple-800 uppercase">Dihapus Pada</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-purple-800 uppercase">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @forelse ($deletedKategori as $kat)
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-4 font-medium text-gray-900">{{ $kat->nama_kategori }}</td>
+                                        <td class="px-4 py-4 text-sm text-gray-500">{{ $kat->deleted_at->format('d M Y H:i') }}</td>
+                                        <td class="px-4 py-4">
+                                            <form action="{{ route('trash.kategori.restore', $kat->id) }}" method="POST" onsubmit="return confirm('Restore Kategori ini?');">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 flex items-center transition">
+                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                                    Restore
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="px-4 py-4 text-center text-sm text-gray-500">Tidak ada kategori di sampah.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            {{-- SECTION 2: LOKASI --}}
+            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
+                <div class="p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        Lokasi Dihapus
+                    </h3>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-blue-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-blue-800 uppercase">Nama Lokasi</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-blue-800 uppercase">Dihapus Pada</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-blue-800 uppercase">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @forelse ($deletedLokasi as $lok)
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-4 font-medium text-gray-900">{{ $lok->nama_lokasi }}</td>
+                                        <td class="px-4 py-4 text-sm text-gray-500">{{ $lok->deleted_at->format('d M Y H:i') }}</td>
+                                        <td class="px-4 py-4">
+                                            <form action="{{ route('trash.lokasi.restore', $lok->id) }}" method="POST" onsubmit="return confirm('Restore Lokasi ini?');">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 flex items-center transition">
+                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                                    Restore
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="px-4 py-4 text-center text-sm text-gray-500">Tidak ada lokasi di sampah.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
             {{-- SECTION 2: UNIT BARANG --}}
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">

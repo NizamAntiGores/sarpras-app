@@ -39,8 +39,11 @@ class PengembalianDetail extends Model
      * Konstanta untuk kondisi akhir
      */
     const KONDISI_BAIK = 'baik';
+
     const KONDISI_RUSAK_RINGAN = 'rusak_ringan';
+
     const KONDISI_RUSAK_BERAT = 'rusak_berat';
+
     const KONDISI_HILANG = 'hilang';
 
     /**

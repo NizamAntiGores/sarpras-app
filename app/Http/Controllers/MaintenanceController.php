@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Maintenance;
 use App\Models\SarprasUnit;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class MaintenanceController extends Controller
 {
@@ -114,11 +114,11 @@ class MaintenanceController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+                ->with('error', 'Terjadi kesalahan: '.$e->getMessage());
         }
     }
 
@@ -150,7 +150,7 @@ class MaintenanceController extends Controller
         $validated = $request->validate([
             'jenis' => 'required|in:perbaikan,servis_rutin,kalibrasi,penggantian_komponen',
             'deskripsi' => 'nullable|string|max:1000',
-            'tanggal_selesai' => 'nullable|date|after_or_equal:' . $maintenance->tanggal_mulai->format('Y-m-d'),
+            'tanggal_selesai' => 'nullable|date|after_or_equal:'.$maintenance->tanggal_mulai->format('Y-m-d'),
             'biaya' => 'nullable|integer|min:0',
             'status' => 'required|in:sedang_berlangsung,selesai,dibatalkan',
             'kondisi_setelah' => 'required_if:status,selesai|in:baik,rusak_ringan,rusak_berat',
@@ -167,7 +167,7 @@ class MaintenanceController extends Controller
             // Jika status berubah menjadi selesai
             if ($validated['status'] === Maintenance::STATUS_SELESAI) {
                 $validated['tanggal_selesai'] = $validated['tanggal_selesai'] ?? now();
-                
+
                 // Update kondisi unit
                 $unit->update([
                     'kondisi' => $validated['kondisi_setelah'],
@@ -194,11 +194,11 @@ class MaintenanceController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+                ->with('error', 'Terjadi kesalahan: '.$e->getMessage());
         }
     }
 

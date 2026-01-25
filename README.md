@@ -1,6 +1,10 @@
 # 🏫 Sarpras SMK - Sistem Informasi Sarana & Prasarana
 
+
 Sistem manajemen inventaris, peminjaman, dan pengaduan sarana prasarana sekolah berbasis Web. Aplikasi ini dirancang untuk mempermudah pengelolaan aset sekolah secara digital, transparan, dan efisien.
+
+> **Ingin menjalankan aplikasi ini?**  
+> Silakan baca panduan lengkap di [📄 SETUP.md](./SETUP.md) untuk langkah-langkah instalasi.
 
 ---
 

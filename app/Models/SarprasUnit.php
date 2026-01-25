@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SarprasUnit extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /**
      * Nama tabel yang digunakan
@@ -26,7 +27,6 @@ class SarprasUnit extends Model
         'kondisi',
         'status',
         'tanggal_perolehan',
-        'nilai_perolehan',
     ];
 
     /**
@@ -34,23 +34,28 @@ class SarprasUnit extends Model
      */
     protected $casts = [
         'tanggal_perolehan' => 'date',
-        'nilai_perolehan' => 'integer',
     ];
 
     /**
      * Konstanta untuk kondisi
      */
     const KONDISI_BAIK = 'baik';
+
     const KONDISI_RUSAK_RINGAN = 'rusak_ringan';
+
     const KONDISI_RUSAK_BERAT = 'rusak_berat';
 
     /**
      * Konstanta untuk status
      */
     const STATUS_TERSEDIA = 'tersedia';
+
     const STATUS_DIPINJAM = 'dipinjam';
+
     const STATUS_MAINTENANCE = 'maintenance';
+
     const STATUS_DIHAPUSBUKUKAN = 'dihapusbukukan';
+
     const STATUS_TERPAKAI = 'terpakai'; // Untuk bahan habis pakai yang sudah dikonsumsi
 
     /**
@@ -132,8 +137,8 @@ class SarprasUnit extends Model
     {
         return $query->where('status', self::STATUS_TERSEDIA)
             ->where('kondisi', '!=', self::KONDISI_RUSAK_BERAT)
-            ->whereDoesntHave('peminjamanDetails', function($q) {
-                $q->whereHas('peminjaman', function($subQ) {
+            ->whereDoesntHave('peminjamanDetails', function ($q) {
+                $q->whereHas('peminjaman', function ($subQ) {
                     $subQ->where('status', 'menunggu');
                 });
             });
@@ -144,7 +149,7 @@ class SarprasUnit extends Model
      */
     public function canBeBorrowed(): bool
     {
-        return $this->status === self::STATUS_TERSEDIA 
+        return $this->status === self::STATUS_TERSEDIA
             && $this->kondisi !== self::KONDISI_RUSAK_BERAT;
     }
 
@@ -162,7 +167,7 @@ class SarprasUnit extends Model
     public static function generateKodeUnit(Sarpras $sarpras): string
     {
         $kodeBarang = $sarpras->kode_barang;
-        
+
         // Hitung jumlah unit yang sudah ada untuk sarpras ini
         $lastUnit = self::where('sarpras_id', $sarpras->id)
             ->orderBy('id', 'desc')
@@ -177,6 +182,6 @@ class SarprasUnit extends Model
             $nextNumber = 1;
         }
 
-        return $kodeBarang . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        return $kodeBarang.'-'.str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
     }
 }

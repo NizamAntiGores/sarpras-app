@@ -132,54 +132,68 @@
                                         <td class="px-4 py-4"><span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">{{ $item->kategori->nama_kategori ?? '-' }}</span></td>
                                         <td class="px-4 py-4 text-center">
                                             {{-- Ringkasan Unit --}}
-                                            <div class="flex flex-col items-center">
-                                                <span class="text-lg font-bold text-gray-700">{{ $item->total_unit ?? 0 }}</span>
-                                                <div class="flex gap-1 mt-1">
-                                                    @if (($item->stok_tersedia ?? 0) > 0)
-                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-green-100 text-green-700 font-semibold" title="Tersedia">✅ {{ $item->stok_tersedia }}</span>
-                                                    @endif
-                                                    {{-- Note: For dipinjam_count, we might want to include pending requests or keep it strictly 'currently borrowed' --}}
-                                                    @if (($item->dipinjam_count ?? 0) > 0)
-                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-orange-100 text-orange-700 font-semibold" title="Dipinjam">👋 {{ $item->dipinjam_count }}</span>
-                                                    @endif
-                                                    @if (($item->maintenance_count ?? 0) > 0)
-                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-red-100 text-red-700 font-semibold" title="Maintenance">🔧 {{ $item->maintenance_count }}</span>
-                                                    @endif
-                                                    @if (($item->rusak_berat_count ?? 0) > 0)
-                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-gray-800 text-white font-semibold" title="Rusak Berat">💀 {{ $item->rusak_berat_count }}</span>
-                                                    @endif
+                                            <div class="w-32 mx-auto">
+                                                <div class="flex justify-between items-end mb-1">
+                                                    <span class="text-xs font-medium text-gray-500">Total</span>
+                                                    <span class="text-lg font-bold text-gray-800">{{ $item->total_unit ?? 0 }}</span>
+                                                </div>
+                                                
+                                                {{-- Progress Bar --}}
+                                                <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden flex mb-2">
+                                                    @php
+                                                        $total = $item->total_unit > 0 ? $item->total_unit : 1;
+                                                        $tersediaPct = (($item->stok_tersedia ?? 0) / $total) * 100;
+                                                        $dipinjamPct = (($item->dipinjam_count ?? 0) / $total) * 100;
+                                                        $rusakPct = (($item->maintenance_count ?? 0) + ($item->rusak_berat_count ?? 0)) / $total * 100;
+                                                    @endphp
+                                                    <div class="bg-green-500" style="width: {{ $tersediaPct }}%" title="Tersedia: {{ $item->stok_tersedia ?? 0 }}"></div>
+                                                    <div class="bg-yellow-400" style="width: {{ $dipinjamPct }}%" title="Dipinjam: {{ $item->dipinjam_count ?? 0 }}"></div>
+                                                    <div class="bg-red-500" style="width: {{ $rusakPct }}%" title="Tidak Tersedia: {{ ($item->maintenance_count ?? 0) + ($item->rusak_berat_count ?? 0) }}"></div>
+                                                </div>
+
+                                                {{-- Legend / Mini Stats --}}
+                                                <div class="flex justify-between text-[10px] font-medium px-0.5">
+                                                    <div class="flex items-center gap-1" title="Tersedia">
+                                                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                                        <span class="text-green-700">{{ $item->stok_tersedia ?? 0 }}</span>
+                                                    </div>
+                                                    <div class="flex items-center gap-1" title="Dipinjam">
+                                                        <div class="w-2 h-2 rounded-full bg-yellow-400"></div>
+                                                        <span class="text-yellow-700">{{ $item->dipinjam_count ?? 0 }}</span>
+                                                    </div>
+                                                    <div class="flex items-center gap-1" title="Rusak/Maintenance">
+                                                        <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                                                        <span class="text-red-700">{{ ($item->maintenance_count ?? 0) + ($item->rusak_berat_count ?? 0) }}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="px-4 py-4 text-center">
                                             <div class="flex flex-col items-center gap-2">
-                                                {{-- Tombol Lihat Unit & Tambah Unit --}}
-                                                <div class="flex gap-2">
-                                                    <a href="{{ route('sarpras.units.index', $item) }}" 
-                                                       class="inline-flex items-center px-2 py-1 bg-teal-100 text-teal-700 rounded text-xs font-medium hover:bg-teal-200"
-                                                       title="Lihat unit {{ $item->nama_barang }}">
-                                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-                                                        Lihat Unit
+                                                <div class="flex items-center justify-center space-x-3">
+                                                    {{-- Shortcut: Lihat Unit (Utama) --}}
+                                                    <a href="{{ route('sarpras.units.index', $item) }}" class="text-teal-600 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 p-1.5 rounded-lg transition" title="Lihat Daftar Unit">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
                                                     </a>
-                                                    <a href="{{ route('sarpras.units.create', $item) }}" 
-                                                       class="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium hover:bg-green-200"
-                                                       title="Tambah unit {{ $item->nama_barang }}">
-                                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                                        Tambah Unit
+                                                    
+                                                    {{-- Shortcut: Tambah Unit --}}
+                                                    <a href="{{ route('sarpras.units.create', $item) }}" class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-1.5 rounded-lg transition" title="Tambah Unit Baru">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                                     </a>
-                                                </div>
-                                                {{-- Tombol Detail, Edit, Hapus --}}
-                                                <div class="flex items-center justify-center space-x-2">
-                                                    <a href="{{ route('sarpras.show', $item) }}" class="text-gray-600 hover:text-gray-900" title="Detail">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+
+                                                    {{-- Detail Sarpras (General Info) --}}
+                                                    <a href="{{ route('sarpras.show', $item) }}" class="text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 p-1.5 rounded-lg transition" title="Detail Informasi Barang">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                                     </a>
-                                                    <a href="{{ route('sarpras.edit', $item) }}" class="text-blue-600 hover:text-blue-900" title="Edit">
+
+                                                    <a href="{{ route('sarpras.edit', $item) }}" class="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-1.5 rounded-lg transition" title="Edit Data Barang">
                                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                     </a>
+
                                                     @if (auth()->user()->role === 'admin')
                                                         <form action="{{ route('sarpras.destroy', $item) }}" method="POST" class="inline" onsubmit="return confirm('Yakin hapus barang ini?');">
                                                             @csrf @method('DELETE')
-                                                            <button type="submit" class="text-red-600 hover:text-red-900" title="Hapus">
+                                                            <button type="submit" class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-lg transition" title="Hapus Barang">
                                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                                             </button>
                                                         </form>

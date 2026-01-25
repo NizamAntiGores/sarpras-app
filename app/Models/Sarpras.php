@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Sarpras extends Model
@@ -80,13 +80,13 @@ class Sarpras extends Model
                 // Kita harus join ke tabel peminjaman_detail lalu ke peminjaman
                 // Di Laravel Eloquent, kita bisa pakai whereHas di level unit
                 // Tapi karena kita sudah di level Sarpras, kita ambil unit ID-nya saja.
-                
+
                 // Ambil ID unit milik sarpras ini yang statusnya 'tersedia'
                 $availableUnitIds = $physicallyAvailable->pluck('id');
 
                 // Cek dari ID tersebut, mana yang ada di peminjaman dengan status 'menunggu'
                 $pendingCount = \App\Models\PeminjamanDetail::whereIn('sarpras_unit_id', $availableUnitIds)
-                    ->whereHas('peminjaman', function($q) {
+                    ->whereHas('peminjaman', function ($q) {
                         $q->where('status', 'menunggu');
                     })
                     ->count();

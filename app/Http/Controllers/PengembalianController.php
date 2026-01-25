@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BarangHilang;
 use App\Models\Peminjaman;
 use App\Models\Pengembalian;
 use App\Models\PengembalianDetail;
-use App\Models\BarangHilang;
 use App\Models\SarprasUnit;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 
 class PengembalianController extends Controller
 {
@@ -21,14 +21,14 @@ class PengembalianController extends Controller
     public function lookupByQrCode(Request $request)
     {
         $qrCode = $request->input('qr_code');
-        
-        if (!$qrCode) {
+
+        if (! $qrCode) {
             return redirect()->route('peminjaman.index')->with('error', 'Kode QR tidak boleh kosong.');
         }
 
         $peminjaman = Peminjaman::where('qr_code', $qrCode)->first();
 
-        if (!$peminjaman) {
+        if (! $peminjaman) {
             return redirect()->route('peminjaman.index')->with('error', 'Peminjaman dengan kode QR tersebut tidak ditemukan.');
         }
 
@@ -180,13 +180,13 @@ class PengembalianController extends Controller
             $peminjaman->update(['status' => 'selesai']);
 
             DB::commit();
-            
+
             \App\Helpers\LogHelper::record('update', "Memproses pengembalian untuk peminjaman ID: {$peminjaman->id}");
 
             $totalDenda = $pengembalian->total_denda;
             $message = 'Pengembalian berhasil dicatat.';
             if ($totalDenda > 0) {
-                $message .= ' Total denda: Rp ' . number_format($totalDenda, 0, ',', '.');
+                $message .= ' Total denda: Rp '.number_format($totalDenda, 0, ',', '.');
             }
 
             return redirect()
@@ -199,7 +199,7 @@ class PengembalianController extends Controller
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+                ->with('error', 'Terjadi kesalahan: '.$e->getMessage());
         }
     }
 

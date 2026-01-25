@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -34,7 +34,7 @@ return new class extends Migration
 
         // Step 3: Update lokasi_id based on lokasi text
         $lokasiMap = DB::table('lokasi')->pluck('id', 'nama_lokasi');
-        
+
         foreach ($lokasiMap as $nama => $id) {
             DB::table('sarpras')
                 ->where('lokasi', $nama)

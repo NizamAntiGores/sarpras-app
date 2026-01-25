@@ -24,15 +24,15 @@ class PengaduanController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-        
+
         // Search
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('judul', 'like', "%{$search}%")
-                  ->orWhereHas('user', function($u) use ($search) {
-                      $u->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('user', function ($u) use ($search) {
+                        $u->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -49,7 +49,7 @@ class PengaduanController extends Controller
         $lokasi = \App\Models\Lokasi::orderBy('nama_lokasi')->get();
         // Hanya sarpras parent yang ditampilkan
         $sarpras = \App\Models\Sarpras::orderBy('nama_barang')->get();
-        
+
         return view('pengaduan.create', compact('lokasi', 'sarpras'));
     }
 
@@ -78,7 +78,7 @@ class PengaduanController extends Controller
             'lokasi_id' => $validated['lokasi_id'],
             'sarpras_id' => $validated['sarpras_id'] ?? null,
             'foto' => $fotoPath,
-            'status' => 'belum_ditindaklanjuti'
+            'status' => 'belum_ditindaklanjuti',
         ]);
 
         return redirect()->route('pengaduan.index')->with('success', 'Pengaduan berhasil dikirim.');
@@ -90,7 +90,7 @@ class PengaduanController extends Controller
     public function show(\App\Models\Pengaduan $pengaduan)
     {
         $user = auth()->user();
-        
+
         // Authorization check
         if ($user->role === 'peminjam' && $pengaduan->user_id !== $user->id) {
             abort(403);
@@ -138,13 +138,13 @@ class PengaduanController extends Controller
             'selesai' => 'Selesai',
             'ditutup' => 'Ditutup',
         ];
-        
+
         if (isset($statusLabels[$validated['status']])) {
             \App\Models\Notification::send(
                 $pengaduan->user_id,
                 \App\Models\Notification::TYPE_PENGADUAN_UPDATED,
                 'Pengaduan Diperbarui 📢',
-                'Pengaduan "' . $pengaduan->judul . '" telah diubah ke status: ' . $statusLabels[$validated['status']],
+                'Pengaduan "'.$pengaduan->judul.'" telah diubah ke status: '.$statusLabels[$validated['status']],
                 route('pengaduan.show', $pengaduan)
             );
         }

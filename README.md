@@ -41,7 +41,6 @@ Sistem manajemen inventaris, peminjaman, dan pengaduan sarana prasarana sekolah 
 - **Database**: MySQL / MariaDB
 - **Library Utama**:
   - `simple-qrcode`: Untuk generate QR Code.
-  - `dompdf`: Untuk export laporan PDF.
   - `Laravel Breeze`: Untuk sistem autentikasi.
 
 ---

@@ -57,7 +57,7 @@ class SarprasUnit extends Model
      */
     public function sarpras(): BelongsTo
     {
-        return $this->belongsTo(Sarpras::class, 'sarpras_id');
+        return $this->belongsTo(Sarpras::class, 'sarpras_id')->withTrashed();
     }
 
     /**

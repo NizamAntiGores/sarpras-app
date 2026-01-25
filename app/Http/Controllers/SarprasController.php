@@ -31,6 +31,9 @@ class SarprasController extends Controller
                 'units as maintenance_count' => function ($query) {
                     $query->where('status', SarprasUnit::STATUS_MAINTENANCE);
                 },
+                'units as rusak_berat_count' => function ($query) {
+                    $query->where('kondisi', SarprasUnit::KONDISI_RUSAK_BERAT);
+                },
             ]);
 
         // Search logic
@@ -85,6 +88,7 @@ class SarprasController extends Controller
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'kategori_id' => 'required|exists:kategori,id',
             'deskripsi' => 'nullable|string|max:1000',
+            'tipe' => 'required|in:asset,bahan',
         ], [
             'kode_barang.required' => 'Kode barang wajib diisi.',
             'kode_barang.unique' => 'Kode barang sudah digunakan.',
@@ -107,6 +111,7 @@ class SarprasController extends Controller
             'foto' => $fotoPath,
             'kategori_id' => $validated['kategori_id'],
             'deskripsi' => $validated['deskripsi'] ?? null,
+            'tipe' => $validated['tipe'],
         ]);
 
         return redirect()
@@ -160,6 +165,7 @@ class SarprasController extends Controller
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'kategori_id' => 'required|exists:kategori,id',
             'deskripsi' => 'nullable|string|max:1000',
+            'tipe' => 'required|in:asset,bahan',
         ], [
             'kode_barang.required' => 'Kode barang wajib diisi.',
             'kode_barang.unique' => 'Kode barang sudah digunakan.',
@@ -194,6 +200,7 @@ class SarprasController extends Controller
             'foto' => $fotoPath,
             'kategori_id' => $validated['kategori_id'],
             'deskripsi' => $validated['deskripsi'] ?? null,
+            'tipe' => $validated['tipe'],
         ]);
 
         return redirect()

@@ -194,11 +194,31 @@ class DatabaseSeeder extends Seeder
             return $units;
         };
 
+        // Helper to copy seed image
+        $getFotoPath = function($filename) {
+            $sourcePath = storage_path('seed_images/' . $filename);
+            if (file_exists($sourcePath)) {
+                $targetDir = 'sarpras';
+                $targetPath = storage_path('app/public/' . $targetDir);
+                
+                if (!file_exists($targetPath)) {
+                    mkdir($targetPath, 0755, true);
+                }
+                
+                $newFilename = uniqid() . '_' . $filename;
+                copy($sourcePath, $targetPath . '/' . $newFilename);
+                return $targetDir . '/' . $newFilename;
+            }
+            return null;
+        };
+
         // Elektronik
         $proyektor = Sarpras::create([
             'kode_barang' => 'PRJ',
             'nama_barang' => 'Proyektor Epson EB-X51',
             'kategori_id' => $kategoriElektronik->id,
+            'foto' => $getFotoPath('proyektor.jpg'),
+            'tipe' => 'asset',
         ]);
         $proyektorUnits = $createUnits($proyektor, $lokasiMultimedia, 5, 1);
 
@@ -206,6 +226,8 @@ class DatabaseSeeder extends Seeder
             'kode_barang' => 'LPT',
             'nama_barang' => 'Laptop Lenovo ThinkPad',
             'kategori_id' => $kategoriElektronik->id,
+            'foto' => $getFotoPath('laptop.jpg'),
+            'tipe' => 'asset',
         ]);
         $laptopUnits = $createUnits($laptop, $lokasiLab, 10, 2);
 
@@ -213,6 +235,8 @@ class DatabaseSeeder extends Seeder
             'kode_barang' => 'SPK',
             'nama_barang' => 'Speaker Portable JBL',
             'kategori_id' => $kategoriElektronik->id,
+            'foto' => $getFotoPath('speaker.jpg'),
+            'tipe' => 'asset',
         ]);
         $speakerUnits = $createUnits($speaker, $lokasiAula, 3, 0);
 
@@ -220,6 +244,8 @@ class DatabaseSeeder extends Seeder
             'kode_barang' => 'CAM',
             'nama_barang' => 'Kamera DSLR Canon EOS',
             'kategori_id' => $kategoriElektronik->id,
+            'foto' => $getFotoPath('kamera.jpg'),
+            'tipe' => 'asset',
         ]);
         $kameraUnits = $createUnits($kamera, $lokasiMultimedia, 3, 0);
 
@@ -227,14 +253,18 @@ class DatabaseSeeder extends Seeder
             'kode_barang' => 'MIC',
             'nama_barang' => 'Mikrofon Wireless Shure',
             'kategori_id' => $kategoriElektronik->id,
+            'foto' => $getFotoPath('mikrofon.jpg'),
+            'tipe' => 'asset',
         ]);
         $mikrofonUnits = $createUnits($mikrofon, $lokasiAula, 4, 1);
 
         // Furniture
         $mejaLipat = Sarpras::create([
-            'kode_barang' => 'MJL',
-            'nama_barang' => 'Meja Lipat Portable',
+            'kode_barang' => 'MJB',
+            'nama_barang' => 'Meja Belajar',
             'kategori_id' => $kategoriFurniture->id,
+            'foto' => $getFotoPath('meja.jpg'),
+            'tipe' => 'asset',
         ]);
         $mejaUnits = $createUnits($mejaLipat, $lokasiGudang, 20, 2);
 
@@ -242,6 +272,8 @@ class DatabaseSeeder extends Seeder
             'kode_barang' => 'KRS',
             'nama_barang' => 'Kursi Plastik',
             'kategori_id' => $kategoriFurniture->id,
+            'foto' => $getFotoPath('kursi.jpg'),
+            'tipe' => 'asset',
         ]);
         $kursiUnits = $createUnits($kursiPlastik, $lokasiGudang, 30, 3);
 
@@ -250,6 +282,8 @@ class DatabaseSeeder extends Seeder
             'kode_barang' => 'BVL',
             'nama_barang' => 'Bola Voli Mikasa',
             'kategori_id' => $kategoriOlahraga->id,
+            'foto' => $getFotoPath('voli.jpg'),
+            'tipe' => 'bahan', // Contoh bahan habis pakai/tidak perlu maintenance serius
         ]);
         $bolaVoliUnits = $createUnits($bolaVoli, $lokasiOlahraga, 8, 1);
 
@@ -257,6 +291,8 @@ class DatabaseSeeder extends Seeder
             'kode_barang' => 'BBK',
             'nama_barang' => 'Bola Basket Spalding',
             'kategori_id' => $kategoriOlahraga->id,
+            'foto' => $getFotoPath('basket.jpg'),
+            'tipe' => 'bahan',
         ]);
         $bolaBasketUnits = $createUnits($bolaBasket, $lokasiOlahraga, 6, 1);
 
@@ -264,6 +300,8 @@ class DatabaseSeeder extends Seeder
             'kode_barang' => 'RKT',
             'nama_barang' => 'Raket Badminton Yonex',
             'kategori_id' => $kategoriOlahraga->id,
+            'foto' => $getFotoPath('raket.jpg'),
+            'tipe' => 'asset',
         ]);
         $raketUnits = $createUnits($raketBadminton, $lokasiOlahraga, 10, 2);
 
@@ -272,6 +310,8 @@ class DatabaseSeeder extends Seeder
             'kode_barang' => 'GTR',
             'nama_barang' => 'Gitar Akustik Yamaha',
             'kategori_id' => $kategoriMusik->id,
+            'foto' => $getFotoPath('gitar.jpg'),
+            'tipe' => 'asset',
         ]);
         $gitarUnits = $createUnits($gitarAkustik, $lokasiAula, 4, 1);
 
@@ -279,6 +319,8 @@ class DatabaseSeeder extends Seeder
             'kode_barang' => 'KYB',
             'nama_barang' => 'Keyboard Yamaha PSR',
             'kategori_id' => $kategoriMusik->id,
+            'foto' => $getFotoPath('keyboard.jpg'),
+            'tipe' => 'asset',
         ]);
         $keyboardUnits = $createUnits($keyboardYamaha, $lokasiAula, 2, 0);
 

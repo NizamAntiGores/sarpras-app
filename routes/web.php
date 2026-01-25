@@ -202,7 +202,8 @@ Route::middleware('auth')->group(function () {
         // TRASH ROUTES (Admin only)
         // =============================================
         Route::get('/trash', [App\Http\Controllers\TrashController::class, 'index'])->name('trash.index');
-        Route::patch('/trash/{id}/restore', [App\Http\Controllers\TrashController::class, 'restore'])->name('trash.restore');
+        Route::patch('/trash/unit/{id}/restore', [App\Http\Controllers\TrashController::class, 'restoreUnit'])->name('trash.restore');
+        Route::patch('/trash/sarpras/{id}/restore', [App\Http\Controllers\TrashController::class, 'restoreSarpras'])->name('trash.sarpras.restore');
 
         Route::resource('users', UserController::class)->except(['show']);
     });

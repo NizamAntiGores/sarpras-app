@@ -57,7 +57,9 @@ class MaintenanceController extends Controller
             ->orderBy('kode_unit')
             ->get();
 
-        return view('maintenance.create', compact('units', 'selectedUnit'));
+        $selectedKondisi = $request->query('kondisi');
+
+        return view('maintenance.create', compact('units', 'selectedUnit', 'selectedKondisi'));
     }
 
     /**

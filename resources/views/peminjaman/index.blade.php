@@ -70,8 +70,28 @@
                                 <label for="search" class="block text-xs font-medium text-gray-700 mb-1">Cari</label>
                                 <input type="text" name="search" id="search" value="{{ request('search') }}" 
                                        class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                       placeholder="Nama Peminjam / Barang...">
+                                       placeholder="Nama Peminjam / Barang..."
+                                       oninput="debounceSubmit()">
                             </div>
+                            <script>
+                                let timeout = null;
+                                function debounceSubmit() {
+                                    clearTimeout(timeout);
+                                    timeout = setTimeout(function () {
+                                        const form = document.getElementById('search').closest('form');
+                                        form.submit();
+                                    }, 600);
+                                }
+                                document.addEventListener("DOMContentLoaded", function() {
+                                    const searchInput = document.getElementById('search');
+                                    if(searchInput && searchInput.value) {
+                                        searchInput.focus();
+                                        const val = searchInput.value;
+                                        searchInput.value = '';
+                                        searchInput.value = val;
+                                    }
+                                });
+                            </script>
                             <div class="flex gap-2">
                                 <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
                                     Filter

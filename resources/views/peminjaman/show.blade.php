@@ -121,12 +121,9 @@
                                     <p class="text-sm text-gray-500">Kode QR Peminjaman:</p>
                                     <p class="font-mono text-lg font-bold text-gray-800">{{ $peminjaman->qr_code }}</p>
                                 </div>
-                                <a href="{{ route('pengembalian.create', $peminjaman) }}" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                    </svg>
-                                    Proses Pengembalian
-                                </a>
+                                
+                                
+
                             </div>
                         </div>
                     @endif

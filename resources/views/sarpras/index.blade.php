@@ -58,10 +58,34 @@
                                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
                                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                                 </span>
-                                <input type="text" name="search" value="{{ request('search') }}" 
+                                <input type="text" name="search" id="search" value="{{ request('search') }}" 
                                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
-                                       placeholder="Cari nama atau kode barang...">
+                                       placeholder="Cari nama atau kode barang..."
+                                       oninput="debounceSubmit()">
                             </div>
+                            <script>
+                                let timeout = null;
+                                function debounceSubmit() {
+                                    clearTimeout(timeout);
+                                    timeout = setTimeout(function () {
+                                        // Submit form
+                                        const form = document.getElementById('search').closest('form');
+                                        form.submit();
+                                    }, 600); // Wait 600ms after user stops typing
+                                }
+                                
+                                // Auto-focus input after reload if searching
+                                document.addEventListener("DOMContentLoaded", function() {
+                                    const searchInput = document.getElementById('search');
+                                    if(searchInput && searchInput.value) {
+                                        searchInput.focus();
+                                        // Move cursor to end
+                                        const val = searchInput.value;
+                                        searchInput.value = '';
+                                        searchInput.value = val;
+                                    }
+                                });
+                            </script>
                             <button type="submit" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
                                 Cari
                             </button>
@@ -112,13 +136,16 @@
                                                 <span class="text-lg font-bold text-gray-700">{{ $item->total_unit ?? 0 }}</span>
                                                 <div class="flex gap-1 mt-1">
                                                     @if (($item->tersedia_count ?? 0) > 0)
-                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-green-100 text-green-700" title="Tersedia">{{ $item->tersedia_count }}</span>
+                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-green-100 text-green-700 font-semibold" title="Tersedia">✅ {{ $item->tersedia_count }}</span>
                                                     @endif
                                                     @if (($item->dipinjam_count ?? 0) > 0)
-                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-orange-100 text-orange-700" title="Dipinjam">{{ $item->dipinjam_count }}</span>
+                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-orange-100 text-orange-700 font-semibold" title="Dipinjam">👋 {{ $item->dipinjam_count }}</span>
                                                     @endif
                                                     @if (($item->maintenance_count ?? 0) > 0)
-                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-red-100 text-red-700" title="Maintenance">{{ $item->maintenance_count }}</span>
+                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-red-100 text-red-700 font-semibold" title="Maintenance">🔧 {{ $item->maintenance_count }}</span>
+                                                    @endif
+                                                    @if (($item->rusak_berat_count ?? 0) > 0)
+                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-gray-800 text-white font-semibold" title="Rusak Berat">💀 {{ $item->rusak_berat_count }}</span>
                                                     @endif
                                                 </div>
                                             </div>

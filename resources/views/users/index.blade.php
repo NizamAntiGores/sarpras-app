@@ -20,6 +20,59 @@
 
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6">
+                    {{-- Filter & Search --}}
+                    <div class="mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+                        <div class="flex gap-2">
+                            <a href="{{ route('users.index') }}" class="px-3 py-1.5 text-xs font-medium rounded-full {{ !request('role') ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                                Semua
+                            </a>
+                            <a href="{{ route('users.index', ['role' => 'admin'] + request()->except(['role', 'page'])) }}" class="px-3 py-1.5 text-xs font-medium rounded-full {{ request('role') == 'admin' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                                Admin
+                            </a>
+                            <a href="{{ route('users.index', ['role' => 'petugas'] + request()->except(['role', 'page'])) }}" class="px-3 py-1.5 text-xs font-medium rounded-full {{ request('role') == 'petugas' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                                Petugas
+                            </a>
+                            <a href="{{ route('users.index', ['role' => 'peminjam'] + request()->except(['role', 'page'])) }}" class="px-3 py-1.5 text-xs font-medium rounded-full {{ request('role') == 'peminjam' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                                Peminjam
+                            </a>
+                        </div>
+                        <div class="w-full md:w-1/3">
+                            <form action="{{ route('users.index') }}" method="GET">
+                                @if(request('role')) <input type="hidden" name="role" value="{{ request('role') }}"> @endif
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                    </span>
+                                    <input type="text" name="search" id="search" value="{{ request('search') }}" 
+                                           class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+                                           placeholder="Cari nama, email, atau NIP..."
+                                           oninput="debounceSubmit()">
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <script>
+                        let timeout = null;
+                        function debounceSubmit() {
+                            clearTimeout(timeout);
+                            timeout = setTimeout(function () {
+                                const form = document.getElementById('search').closest('form');
+                                form.submit();
+                            }, 600);
+                        }
+                        
+                        document.addEventListener("DOMContentLoaded", function() {
+                            const searchInput = document.getElementById('search');
+                            if(searchInput && searchInput.value) {
+                                searchInput.focus();
+                                const val = searchInput.value;
+                                searchInput.value = '';
+                                searchInput.value = val;
+                            }
+                        });
+                    </script>
+
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">

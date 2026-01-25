@@ -53,7 +53,7 @@ class Peminjaman extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id')->withTrashed();
     }
 
     /**
@@ -61,7 +61,7 @@ class Peminjaman extends Model
      */
     public function peminjam(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id')->withTrashed();
     }
 
     /**
@@ -69,7 +69,7 @@ class Peminjaman extends Model
      */
     public function petugas(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'petugas_id');
+        return $this->belongsTo(User::class, 'petugas_id')->withTrashed();
     }
 
     /**

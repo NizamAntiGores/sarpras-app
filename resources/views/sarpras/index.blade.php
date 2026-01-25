@@ -135,9 +135,10 @@
                                             <div class="flex flex-col items-center">
                                                 <span class="text-lg font-bold text-gray-700">{{ $item->total_unit ?? 0 }}</span>
                                                 <div class="flex gap-1 mt-1">
-                                                    @if (($item->tersedia_count ?? 0) > 0)
-                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-green-100 text-green-700 font-semibold" title="Tersedia">✅ {{ $item->tersedia_count }}</span>
+                                                    @if (($item->stok_tersedia ?? 0) > 0)
+                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-green-100 text-green-700 font-semibold" title="Tersedia">✅ {{ $item->stok_tersedia }}</span>
                                                     @endif
+                                                    {{-- Note: For dipinjam_count, we might want to include pending requests or keep it strictly 'currently borrowed' --}}
                                                     @if (($item->dipinjam_count ?? 0) > 0)
                                                         <span class="px-1.5 py-0.5 text-xs rounded bg-orange-100 text-orange-700 font-semibold" title="Dipinjam">👋 {{ $item->dipinjam_count }}</span>
                                                     @endif

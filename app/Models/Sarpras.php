@@ -51,7 +51,7 @@ class Sarpras extends Model
      */
     public function activeUnits(): HasMany
     {
-        return $this->units()->where('status', '!=', SarprasUnit::STATUS_DIHAPUSBUKUKAN);
+        return $this->units()->whereNotIn('status', [SarprasUnit::STATUS_DIHAPUSBUKUKAN, SarprasUnit::STATUS_TERPAKAI]);
     }
 
     /**
@@ -70,10 +70,30 @@ class Sarpras extends Model
     protected function stokTersedia(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->units()
-                ->where('status', SarprasUnit::STATUS_TERSEDIA)
-                ->where('kondisi', '!=', SarprasUnit::KONDISI_RUSAK_BERAT)
-                ->count(),
+            get: function () {
+                // Ambil semua unit yang secara fisik tersedia
+                $physicallyAvailable = $this->units()
+                    ->where('status', SarprasUnit::STATUS_TERSEDIA)
+                    ->where('kondisi', '!=', SarprasUnit::KONDISI_RUSAK_BERAT);
+
+                // Hitung ID unit yang sedang dalam pengajuan 'menunggu'
+                // Kita harus join ke tabel peminjaman_detail lalu ke peminjaman
+                // Di Laravel Eloquent, kita bisa pakai whereHas di level unit
+                // Tapi karena kita sudah di level Sarpras, kita ambil unit ID-nya saja.
+                
+                // Ambil ID unit milik sarpras ini yang statusnya 'tersedia'
+                $availableUnitIds = $physicallyAvailable->pluck('id');
+
+                // Cek dari ID tersebut, mana yang ada di peminjaman dengan status 'menunggu'
+                $pendingCount = \App\Models\PeminjamanDetail::whereIn('sarpras_unit_id', $availableUnitIds)
+                    ->whereHas('peminjaman', function($q) {
+                        $q->where('status', 'menunggu');
+                    })
+                    ->count();
+
+                // Stok Tampil = Fisik Tersedia - Sedang Diajukan
+                return $physicallyAvailable->count() - $pendingCount;
+            }
         );
     }
 
@@ -109,7 +129,7 @@ class Sarpras extends Model
         return Attribute::make(
             get: fn () => $this->units()
                 ->where('kondisi', '!=', SarprasUnit::KONDISI_BAIK)
-                ->where('status', '!=', SarprasUnit::STATUS_DIHAPUSBUKUKAN)
+                ->whereNotIn('status', [SarprasUnit::STATUS_DIHAPUSBUKUKAN, SarprasUnit::STATUS_TERPAKAI])
                 ->count(),
         );
     }

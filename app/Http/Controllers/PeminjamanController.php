@@ -24,7 +24,7 @@ class PeminjamanController extends Controller
     {
         $user = auth()->user();
         
-        $query = Peminjaman::with(['user', 'details.sarprasUnit.sarpras', 'petugas'])
+        $query = Peminjaman::with(['user', 'details.sarprasUnit.sarpras', 'petugas', 'pengembalian'])
             ->orderBy('created_at', 'desc');
 
         // Jika user adalah peminjam, hanya tampilkan data miliknya
@@ -53,15 +53,26 @@ class PeminjamanController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->whereHas('user', function($u) use ($search) {
-                    $u->where('name', 'like', "%{$search}%");
-                })
-                ->orWhereHas('details.sarprasUnit.sarpras', function($s) use ($search) {
+                // Support pencarian ID secara langsung (misal: "45" atau "#45")
+                $cleanSearch = ltrim($search, '#');
+                if (is_numeric($cleanSearch)) {
+                    $q->where('id', $cleanSearch)
+                      ->orWhereHas('user', function($u) use ($search) {
+                          $u->where('name', 'like', "%{$search}%");
+                      });
+                } else {
+                    $q->whereHas('user', function($u) use ($search) {
+                        $u->where('name', 'like', "%{$search}%");
+                    });
+                }
+                
+                $q->orWhereHas('details.sarprasUnit.sarpras', function($s) use ($search) {
                     $s->where('nama_barang', 'like', "%{$search}%");
                 })
                 ->orWhereHas('details.sarprasUnit', function($su) use ($search) {
                     $su->where('kode_unit', 'like', "%{$search}%");
-                });
+                })
+                ->orWhere('qr_code', 'like', "%{$search}%"); // Support cari QR Code
             });
         }
 
@@ -94,9 +105,16 @@ class PeminjamanController extends Controller
         ->orderBy('nama_barang')
         ->get();
 
+        // Ambil ID unit yang sedang dalam pengajuan 'menunggu'
+        $pendingUnitIds = PeminjamanDetail::whereHas('peminjaman', function($q) {
+            $q->where('status', 'menunggu');
+        })->pluck('sarpras_unit_id');
+
         // Ambil semua unit yang bisa dipinjam, grouped by sarpras
+        // Exclude unit yang status fisiknya tidak tersedia ATAU sedang dalam pengajuan menunggu
         $availableUnits = SarprasUnit::with('sarpras', 'lokasi')
             ->bisaDipinjam()
+            ->whereNotIn('id', $pendingUnitIds)
             ->orderBy('kode_unit')
             ->get()
             ->groupBy('sarpras_id');
@@ -285,8 +303,9 @@ class PeminjamanController extends Controller
                 'catatan_petugas' => $validated['catatan_petugas'] ?? $peminjaman->catatan_petugas,
             ]);
 
+            $queryParams = $request->only(['status', 'page', 'tanggal_mulai', 'tanggal_selesai', 'search']);
             return redirect()
-                ->route('peminjaman.index')
+                ->route('peminjaman.index', $queryParams)
                 ->with('success', 'Data peminjaman berhasil diperbarui.');
         }
 
@@ -309,12 +328,48 @@ class PeminjamanController extends Controller
                     }
                 }
 
-                // Update status semua unit menjadi 'dipinjam'
+                $allBahan = true;
+
+                // Update status unit
                 foreach ($peminjaman->details as $detail) {
-                    $detail->sarprasUnit->update(['status' => SarprasUnit::STATUS_DIPINJAM]);
+                    $unit = $detail->sarprasUnit;
+                    
+                    if ($unit->isBahan()) {
+                        // Jika tipe 'bahan', maka status jadi TERPAKAI (Consumed)
+                        // Barang hilang dari stok, tidak muncul di Restore, tidak perlu dikembalikan
+                        $unit->update([
+                            'status' => SarprasUnit::STATUS_TERPAKAI, 
+                            'kondisi' => 'baik'
+                        ]);
+                    } else {
+                        // Jika tipe 'asset', status jadi 'dipinjam' dan HARUS dikembalikan
+                        $unit->update(['status' => SarprasUnit::STATUS_DIPINJAM]);
+                        $allBahan = false;
+                    }
                 }
 
-                // Generate QR code
+                // Jika SEMUA barang adalah 'bahan' (habis pakai), maka transaksi langsung SELESAI
+                // Tidak perlu menunggu pengembalian
+                if ($allBahan) {
+                    $newStatus = 'selesai';
+                    // Auto-create record pengembalian (formalitas sistem)
+                    $pengembalian = \App\Models\Pengembalian::create([
+                        'peminjaman_id' => $peminjaman->id,
+                        'petugas_id' => $user->id,
+                        'tgl_kembali_aktual' => now(),
+                    ]);
+                    
+                    foreach ($peminjaman->details as $detail) {
+                        \App\Models\PengembalianDetail::create([
+                            'pengembalian_id' => $pengembalian->id,
+                            'sarpras_unit_id' => $detail->sarpras_unit_id,
+                            'kondisi_akhir' => 'baik',
+                            'denda' => 0
+                        ]);
+                    }
+                }
+
+                // Generate QR code (tapi jika selesai langsung, QR mungkin tidak terlalu krusial, tapi tetap generate untuk history)
                 $peminjaman->qr_code = 'QR-' . strtoupper(Str::random(10));
             }
 
@@ -368,8 +423,14 @@ class PeminjamanController extends Controller
                 'menunggu' => 'Status peminjaman dikembalikan ke menunggu.',
             ];
 
+            $queryParams = $request->only(['page', 'tanggal_mulai', 'tanggal_selesai', 'search']);
+            if ($request->has('redirect_status') && $request->redirect_status != null) {
+                // Kembalikan filter 'status' seperti semula
+                $queryParams['status'] = $request->redirect_status;
+            }
+            
             return redirect()
-                ->route('peminjaman.index')
+                ->route('peminjaman.index', $queryParams)
                 ->with('success', $statusMessages[$newStatus] ?? 'Status peminjaman berhasil diperbarui.');
 
         } catch (\Exception $e) {

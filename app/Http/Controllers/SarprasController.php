@@ -40,13 +40,30 @@ class SarprasController extends Controller
         if ($request->filled('search')) {
             $query->where(function($q) use ($request) {
                 $q->where('nama_barang', 'like', '%' . $request->search . '%')
-                  ->orWhere('kode_barang', 'like', '%' . $request->search . '%');
+                  ->orWhere('kode_barang', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('units', function($u) use ($request) {
+                      $u->where('kode_unit', 'like', '%' . $request->search . '%');
+                  });
             });
         }
 
         // Filter by Kategori
         if ($request->filled('kategori_id')) {
             $query->where('kategori_id', $request->kategori_id);
+        }
+
+        // Special Filter for Stok Menipis (Threshold <= 3)
+        if ($request->filled('filter') && $request->filter === 'stok_menipis') {
+            // Kita sudah menghitung tersedia_count di atas, jadi kita bisa pakai HAVING
+            // Note: untuk menggunakan HAVING pada aggregate count custom, pastikan query builder mendukungnya
+            // Alternatifnya duplicate logic di HAVING
+             $query->having('tersedia_count', '<=', 3)
+                   ->having('tersedia_count', '>', 0); // Opsional: kalau mau yg 0 masuk 'Stok Habis'
+        }
+        
+        // Special Filter for Stok Habis
+        if ($request->filled('filter') && $request->filter === 'stok_habis') {
+             $query->having('tersedia_count', '=', 0);
         }
 
         // Calculate totals across ALL records for stats cards

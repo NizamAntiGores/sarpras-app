@@ -32,11 +32,18 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'role' => ['required', 'in:guru,siswa'],
+            'nomor_induk' => ['required', 'string', 'max:20', 'unique:' . User::class],
+            'kelas' => ['nullable', 'string', 'max:20'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'kontak' => ['nullable', 'string', 'max:20'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
             'name.required' => 'Nama lengkap wajib diisi.',
+            'role.required' => 'Status (Guru/Siswa) wajib dipilih.',
+            'role.in' => 'Status tidak valid.',
+            'nomor_induk.required' => 'NIP/NISN wajib diisi.',
+            'nomor_induk.unique' => 'NIP/NISN sudah terdaftar.',
             'email.required' => 'Email wajib diisi.',
             'email.email' => 'Format email tidak valid.',
             'email.unique' => 'Email sudah terdaftar.',
@@ -49,7 +56,9 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'kontak' => $request->kontak,
             'password' => Hash::make($request->password),
-            'role' => 'peminjam', // Hardcode: Registrasi mandiri selalu jadi peminjam
+            'role' => $request->role,
+            'nomor_induk' => $request->nomor_induk,
+            'kelas' => $request->kelas,
         ]);
 
         event(new Registered($user));

@@ -18,9 +18,14 @@ class KatalogController extends Controller
         $kategoriId = $request->query('kategori');
 
         $query = Sarpras::with(['kategori'])
-            ->withCount(['units as available_count' => function ($query) {
-                $query->bisaDipinjam();
-            }])
+            ->withCount([
+                'units as available_count' => function ($query) {
+                    $query->bisaDipinjam();
+                }
+            ])
+            ->when(!auth()->user()->isGuru(), function ($query) {
+                $query->where('tipe', '!=', 'bahan');
+            })
             ->having('available_count', '>', 0)
             ->orderBy('nama_barang');
 

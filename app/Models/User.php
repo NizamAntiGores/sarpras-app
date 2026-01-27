@@ -22,6 +22,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'nomor_induk',
+        'kelas',
         'email',
         'password',
         'role',
@@ -69,7 +70,23 @@ class User extends Authenticatable
      */
     public function isPeminjam(): bool
     {
-        return $this->role === 'peminjam';
+        return in_array($this->role, ['peminjam', 'guru', 'siswa']);
+    }
+
+    /**
+     * Check if user is guru
+     */
+    public function isGuru(): bool
+    {
+        return $this->role === 'guru';
+    }
+
+    /**
+     * Check if user is siswa
+     */
+    public function isSiswa(): bool
+    {
+        return $this->role === 'siswa';
     }
 
     /**

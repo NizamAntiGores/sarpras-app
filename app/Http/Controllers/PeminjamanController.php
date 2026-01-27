@@ -29,7 +29,7 @@ class PeminjamanController extends Controller
             ->orderBy('created_at', 'desc');
 
         // Jika user adalah peminjam, hanya tampilkan data miliknya
-        if ($user->role === 'peminjam') {
+        if ($user->isPeminjam()) {
             $query->where('user_id', $user->id);
         }
 
@@ -97,11 +97,16 @@ class PeminjamanController extends Controller
         $selectedSarprasId = $request->query('sarpras_id');
 
         // Ambil semua sarpras yang memiliki unit tersedia
+        // Filter: Hanya Guru yang bisa melihat barang 'bahan' (sekali pakai)
+        $user = auth()->user();
         $sarprasList = Sarpras::withCount([
             'units as available_units_count' => function ($query) {
                 $query->bisaDipinjam();
             },
         ])
+            ->when(!$user->isGuru(), function ($query) {
+                $query->where('tipe', '!=', 'bahan');
+            })
             ->having('available_units_count', '>', 0)
             ->orderBy('nama_barang')
             ->get();
@@ -152,13 +157,25 @@ class PeminjamanController extends Controller
 
             foreach ($units as $unit) {
                 // Cek apakah unit bisa dipinjam
-                if (! $unit->canBeBorrowed()) {
+                if (!$unit->canBeBorrowed()) {
                     DB::rollBack();
 
                     return redirect()
                         ->back()
                         ->withInput()
                         ->with('error', "Unit {$unit->kode_unit} tidak tersedia untuk dipinjam.");
+                }
+
+                // Cek validasi Guru dan Bahan
+                // Hanya Guru yang boleh meminjam barang tipe 'bahan'
+                $user = auth()->user();
+                if ($unit->isBahan() && !$user->isGuru()) {
+                    DB::rollBack();
+
+                    return redirect()
+                        ->back()
+                        ->withInput()
+                        ->with('error', "Unit {$unit->kode_unit} adalah barang sekali pakai (bahan). Hanya Guru yang dapat meminjamnya.");
                 }
 
                 // Cek double booking - apakah unit sudah ada di peminjaman aktif
@@ -206,7 +223,7 @@ class PeminjamanController extends Controller
                 ]);
             }
 
-            \App\Helpers\LogHelper::record('create', "Membuat pengajuan peminjaman baru (ID: {$peminjaman->id}) untuk ".count($validated['unit_ids']).' unit.');
+            \App\Helpers\LogHelper::record('create', "Membuat pengajuan peminjaman baru (ID: {$peminjaman->id}) untuk " . count($validated['unit_ids']) . ' unit.');
 
             DB::commit();
 
@@ -222,7 +239,7 @@ class PeminjamanController extends Controller
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan: '.$e->getMessage());
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
@@ -234,7 +251,7 @@ class PeminjamanController extends Controller
         $user = auth()->user();
 
         // Peminjam hanya bisa lihat data miliknya
-        if ($user->role === 'peminjam' && $peminjaman->user_id !== $user->id) {
+        if ($user->isPeminjam() && $peminjaman->user_id !== $user->id) {
             abort(403, 'Anda tidak memiliki akses ke data ini.');
         }
 
@@ -258,7 +275,7 @@ class PeminjamanController extends Controller
         $user = auth()->user();
 
         // Hanya admin dan petugas yang bisa edit
-        if ($user->role === 'peminjam') {
+        if ($user->isPeminjam()) {
             abort(403, 'Anda tidak memiliki akses untuk mengedit peminjaman.');
         }
 
@@ -285,7 +302,7 @@ class PeminjamanController extends Controller
         $user = auth()->user();
 
         // Hanya admin dan petugas yang bisa update
-        if ($user->role === 'peminjam') {
+        if ($user->isPeminjam()) {
             abort(403, 'Anda tidak memiliki akses untuk mengubah status peminjaman.');
         }
 
@@ -325,7 +342,7 @@ class PeminjamanController extends Controller
                 // Validasi semua unit masih tersedia
                 foreach ($peminjaman->details as $detail) {
                     $unit = $detail->sarprasUnit;
-                    if (! $unit->canBeBorrowed()) {
+                    if (!$unit->canBeBorrowed()) {
                         DB::rollBack();
 
                         return redirect()
@@ -376,7 +393,7 @@ class PeminjamanController extends Controller
                 }
 
                 // Generate QR code (tapi jika selesai langsung, QR mungkin tidak terlalu krusial, tapi tetap generate untuk history)
-                $peminjaman->qr_code = 'QR-'.strtoupper(Str::random(10));
+                $peminjaman->qr_code = 'QR-' . strtoupper(Str::random(10));
             }
 
             // Case 2: Status berubah ke 'ditolak' (dari 'menunggu')
@@ -399,7 +416,7 @@ class PeminjamanController extends Controller
                 'qr_code' => $peminjaman->qr_code,
             ]);
 
-            \App\Helpers\LogHelper::record('update', "Mengubah status peminjaman (ID: {$peminjaman->id}) menjadi: {$newStatus} oleh ".auth()->user()->name);
+            \App\Helpers\LogHelper::record('update', "Mengubah status peminjaman (ID: {$peminjaman->id}) menjadi: {$newStatus} oleh " . auth()->user()->name);
 
             // Send notification to user
             if ($newStatus === 'disetujui') {
@@ -407,7 +424,7 @@ class PeminjamanController extends Controller
                     $peminjaman->user_id,
                     \App\Models\Notification::TYPE_PEMINJAMAN_APPROVED,
                     'Peminjaman Disetujui ✅',
-                    'Peminjaman Anda telah disetujui oleh '.auth()->user()->name.'. Silakan ambil barang sesuai jadwal.',
+                    'Peminjaman Anda telah disetujui oleh ' . auth()->user()->name . '. Silakan ambil barang sesuai jadwal.',
                     route('peminjaman.show', $peminjaman)
                 );
             } elseif ($newStatus === 'ditolak') {
@@ -415,7 +432,7 @@ class PeminjamanController extends Controller
                     $peminjaman->user_id,
                     \App\Models\Notification::TYPE_PEMINJAMAN_REJECTED,
                     'Peminjaman Ditolak ❌',
-                    'Peminjaman Anda ditolak. Alasan: '.($validated['catatan_petugas'] ?? 'Tidak ada keterangan'),
+                    'Peminjaman Anda ditolak. Alasan: ' . ($validated['catatan_petugas'] ?? 'Tidak ada keterangan'),
                     route('peminjaman.show', $peminjaman)
                 );
             }
@@ -444,7 +461,7 @@ class PeminjamanController extends Controller
 
             return redirect()
                 ->back()
-                ->with('error', 'Terjadi kesalahan: '.$e->getMessage());
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 

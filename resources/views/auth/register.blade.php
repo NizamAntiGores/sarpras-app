@@ -4,53 +4,80 @@
         <p class="text-sm text-gray-500">Sistem Informasi Sarpras SMK</p>
     </div>
 
-    <form method="POST" action="{{ route('register') }}">
+    <form method="POST" action="{{ route('register') }}" x-data="{ role: '{{ old('role', 'siswa') }}' }">
         @csrf
 
         <!-- Nama Lengkap -->
         <div>
             <x-input-label for="name" value="Nama Lengkap" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" placeholder="Masukkan nama lengkap" />
+            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required
+                autofocus autocomplete="name" placeholder="Masukkan nama lengkap" />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
+        </div>
+
+        <!-- Role Selection -->
+        <div class="mt-4">
+            <x-input-label for="role" value="Status Pendaftar" />
+            <select id="role" name="role" x-model="role"
+                class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                <option value="siswa">Siswa</option>
+                <option value="guru">Guru</option>
+            </select>
+            <x-input-error :messages="$errors->get('role')" class="mt-2" />
         </div>
 
         <!-- Email -->
         <div class="mt-4">
             <x-input-label for="email" value="Email" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" placeholder="email@example.com" />
+            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required
+                autocomplete="username" placeholder="email@example.com" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
         <!-- Nomor Induk -->
         <div class="mt-4">
-            <x-input-label for="nomor_induk" value="Nomor Induk Siswa/Karyawan (Opsional)" />
-            <x-text-input id="nomor_induk" class="block mt-1 w-full" type="text" name="nomor_induk" :value="old('nomor_induk')" placeholder="NIS / NIP (Jika ada)" />
+            <x-input-label for="nomor_induk" x-text="role === 'guru' ? 'NIP' : 'NISN'" />
+            <x-text-input id="nomor_induk" class="block mt-1 w-full" type="text" name="nomor_induk"
+                :value="old('nomor_induk')" x-bind:placeholder="role === 'guru' ? 'Masukkan NIP' : 'Masukkan NISN'"
+                required />
             <x-input-error :messages="$errors->get('nomor_induk')" class="mt-2" />
+        </div>
+
+        <!-- Kelas (Hanya untuk Siswa) -->
+        <div class="mt-4" x-show="role === 'siswa'" x-transition>
+            <x-input-label for="kelas" value="Kelas (Opsional)" />
+            <x-text-input id="kelas" class="block mt-1 w-full" type="text" name="kelas" :value="old('kelas')"
+                placeholder="Contoh: XII RPL 1" />
+            <x-input-error :messages="$errors->get('kelas')" class="mt-2" />
         </div>
 
         <!-- Kontak/No HP -->
         <div class="mt-4">
             <x-input-label for="kontak" value="No. HP/WhatsApp (Opsional)" />
-            <x-text-input id="kontak" class="block mt-1 w-full" type="text" name="kontak" :value="old('kontak')" placeholder="08xxxxxxxxxx" />
+            <x-text-input id="kontak" class="block mt-1 w-full" type="text" name="kontak" :value="old('kontak')"
+                placeholder="08xxxxxxxxxx" />
             <x-input-error :messages="$errors->get('kontak')" class="mt-2" />
         </div>
 
         <!-- Password -->
         <div class="mt-4">
             <x-input-label for="password" value="Password" />
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" placeholder="Minimal 8 karakter" />
+            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required
+                autocomplete="new-password" placeholder="Minimal 8 karakter" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         <!-- Confirm Password -->
         <div class="mt-4">
             <x-input-label for="password_confirmation" value="Konfirmasi Password" />
-            <x-text-input id="password_confirmation" class="block mt-1 w-full" type="password" name="password_confirmation" required autocomplete="new-password" placeholder="Ulangi password" />
+            <x-text-input id="password_confirmation" class="block mt-1 w-full" type="password"
+                name="password_confirmation" required autocomplete="new-password" placeholder="Ulangi password" />
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
         <div class="flex items-center justify-end mt-6">
-            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" href="{{ route('login') }}">
+            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                href="{{ route('login') }}">
                 Sudah punya akun?
             </a>
 

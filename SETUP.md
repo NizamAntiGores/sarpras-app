@@ -49,7 +49,17 @@ DB_PASSWORD=
 ```
 
 ### 5. Migrasi & Seeding Data
-Jalankan perintah ini untuk membuat tabel dan mengisi data awal (dummy data):
+Jalankan perintah berikut untuk membuat struktur tabel di database:
+```bash
+php artisan migrate
+```
+
+Jika ingin mengisi database dengan data awal (dummy data), jalankan:
+```bash
+php artisan db:seed
+```
+
+Atau jalankan keduanya sekaligus (Disarankan untuk instalasi awal):
 ```bash
 php artisan migrate --seed
 ```

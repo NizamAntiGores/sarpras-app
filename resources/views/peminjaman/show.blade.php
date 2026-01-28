@@ -116,7 +116,25 @@
                     @if ($peminjaman->keterangan)
                         <div class="mt-6 bg-gray-50 rounded-lg p-4">
                             <h3 class="font-semibold text-gray-800 mb-2">Keterangan dari Peminjam</h3>
-                            <p class="text-gray-700">{{ $peminjaman->keterangan }}</p>
+                            @if (Str::contains($peminjaman->keterangan, '[REQ-EXT]'))
+                                @php
+                                    $parts = explode('| [REQ-EXT] ', $peminjaman->keterangan);
+                                    $originalNote = $parts[0] ?? '';
+                                    $extensionNote = $parts[1] ?? '';
+                                @endphp
+                                <p class="text-gray-700 mb-2">{{ $originalNote }}</p>
+                                @if ($extensionNote)
+                                    <div class="bg-purple-50 border-l-4 border-purple-500 p-3 rounded">
+                                        <p class="text-sm font-bold text-purple-800 flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            Riwayat Perpanjangan:
+                                        </p>
+                                        <p class="text-sm text-purple-700 mt-1">{{ $extensionNote }}</p>
+                                    </div>
+                                @endif
+                            @else
+                                <p class="text-gray-700">{{ $peminjaman->keterangan }}</p>
+                            @endif
                         </div>
                     @endif
 
@@ -207,6 +225,16 @@
                         <a href="{{ route('peminjaman.index', request()->query()) }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300">Kembali</a>
                         
                         <div class="flex gap-3">
+                            {{-- Extension Button for Borrower --}}
+                            @if ($peminjaman->status === 'disetujui' && $peminjaman->user_id === auth()->id())
+                                <button x-data @click="$dispatch('open-modal', 'extension-modal')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Ajukan Perpanjangan
+                                </button>
+                            @endif
+
                             @if (in_array(auth()->user()->role, ['admin', 'petugas']))
                                 @if ($peminjaman->status === 'menunggu')
                                     <a href="{{ route('peminjaman.edit', $peminjaman) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 flex items-center gap-2">
@@ -230,4 +258,55 @@
             </div>
         </div>
     </div>
+
+    {{-- Extension Modal --}}
+    <x-modal name="extension-modal">
+        <form method="POST" action="{{ route('peminjaman.extend', $peminjaman) }}" class="p-6">
+            @csrf
+            @method('PUT')
+
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-medium text-gray-900">
+                    Ajukan Perpanjangan Peminjaman
+                </h2>
+                <button type="button" x-on:click="$dispatch('close')" class="text-gray-400 hover:text-gray-500">
+                    <span class="sr-only">Close</span>
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <p class="text-sm text-gray-500 mb-4">
+                Anda dapat mengajukan perpanjangan maksimal 7 hari dari tanggal rencana kembali saat ini ({{ $peminjaman->tgl_kembali_rencana->format('d M Y') }}).
+                Status peminjaman akan kembali menjadi "Menunggu" hingga disetujui petugas.
+            </p>
+
+            <div class="space-y-4">
+                 <div>
+                    <x-input-label for="tgl_kembali_baru" value="Tanggal Kembali Baru" />
+                    <x-text-input id="tgl_kembali_baru" name="tgl_kembali_baru" type="date" class="mt-1 block w-full" 
+                        required 
+                        min="{{ now()->addDay()->format('Y-m-d') }}"
+                        max="{{ $peminjaman->tgl_kembali_rencana->addDays(7)->format('Y-m-d') }}"
+                    />
+                    <p class="text-xs text-gray-500 mt-1">Maksimal: {{ $peminjaman->tgl_kembali_rencana->addDays(7)->format('d M Y') }}</p>
+                </div>
+
+                <div>
+                    <x-input-label for="alasan" value="Alasan Perpanjangan" />
+                    <textarea id="alasan" name="alasan" rows="3" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" placeholder="Contoh: Tugas belum selesai, butuh waktu tambahan untuk rendering..." required></textarea>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" x-on:click="$dispatch('close')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 text-sm font-medium">
+                    Batal
+                </button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm font-medium">
+                    Kirim Pengajuan
+                </button>
+            </div>
+        </form>
+    </x-modal>
 </x-app-layout>

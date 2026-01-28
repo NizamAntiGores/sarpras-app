@@ -147,6 +147,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/katalog', [KatalogController::class, 'index'])->name('katalog.index');
         Route::get('/peminjaman/create', [PeminjamanController::class, 'create'])->name('peminjaman.create');
         Route::post('/peminjaman', [PeminjamanController::class, 'store'])->name('peminjaman.store');
+
+        // Extension
+        Route::put('/peminjaman/{peminjaman}/extend', [PeminjamanController::class, 'extend'])->name('peminjaman.extend');
     });
 
     // Edit & Update: Admin & Petugas (untuk approve/reject/selesai)

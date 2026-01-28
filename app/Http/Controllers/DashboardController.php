@@ -38,28 +38,48 @@ class DashboardController extends Controller
             // Dashboard Admin: Statistik lengkap
 
             // Top 5 Barang Paling Sering Dipinjam (berdasarkan detail count)
-            $top5Barang = Sarpras::withCount(['units as total_dipinjam' => function ($query) {
-                $query->whereHas('peminjamanDetails.peminjaman', function ($q) {
-                    $q->whereIn('status', ['disetujui', 'selesai']);
-                });
-            }])
+            $top5Barang = Sarpras::withCount([
+                'units as total_dipinjam' => function ($query) {
+                    $query->whereHas('peminjamanDetails.peminjaman', function ($q) {
+                        $q->whereIn('status', ['disetujui', 'selesai']);
+                    });
+                }
+            ])
                 ->orderByDesc('total_dipinjam')
-                ->limit(20)
+                ->limit(5) // Limit to top 5 specifically
                 ->get(['id', 'nama_barang', 'kode_barang']);
 
+            // Statistik Peminjaman Per Bulan (Tahun Ini)
+            $peminjamanPerBulan = Peminjaman::selectRaw('MONTH(tgl_pinjam) as bulan, COUNT(*) as total')
+                ->whereYear('tgl_pinjam', date('Y'))
+                ->groupBy('bulan')
+                ->orderBy('bulan')
+                ->pluck('total', 'bulan')
+                ->toArray();
+
+            // Fill missing months with 0
+            $chartPeminjamanBulanan = [];
+            for ($i = 1; $i <= 12; $i++) {
+                $chartPeminjamanBulanan[] = $peminjamanPerBulan[$i] ?? 0;
+            }
+
             // Barang dengan Stok Menipis (unit tersedia <= 3)
-            $stokMenipis = Sarpras::withCount(['units as available_count' => function ($query) {
-                $query->bisaDipinjam();
-            }])
+            $stokMenipis = Sarpras::withCount([
+                'units as available_count' => function ($query) {
+                    $query->bisaDipinjam();
+                }
+            ])
                 ->having('available_count', '<=', 3)
                 ->having('available_count', '>', 0)
                 ->limit(50)
                 ->get();
 
             // Barang Habis (tidak ada unit tersedia)
-            $stokHabis = Sarpras::withCount(['units as available_count' => function ($query) {
-                $query->bisaDipinjam();
-            }])
+            $stokHabis = Sarpras::withCount([
+                'units as available_count' => function ($query) {
+                    $query->bisaDipinjam();
+                }
+            ])
                 ->having('available_count', '=', 0)
                 ->limit(50)
                 ->get();
@@ -103,6 +123,7 @@ class DashboardController extends Controller
 
                 // Tier 2: Top 5 Barang & Stok Alert
                 'top5Barang' => $top5Barang,
+                'chartPeminjamanBulanan' => $chartPeminjamanBulanan,
                 'stokMenipis' => $stokMenipis,
                 'stokHabis' => $stokHabis,
 
@@ -141,9 +162,11 @@ class DashboardController extends Controller
 
             // Data katalog barang (untuk ditampilkan langsung)
             $katalogBarang = Sarpras::with(['kategori'])
-                ->withCount(['units as available_count' => function ($query) {
-                    $query->bisaDipinjam();
-                }])
+                ->withCount([
+                    'units as available_count' => function ($query) {
+                        $query->bisaDipinjam();
+                    }
+                ])
                 ->having('available_count', '>', 0)
                 ->orderBy('nama_barang')
                 ->limit(8)
@@ -167,9 +190,11 @@ class DashboardController extends Controller
 
                 // Katalog barang untuk ditampilkan langsung
                 'katalogBarang' => $katalogBarang,
-                'totalKatalog' => Sarpras::withCount(['units as available_count' => function ($query) {
-                    $query->bisaDipinjam();
-                }])
+                'totalKatalog' => Sarpras::withCount([
+                    'units as available_count' => function ($query) {
+                        $query->bisaDipinjam();
+                    }
+                ])
                     ->having('available_count', '>', 0)
                     ->count(),
 

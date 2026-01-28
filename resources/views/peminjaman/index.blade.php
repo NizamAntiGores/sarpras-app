@@ -4,7 +4,7 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Daftar Peminjaman') }}
             </h2>
-            @if (auth()->user()->role === 'peminjam')
+            @if (in_array(auth()->user()->role, ['peminjam', 'guru', 'siswa']))
                 <a href="{{ route('peminjaman.create') }}" 
                    class="mt-3 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 transition ease-in-out duration-150">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,7 +152,7 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
-                                    @if (auth()->user()->role !== 'peminjam')
+                                    @if (!in_array(auth()->user()->role, ['peminjam', 'guru', 'siswa']))
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Peminjam</th>
                                     @endif
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit Barang</th>
@@ -166,7 +166,7 @@
                                 @forelse ($peminjaman as $pinjam)
                                     <tr class="hover:bg-gray-50">
                                         <td class="px-6 py-4 text-sm text-gray-500 font-mono">#{{ $pinjam->id }}</td>
-                                        @if (auth()->user()->role !== 'peminjam')
+                                        @if (!in_array(auth()->user()->role, ['peminjam', 'guru', 'siswa']))
                                             <td class="px-6 py-4">
                                                 <div class="text-sm font-medium text-gray-900">{{ $pinjam->user->name ?? '-' }}</div>
                                                 <div class="text-sm text-gray-500">{{ $pinjam->user->email ?? '-' }}</div>
@@ -195,6 +195,13 @@
                                             @switch($pinjam->status)
                                                 @case('menunggu')
                                                     <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Menunggu</span>
+                                                    @if(Str::contains($pinjam->keterangan, '[REQ-EXT]'))
+                                                        <div class="mt-1">
+                                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200">
+                                                                🔄 Minta Perpanjangan
+                                                            </span>
+                                                        </div>
+                                                    @endif
                                                     @break
                                                 @case('disetujui')
                                                     <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Disetujui</span>
@@ -273,7 +280,7 @@
                                         </td>
                                         <td class="px-6 py-4 text-center">
                                             <div class="flex items-center justify-center space-x-2">
-                                                @if (auth()->user()->role !== 'peminjam')
+                                                @if (!in_array(auth()->user()->role, ['peminjam', 'guru', 'siswa']))
                                                     {{-- TOMBOL AKSI UTAMA BERDASARKAN STATUS --}}
                                                     @if ($pinjam->status === 'menunggu')
                                                         <a href="{{ route('peminjaman.edit', array_merge(['peminjaman' => $pinjam->id], request()->query())) }}" class="inline-flex items-center px-3 py-1.5 bg-yellow-500 text-white text-xs font-bold rounded hover:bg-yellow-600 transition shadow-sm" title="Verifikasi Pengajuan">
@@ -289,8 +296,8 @@
                                                 @endif
 
                                                 {{-- TOMBOL DETAIL (SELALU ADA) --}}
-                                                <a href="{{ route('peminjaman.show', array_merge(['peminjaman' => $pinjam->id], request()->query())) }}" class="inline-flex items-center px-2 py-1.5 {{ (auth()->user()->role !== 'peminjam' && in_array($pinjam->status, ['menunggu', 'disetujui'])) ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-blue-50 text-blue-600 hover:bg-blue-100' }} text-xs font-medium rounded transition" title="Lihat Detail">
-                                                    @if (auth()->user()->role !== 'peminjam' && in_array($pinjam->status, ['menunggu', 'disetujui']))
+                                                <a href="{{ route('peminjaman.show', array_merge(['peminjaman' => $pinjam->id], request()->query())) }}" class="inline-flex items-center px-2 py-1.5 {{ (!in_array(auth()->user()->role, ['peminjam', 'guru', 'siswa']) && in_array($pinjam->status, ['menunggu', 'disetujui'])) ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-blue-50 text-blue-600 hover:bg-blue-100' }} text-xs font-medium rounded transition" title="Lihat Detail">
+                                                    @if (!in_array(auth()->user()->role, ['peminjam', 'guru', 'siswa']) && in_array($pinjam->status, ['menunggu', 'disetujui']))
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                                     @else
                                                         Detail
@@ -301,7 +308,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="{{ auth()->user()->role !== 'peminjam' ? 7 : 6 }}" class="px-6 py-12 text-center text-gray-500">
+                                        <td colspan="{{ !in_array(auth()->user()->role, ['peminjam', 'guru', 'siswa']) ? 7 : 6 }}" class="px-6 py-12 text-center text-gray-500">
                                             Belum ada data peminjaman
                                         </td>
                                     </tr>

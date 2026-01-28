@@ -54,9 +54,13 @@ class PeminjamanController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                // Support pencarian ID secara langsung (misal: "45" atau "#45")
+                // Support pencarian ID secara langsung
                 $cleanSearch = ltrim($search, '#');
-                if (is_numeric($cleanSearch)) {
+
+                // Jika search diawali "QR-", fokus cari di kolom qr_code
+                if (str_starts_with(strtoupper($search), 'QR-')) {
+                    $q->where('qr_code', 'like', "%{$search}%");
+                } elseif (is_numeric($cleanSearch)) {
                     $q->where('id', $cleanSearch)
                         ->orWhereHas('user', function ($u) use ($search) {
                             $u->where('name', 'like', "%{$search}%");
@@ -64,16 +68,15 @@ class PeminjamanController extends Controller
                 } else {
                     $q->whereHas('user', function ($u) use ($search) {
                         $u->where('name', 'like', "%{$search}%");
-                    });
-                }
-
-                $q->orWhereHas('details.sarprasUnit.sarpras', function ($s) use ($search) {
-                    $s->where('nama_barang', 'like', "%{$search}%");
-                })
-                    ->orWhereHas('details.sarprasUnit', function ($su) use ($search) {
-                        $su->where('kode_unit', 'like', "%{$search}%");
                     })
-                    ->orWhere('qr_code', 'like', "%{$search}%"); // Support cari QR Code
+                        ->orWhereHas('details.sarprasUnit.sarpras', function ($s) use ($search) {
+                            $s->where('nama_barang', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('details.sarprasUnit', function ($su) use ($search) {
+                            $su->where('kode_unit', 'like', "%{$search}%");
+                        })
+                        ->orWhere('qr_code', 'like', "%{$search}%"); // Fallback search qr_code
+                }
             });
         }
 
@@ -148,6 +151,17 @@ class PeminjamanController extends Controller
             'tgl_kembali_rencana.required' => 'Tanggal kembali rencana wajib diisi.',
             'tgl_kembali_rencana.after' => 'Tanggal kembali harus setelah tanggal pinjam.',
         ]);
+
+        // Custom Validation: Batas Peminjaman Maksimal 7 Hari
+        $tglPinjam = \Carbon\Carbon::parse($validated['tgl_pinjam']);
+        $tglKembali = \Carbon\Carbon::parse($validated['tgl_kembali_rencana']);
+
+        if ($tglPinjam->diffInDays($tglKembali) > 7) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Peminjaman tidak boleh lebih dari 7 hari. Silakan ajukan perpanjangan nanti jika diperlukan.');
+        }
 
         DB::beginTransaction();
 
@@ -342,13 +356,44 @@ class PeminjamanController extends Controller
                 // Validasi semua unit masih tersedia
                 foreach ($peminjaman->details as $detail) {
                     $unit = $detail->sarprasUnit;
-                    if (!$unit->canBeBorrowed()) {
-                        DB::rollBack();
 
-                        return redirect()
-                            ->back()
-                            ->with('error', "Unit {$unit->kode_unit} sudah tidak tersedia.");
+                    // Cek ketersediaan standard
+                    if ($unit->canBeBorrowed()) {
+                        continue;
                     }
+
+                    // Logic Khusus Perpanjangan (Extension):
+                    // Jika unit statusnya 'dipinjam' tapi peminjaman ini yang sedang memegangnya (atau status menggantung dari peminjaman ini)
+                    // Maka boleh disetujui kembali.
+
+                    // Syarat:
+                    // 1. Status 'dipinjam'
+                    // 2. Kondisi tidak rusak berat
+                    // 3. TIDAK ADA peminjaman LAIN yang sedang 'disetujui' untuk unit ini.
+
+                    $isDipinjam = $unit->status === SarprasUnit::STATUS_DIPINJAM;
+                    $isLayak = $unit->kondisi !== SarprasUnit::KONDISI_RUSAK_BERAT;
+
+                    if ($isDipinjam && $isLayak) {
+                        // Cek apakah ada peminjaman 'disetujui' LAIN yang menggunakan unit ini
+                        $otherActiveLoan = Peminjaman::where('status', 'disetujui')
+                            ->where('id', '!=', $peminjaman->id) // Bukan peminjaman ini
+                            ->whereHas('details', function ($q) use ($unit) {
+                                $q->where('sarpras_unit_id', $unit->id);
+                            })
+                            ->exists();
+
+                        if (!$otherActiveLoan) {
+                            // Aman, ini adalah perpanjangan untuk barang yang memang sedang dibawa dia sendiri
+                            continue;
+                        }
+                    }
+
+                    // Jika sampai sini, berarti benar-benar tidak tersedia
+                    DB::rollBack();
+                    return redirect()
+                        ->back()
+                        ->with('error', "Unit {$unit->kode_unit} tidak tersedia (Status: {$unit->status}).");
                 }
 
                 $allBahan = true;
@@ -491,5 +536,53 @@ class PeminjamanController extends Controller
         return redirect()
             ->route('peminjaman.index')
             ->with('success', 'Data peminjaman berhasil dihapus.');
+    }
+
+    /**
+     * Handle extension request from user.
+     */
+    public function extend(Request $request, Peminjaman $peminjaman): RedirectResponse
+    {
+        $user = auth()->user();
+
+        // Validasi Owner
+        if ($peminjaman->user_id !== $user->id) {
+            abort(403, 'Anda tidak berhak mengajukan perpanjangan untuk peminjaman ini.');
+        }
+
+        // Hanya bisa diperpanjang jika status 'disetujui' (sedang dipinjam)
+        if ($peminjaman->status !== 'disetujui') {
+            return back()->with('error', 'Hanya peminjaman yang sedang aktif yang bisa diperpanjang.');
+        }
+
+        $validated = $request->validate([
+            'tgl_kembali_baru' => 'required|date|after:today',
+            'alasan' => 'required|string|max:255',
+        ], [
+            'tgl_kembali_baru.after' => 'Tanggal perpanjangan harus setelah hari ini.',
+            'alasan.required' => 'Alasan perpanjangan wajib diisi.',
+        ]);
+
+        $oldDate = \Carbon\Carbon::parse($peminjaman->tgl_kembali_rencana);
+        $newDate = \Carbon\Carbon::parse($validated['tgl_kembali_baru']);
+
+        // Validasi Max Extension (Misal: Maksimal +7 hari dari rencana awal)
+        if ($oldDate->diffInDays($newDate) > 7) {
+            return back()->with('error', 'Perpanjangan maksimal 7 hari dari tanggal rencana awal.');
+        }
+
+        // Proses Update
+        // Status diubah jadi MENUNGGU lagi agar Admin notice dan approve ulang
+        $peminjaman->update([
+            'status' => 'menunggu', // Reset status to waiting approval
+            'tgl_kembali_rencana' => $validated['tgl_kembali_baru'],
+            'keterangan' => $peminjaman->keterangan . " | [REQ-EXT] Perpanjangan diajukan tgl " . now()->format('d/m') . ". Alasan: " . $validated['alasan'],
+            // Reset petugas approval karena butuh approval baru
+            'petugas_id' => null,
+        ]);
+
+        \App\Helpers\LogHelper::record('update', "Mengajukan perpanjangan peminjaman (ID: {$peminjaman->id}) sampai tgl " . $newDate->format('d M Y'));
+
+        return redirect()->back()->with('success', 'Pengajuan perpanjangan berhasil dikirim. Menunggu persetujuan petugas.');
     }
 }

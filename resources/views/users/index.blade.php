@@ -97,8 +97,8 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nomor
-                                        Induk</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                        Identitas (NIS/NIP)</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email
                                     </th>
                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Role
@@ -122,17 +122,22 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-500 font-mono">
+                                            @if($user->role == 'siswa')
+                                                <span class="text-xs text-gray-400 block">NIS</span>
+                                            @elseif($user->role == 'guru')
+                                                <span class="text-xs text-gray-400 block">NIP</span>
+                                            @endif
                                             {{ $user->nomor_induk ?? '-' }}
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-500">{{ $user->email }}</td>
                                         <td class="px-6 py-4 text-center">
                                             <span class="px-2 py-1 text-xs rounded-full 
-                                                            {{ $user->role === 'admin' ? 'bg-red-100 text-red-800' : '' }}
-                                                            {{ $user->role === 'petugas' ? 'bg-blue-100 text-blue-800' : '' }}
-                                                            {{ $user->role === 'peminjam' ? 'bg-gray-100 text-gray-800' : '' }}
-                                                            {{ $user->role === 'siswa' ? 'bg-green-100 text-green-800' : '' }}
-                                                            {{ $user->role === 'guru' ? 'bg-purple-100 text-purple-800' : '' }}
-                                                        ">{{ ucfirst($user->role) }}</span>
+                                                                {{ $user->role === 'admin' ? 'bg-red-100 text-red-800' : '' }}
+                                                                {{ $user->role === 'petugas' ? 'bg-blue-100 text-blue-800' : '' }}
+                                                                {{ $user->role === 'peminjam' ? 'bg-gray-100 text-gray-800' : '' }}
+                                                                {{ $user->role === 'siswa' ? 'bg-green-100 text-green-800' : '' }}
+                                                                {{ $user->role === 'guru' ? 'bg-purple-100 text-purple-800' : '' }}
+                                                            ">{{ ucfirst($user->role) }}</span>
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-500">{{ $user->kontak ?? '-' }}</td>
                                         <td class="px-6 py-4 text-center">

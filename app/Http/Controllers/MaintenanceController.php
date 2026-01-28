@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Maintenance;
+use App\Models\Sarpras;
 use App\Models\SarprasUnit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -51,15 +52,25 @@ class MaintenanceController extends Controller
         }
 
         // Ambil unit yang tersedia untuk maintenance (tidak sedang dipinjam)
-        $units = SarprasUnit::with('sarpras')
-            ->where('status', '!=', SarprasUnit::STATUS_DIPINJAM)
-            ->where('status', '!=', SarprasUnit::STATUS_DIHAPUSBUKUKAN)
+        $rawUnits = SarprasUnit::with('sarpras', 'lokasi')
+            ->whereNotIn('status', [SarprasUnit::STATUS_DIPINJAM, SarprasUnit::STATUS_DIHAPUSBUKUKAN])
             ->orderBy('kode_unit')
             ->get();
 
+        // Group by Sarpras ID for Accordion UI
+        $availableUnits = $rawUnits->groupBy('sarpras_id');
+
+        // Get Sarpras that have units available
+        $sarprasList = Sarpras::whereIn('id', $availableUnits->keys())
+            ->orderBy('nama_barang')
+            ->get();
+
+        // Keep flat units for fallback or specific logic if needed, but mostly we use the grouped structure
+        $units = $rawUnits;
+
         $selectedKondisi = $request->query('kondisi');
 
-        return view('maintenance.create', compact('units', 'selectedUnit', 'selectedKondisi'));
+        return view('maintenance.create', compact('sarprasList', 'availableUnits', 'units', 'selectedUnit', 'selectedKondisi'));
     }
 
     /**
@@ -118,7 +129,7 @@ class MaintenanceController extends Controller
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan: '.$e->getMessage());
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
@@ -150,7 +161,7 @@ class MaintenanceController extends Controller
         $validated = $request->validate([
             'jenis' => 'required|in:perbaikan,servis_rutin,kalibrasi,penggantian_komponen',
             'deskripsi' => 'nullable|string|max:1000',
-            'tanggal_selesai' => 'nullable|date|after_or_equal:'.$maintenance->tanggal_mulai->format('Y-m-d'),
+            'tanggal_selesai' => 'nullable|date|after_or_equal:' . $maintenance->tanggal_mulai->format('Y-m-d'),
             'biaya' => 'nullable|integer|min:0',
             'status' => 'required|in:sedang_berlangsung,selesai,dibatalkan',
             'kondisi_setelah' => 'required_if:status,selesai|in:baik,rusak_ringan,rusak_berat',
@@ -198,7 +209,7 @@ class MaintenanceController extends Controller
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan: '.$e->getMessage());
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 

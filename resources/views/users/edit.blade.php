@@ -32,16 +32,16 @@
                                 <input type="text" name="name" id="name" value="{{ old('name', $user->name) }}"
                                     class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             </div>
-                            <div>
-                                <label for="nomor_induk" class="block text-sm font-medium text-gray-700 mb-1">Nomor
-                                    Induk</label>
+                            <div id="div-nomor-induk">
+                                <label for="nomor_induk" id="label-nomor-induk"
+                                    class="block text-sm font-medium text-gray-700 mb-1">Nomor Induk</label>
                                 <input type="text" name="nomor_induk" id="nomor_induk"
                                     value="{{ old('nomor_induk', $user->nomor_induk) }}" placeholder="NIS/NISN"
                                     class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             </div>
-                            <div>
+                            <div id="div-kelas">
                                 <label for="kelas" class="block text-sm font-medium text-gray-700 mb-1">Kelas <span
-                                        class="text-gray-400">(khusus siswa)</span></label>
+                                        class="text-red-500">*</span></label>
                                 <input type="text" name="kelas" id="kelas" value="{{ old('kelas', $user->kelas) }}"
                                     placeholder="Contoh: XII RPL 1"
                                     class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
@@ -97,6 +97,42 @@
                                 class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">Update</button>
                         </div>
                     </form>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const roleSelect = document.getElementById('role');
+                            const divKelas = document.getElementById('div-kelas');
+                            const divNomorInduk = document.getElementById('div-nomor-induk');
+                            const labelNomorInduk = document.getElementById('label-nomor-induk');
+                            const inputNomorInduk = document.getElementById('nomor_induk');
+
+                            function updateFields() {
+                                const role = roleSelect.value;
+
+                                // Reset classes
+                                divKelas.classList.remove('hidden');
+                                divNomorInduk.classList.remove('hidden');
+
+                                if (role === 'siswa') {
+                                    divKelas.style.display = 'block';
+                                    labelNomorInduk.innerHTML = 'NIS / NISN <span class="text-red-500">*</span>';
+                                    inputNomorInduk.placeholder = 'Masukkan NIS Siswa';
+                                } else if (role === 'guru') {
+                                    divKelas.style.display = 'none';
+                                    labelNomorInduk.innerHTML = 'NIP <span class="text-red-500">*</span>';
+                                    inputNomorInduk.placeholder = 'Masukkan NIP Guru';
+                                } else {
+                                    // Admin / Petugas
+                                    divKelas.style.display = 'none';
+                                    labelNomorInduk.innerHTML = 'Nomor Induk <span class="text-gray-400">(Opsional)</span>';
+                                    inputNomorInduk.placeholder = 'Nomor Induk (jika ada)';
+                                }
+                            }
+
+                            roleSelect.addEventListener('change', updateFields);
+                            updateFields(); // Run on load
+                        });
+                    </script>
                 </div>
             </div>
         </div>

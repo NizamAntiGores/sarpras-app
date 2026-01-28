@@ -149,12 +149,27 @@
                     <div class="bg-white rounded-xl shadow-lg overflow-hidden lg:col-span-2">
                         <div class="p-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white flex justify-between items-center">
                             <div>
-                                <h4 class="font-bold text-gray-800 text-lg">📈 Trend Peminjaman Tahun Ini</h4>
-                                <p class="text-xs text-gray-500">Total peminjaman per bulan</p>
+                                <h4 class="font-bold text-gray-800 text-lg">📈 Trend Peminjaman</h4>
+                                <p class="text-xs text-gray-500">
+                                    @if(($data['chartTrend']['filter'] ?? 'weekly') == 'weekly')
+                                        Mingguan (Senin - Minggu)
+                                    @elseif(($data['chartTrend']['filter'] ?? 'weekly') == 'monthly')
+                                        Bulanan (Tanggal 1 - {{ now()->daysInMonth }})
+                                    @else
+                                        Tahunan (Januari - Desember)
+                                    @endif
+                                </p>
+                            </div>
+                            <div>
+                                <select onchange="window.location.href='?trend_filter='+this.value" class="text-xs border-gray-300 rounded-lg shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                    <option value="weekly" {{ ($data['chartTrend']['filter'] ?? 'weekly') == 'weekly' ? 'selected' : '' }}>Minggu Ini</option>
+                                    <option value="monthly" {{ ($data['chartTrend']['filter'] ?? 'weekly') == 'monthly' ? 'selected' : '' }}>Bulan Ini</option>
+                                    <option value="yearly" {{ ($data['chartTrend']['filter'] ?? 'weekly') == 'yearly' ? 'selected' : '' }}>Tahun Ini</option>
+                                </select>
                             </div>
                         </div>
                         <div class="p-5 h-80 relative">
-                            <div id="trendChart"></div>
+                            <canvas id="trendChart"></canvas>
                         </div>
                     </div>
 
@@ -165,7 +180,7 @@
                             <p class="text-xs text-gray-500">Barang paling sering dipinjam</p>
                         </div>
                         <div class="p-5 h-64 relative">
-                            <div id="top5Chart"></div>
+                            <canvas id="top5Chart"></canvas>
                         </div>
                     </div>
 
@@ -175,8 +190,8 @@
                             <h4 class="font-bold text-gray-800 text-lg">📊 Status Pengajuan</h4>
                             <p class="text-xs text-gray-500">Distribusi status peminjaman saat ini</p>
                         </div>
-                        <div class="p-5 h-64 relative">
-                            <div id="statusChart"></div>
+                        <div class="p-5 h-64 relative flex items-center justify-center">
+                            <canvas id="statusChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -437,158 +452,139 @@
         </div>
     </div>
 
-    {{-- ApexCharts for Admin Dashboard --}}
+    {{-- Chart.js for Admin Dashboard --}}
     @if (auth()->user()->role === 'admin')
-        <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
         <script>
+            // Common Chart Options for Premium Look
+            Chart.defaults.font.family = "'Inter', 'sans-serif'";
+            Chart.defaults.color = '#64748b';
+            
             document.addEventListener('DOMContentLoaded', function() {
                 
-                // 1. Trend Line Chart (Area Spline)
-                var trendOptions = {
-                    series: [{
-                        name: 'Peminjaman',
-                        data: {!! json_encode(array_values($data['chartPeminjamanBulanan'] ?? [])) !!}
-                    }],
-                    chart: {
-                        type: 'area',
-                        height: 320,
-                        fontFamily: 'Inter, sans-serif',
-                        toolbar: { show: false },
-                        zoom: { enabled: false }
-                    },
-                    colors: ['#4F46E5'], // Indigo 600
-                    fill: {
-                        type: 'gradient',
-                        gradient: {
-                            shadeIntensity: 1,
-                            opacityFrom: 0.7,
-                            opacityTo: 0.2,
-                            stops: [0, 90, 100]
-                        }
-                    },
-                    dataLabels: { enabled: false },
-                    stroke: {
-                        curve: 'smooth',
-                        width: 3
-                    },
-                    xaxis: {
-                        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', ' Okt', 'Nov', 'Des'],
-                        axisBorder: { show: false },
-                        axisTicks: { show: false }
-                    },
-                    yaxis: {
-                        show: true,
-                        tickAmount: 5,
-                        labels: {
-                            formatter: function (value) {
-                                return Math.floor(value); // Hilangkan desimal
-                            }
-                        }
-                    },
-                    grid: {
-                        strokeDashArray: 4,
-                        yaxis: { lines: { show: true } },
-                        xaxis: { lines: { show: false } },
-                        padding: { top: 0, right: 0, bottom: 0, left: 10 }
-                    },
-                    tooltip: {
-                        theme: 'light',
-                        y: {
-                            formatter: function (val) {
-                                return val + " Peminjaman"
-                            }
-                        }
-                    }
-                };
-                var trendChart = new ApexCharts(document.querySelector("#trendChart"), trendOptions);
-                trendChart.render();
+                // 1. Trend Line Chart
+                const trendCtx = document.getElementById('trendChart');
+                if (trendCtx) {
+                    const ctx = trendCtx.getContext('2d');
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)'); // Blue
+                    gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
 
-                // 2. Top 5 Barang (Bar Chart)
-                var top5Names = {!! json_encode(($data['top5Barang'] ?? collect())->pluck('nama_barang')->map(fn($n) => Str::limit($n, 20))) !!};
-                var top5Values = {!! json_encode(($data['top5Barang'] ?? collect())->pluck('total_dipinjam')) !!};
-
-                var top5Options = {
-                    series: [{
-                        name: 'Total Dipinjam',
-                        data: top5Values
-                    }],
-                    chart: {
-                        type: 'bar',
-                        height: 280,
-                        fontFamily: 'Inter, sans-serif',
-                        toolbar: { show: false }
-                    },
-                    plotOptions: {
-                        bar: {
-                            borderRadius: 6,
-                            horizontal: true,
-                            barHeight: '60%',
-                            distributed: true // Warna beda tiap bar
-                        }
-                    },
-                    colors: ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316'],
-                    dataLabels: { enabled: false },
-                    xaxis: {
-                        categories: top5Names,
-                        axisBorder: { show: false },
-                        axisTicks: { show: false },
-                        labels: { show: false } // Sembunyikan label angka di bawah biar bersih
-                    },
-                    grid: {
-                        show: false,
-                        padding: { top: 0, right: 0, bottom: 0, left: 0 }
-                    },
-                    tooltip: { theme: 'light' },
-                    legend: { show: false }
-                };
-                var top5Chart = new ApexCharts(document.querySelector("#top5Chart"), top5Options);
-                top5Chart.render();
-
-                // 3. Status Chart (Donut)
-                var statusOptions = {
-                    series: [
-                        {{ $data['peminjamanMenunggu'] ?? 0 }},
-                        {{ $data['peminjamanDisetujui'] ?? 0 }},
-                        {{ $data['peminjamanSelesai'] ?? 0 }},
-                        {{ $data['peminjamanDitolak'] ?? 0 }} // Tambahkan Ditolak jika ada datanya di controller, kalau tidak 0
-                    ],
-                    chart: {
-                        type: 'donut',
-                        height: 280,
-                        fontFamily: 'Inter, sans-serif',
-                    },
-                    labels: ['Menunggu', 'Sedang Dipinjam', 'Selesai', 'Ditolak'],
-                    colors: ['#fbbf24', '#22c55e', '#3b82f6', '#ef4444'],
-                    plotOptions: {
-                        pie: {
-                            donut: {
-                                size: '75%',
-                                labels: {
-                                    show: true,
-                                    total: {
-                                        show: true,
-                                        label: 'Total',
-                                        fontSize: '14px',
-                                        fontWeight: 600,
-                                        color: '#64748b'
-                                    }
+                    new Chart(trendCtx, {
+                        type: 'line',
+                        data: {
+                            labels: {!! json_encode($data['chartTrend']['labels'] ?? []) !!},
+                            datasets: [{
+                                label: 'Peminjaman',
+                                data: {!! json_encode($data['chartTrend']['data'] ?? []) !!},
+                                borderColor: '#3b82f6', // Blue 500
+                                backgroundColor: gradient,
+                                borderWidth: 3,
+                                pointBackgroundColor: '#ffffff',
+                                pointBorderColor: '#3b82f6',
+                                pointBorderWidth: 2,
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                fill: true,
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                    padding: 12,
+                                    titleColor: '#fff',
+                                    bodyColor: '#fff',
+                                    titleFont: { size: 14, weight: 'bold' },
+                                    intersect: false,
+                                    mode: 'index',
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { borderDash: [2, 4], color: '#f1f5f9' },
+                                    ticks: { padding: 10 }
+                                },
+                                x: {
+                                    grid: { display: false },
+                                    ticks: { padding: 10 }
                                 }
                             }
                         }
-                    },
-                    legend: {
-                        position: 'bottom',
-                        horizontalAlign: 'center',
-                        fontSize: '13px',
-                        fontFamily: 'Inter, sans-serif',
-                        markers: { radius: 12 }
-                    },
-                    dataLabels: { enabled: false },
-                    stroke: { show: false }
-                };
-                var statusChart = new ApexCharts(document.querySelector("#statusChart"), statusOptions);
-                statusChart.render();
+                    });
+                }
 
+                // 2. Top 5 Bar Chart
+                const top5Ctx = document.getElementById('top5Chart');
+                if (top5Ctx) {
+                    new Chart(top5Ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: {!! json_encode(($data['top5Barang'] ?? collect())->pluck('nama_barang')->map(fn($n) => Str::limit($n, 15))) !!},
+                            datasets: [{
+                                label: 'Dipinjam',
+                                data: {!! json_encode(($data['top5Barang'] ?? collect())->pluck('total_dipinjam')) !!},
+                                backgroundColor: [
+                                    '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316'
+                                ],
+                                borderRadius: 6,
+                                barThickness: 20,
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                            },
+                            scales: {
+                                x: { display: false },
+                                y: {
+                                    grid: { display: false },
+                                    ticks: { font: { weight: '600' } }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // 3. Status Doughnut Chart
+                const statusCtx = document.getElementById('statusChart');
+                if (statusCtx) {
+                    new Chart(statusCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Menunggu', 'Disetujui', 'Selesai'],
+                            datasets: [{
+                                data: [
+                                    {{ $data['peminjamanMenunggu'] ?? 0 }},
+                                    {{ $data['peminjamanDisetujui'] ?? 0 }},
+                                    {{ $data['peminjamanSelesai'] ?? 0 }}
+                                ],
+                                backgroundColor: ['#fbbf24', '#22c55e', '#3b82f6'],
+                                borderWidth: 0,
+                                hoverOffset: 10
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '75%',
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { usePointStyle: true, padding: 20 }
+                                }
+                            }
+                        }
+                    });
+                }
             });
         </script>
     @endif

@@ -49,18 +49,53 @@ class DashboardController extends Controller
                 ->limit(5) // Limit to top 5 specifically
                 ->get(['id', 'nama_barang', 'kode_barang']);
 
-            // Statistik Peminjaman Per Bulan (Tahun Ini)
-            $peminjamanPerBulan = Peminjaman::selectRaw('MONTH(tgl_pinjam) as bulan, COUNT(*) as total')
-                ->whereYear('tgl_pinjam', date('Y'))
-                ->groupBy('bulan')
-                ->orderBy('bulan')
-                ->pluck('total', 'bulan')
-                ->toArray();
+            // Statistik Peminjaman Trend Chart
+            $trendFilter = request()->get('trend_filter', 'weekly'); // default weekly
+            $chartLabels = [];
+            $chartData = [];
 
-            // Fill missing months with 0
-            $chartPeminjamanBulanan = [];
-            for ($i = 1; $i <= 12; $i++) {
-                $chartPeminjamanBulanan[] = $peminjamanPerBulan[$i] ?? 0;
+            if ($trendFilter === 'yearly') {
+                // Per Bulan dalam Tahun Ini
+                $queryData = Peminjaman::selectRaw('MONTH(tgl_pinjam) as bulan, COUNT(*) as total')
+                    ->whereYear('tgl_pinjam', date('Y'))
+                    ->groupBy('bulan')
+                    ->pluck('total', 'bulan')
+                    ->toArray();
+
+                $chartLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', ' Okt', 'Nov', 'Des'];
+                for ($i = 1; $i <= 12; $i++) {
+                    $chartData[] = $queryData[$i] ?? 0;
+                }
+
+            } elseif ($trendFilter === 'monthly') {
+                // Per Hari dalam Bulan Ini
+                $daysInMonth = now()->daysInMonth;
+                $queryData = Peminjaman::selectRaw('DAY(tgl_pinjam) as hari, COUNT(*) as total')
+                    ->whereMonth('tgl_pinjam', date('m'))
+                    ->whereYear('tgl_pinjam', date('Y'))
+                    ->groupBy('hari')
+                    ->pluck('total', 'hari')
+                    ->toArray();
+
+                for ($i = 1; $i <= $daysInMonth; $i++) {
+                    $chartLabels[] = (string) $i;
+                    $chartData[] = $queryData[$i] ?? 0;
+                }
+
+            } else { // weekly (default)
+                // Per Hari dalam Minggu Ini (Senin - Minggu)
+                $queryData = Peminjaman::selectRaw('DATE(tgl_pinjam) as tanggal, COUNT(*) as total')
+                    ->whereBetween('tgl_pinjam', [now()->startOfWeek(), now()->endOfWeek()])
+                    ->groupBy('tanggal')
+                    ->pluck('total', 'tanggal')
+                    ->toArray();
+
+                $chartLabels = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+                $startOfWeek = now()->startOfWeek();
+                for ($i = 0; $i < 7; $i++) {
+                    $date = $startOfWeek->copy()->addDays($i)->format('Y-m-d');
+                    $chartData[] = $queryData[$date] ?? 0;
+                }
             }
 
             // Barang dengan Stok Menipis (unit tersedia <= 3)
@@ -123,7 +158,11 @@ class DashboardController extends Controller
 
                 // Tier 2: Top 5 Barang & Stok Alert
                 'top5Barang' => $top5Barang,
-                'chartPeminjamanBulanan' => $chartPeminjamanBulanan,
+                'chartTrend' => [
+                    'labels' => $chartLabels,
+                    'data' => $chartData,
+                    'filter' => $trendFilter
+                ],
                 'stokMenipis' => $stokMenipis,
                 'stokHabis' => $stokHabis,
 

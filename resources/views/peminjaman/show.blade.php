@@ -13,16 +13,23 @@
     <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
-                <div class="p-6">
+                <div class="p-6 print:p-0">
+                    {{-- Print Header --}}
+                    <div class="hidden print:block text-center mb-8 border-b-2 border-black pb-4">
+                        <h1 class="text-2xl font-bold uppercase tracking-wider">Bukti Peminjaman Barang</h1>
+                        <p class="text-sm">SMK Negeri 1 (Contoh) - Sistem Sarpras</p>
+                    </div>
                     {{-- Status Badge --}}
                     <div class="mb-6 text-center">
                         @switch($peminjaman->status)
                             @case('menunggu')
-                                <span class="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full text-lg font-medium">⏳ Menunggu Persetujuan</span>
+                                <span class="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full text-lg font-medium print:hidden">⏳ Menunggu Persetujuan</span>
+                                <span class="hidden print:block text-lg font-bold border border-black px-4 py-1 inline-block">STATUS: MENUNGGU PERSETUJUAN</span>
                                 <p class="text-sm text-gray-500 mt-2">Kode QR akan muncul setelah pengajuan disetujui oleh petugas.</p>
                                 @break
                             @case('disetujui')
-                                <span class="px-4 py-2 bg-green-100 text-green-800 rounded-full text-lg font-medium">✅ Disetujui</span>
+                                <span class="px-4 py-2 bg-green-100 text-green-800 rounded-full text-lg font-medium print:hidden">✅ Disetujui</span>
+                                <span class="hidden print:block text-lg font-bold border border-black px-4 py-1 inline-block">STATUS: DISETUJUI</span>
                                 @if ($peminjaman->tgl_kembali_rencana && now()->gt($peminjaman->tgl_kembali_rencana))
                                     <div class="mt-2">
                                         <span class="px-3 py-1 rounded-full text-sm font-bold bg-red-600 text-white shadow">
@@ -32,7 +39,8 @@
                                 @endif
                                 @break
                             @case('selesai')
-                                <span class="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-lg font-medium">📦 Selesai</span>
+                                <span class="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-lg font-medium print:hidden">📦 Selesai</span>
+                                <span class="hidden print:block text-lg font-bold border border-black px-4 py-1 inline-block">STATUS: SELESAI</span>
                                 @if ($peminjaman->pengembalian && $peminjaman->tgl_kembali_rencana)
                                     @php
                                         $tglAktual = \Carbon\Carbon::parse($peminjaman->pengembalian->tgl_kembali_aktual);
@@ -61,9 +69,9 @@
                         @endswitch
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 print:grid-cols-2 print:gap-4">
                         {{-- Info Peminjam --}}
-                        <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="bg-gray-50 rounded-lg p-4 print:bg-white print:border print:border-black print:rounded-none">
                             <h3 class="font-semibold text-gray-800 mb-3 border-b pb-2">Info Peminjam</h3>
                             <div class="space-y-2">
                                 <p><span class="text-gray-500">Nama:</span> <span class="font-medium">{{ $peminjaman->user->name ?? '-' }}</span></p>
@@ -73,7 +81,7 @@
                         </div>
 
                         {{-- Info Barang (Unit-Based) --}}
-                        <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="bg-gray-50 rounded-lg p-4 print:bg-white print:border print:border-black print:rounded-none">
                             <h3 class="font-semibold text-gray-800 mb-3 border-b pb-2">Unit yang Dipinjam</h3>
                             <div class="space-y-2">
                                 <p><span class="text-gray-500">Jumlah Unit:</span> <span class="text-xl font-bold text-blue-600">{{ $peminjaman->details->count() }}</span></p>
@@ -95,7 +103,7 @@
                     </div>
 
                     {{-- Info Tanggal --}}
-                    <div class="mt-6 bg-blue-50 rounded-lg p-4">
+                    <div class="mt-6 bg-blue-50 rounded-lg p-4 print:bg-white print:border print:border-black print:mt-4 print:rounded-none">
                         <h3 class="font-semibold text-gray-800 mb-3 border-b border-indigo-200 pb-2">Info Peminjaman</h3>
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
                             <div>
@@ -150,10 +158,10 @@
 
                     {{-- QR Code Bukti Peminjaman (hanya jika disetujui DAN hanya untuk peminjam yang bersangkutan) --}}
                     @if ($peminjaman->status === 'disetujui' && $peminjaman->qr_code && auth()->id() === $peminjaman->user_id)
-                        <div class="mt-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+                        <div class="mt-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200 print:bg-white print:border-none print:shadow-none print:p-0 print:mt-4">
                             <h3 class="font-semibold text-gray-800 mb-4 text-center">📱 QR Code Bukti Peminjaman</h3>
                             <div class="flex flex-col items-center">
-                                <div class="bg-white p-4 rounded-lg shadow-md">
+                                <div class="bg-white p-4 rounded-lg shadow-md print:shadow-none print:p-0">
                                     {!! QrCode::size(180)->generate($peminjaman->qr_code) !!}
                                 </div>
                                 <p class="mt-3 font-mono text-lg font-bold text-blue-800">{{ $peminjaman->qr_code }}</p>
@@ -221,7 +229,19 @@
                         </div>
                     @endif
 
-                    <div class="mt-6 pt-6 border-t flex flex-wrap justify-between items-center gap-3">
+                    {{-- Signature Section (Print Only) --}}
+                    <div class="hidden print:flex mt-12 justify-between text-center break-inside-avoid">
+                        <div class="w-1/3">
+                            <p class="mb-16">Peminjam</p>
+                            <p class="font-bold underline">{{ $peminjaman->user->name ?? '......................' }}</p>
+                        </div>
+                        <div class="w-1/3">
+                            <p class="mb-16">Petugas Sarpras</p>
+                            <p class="font-bold underline">{{ $peminjaman->petugas->name ?? '......................' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t flex flex-wrap justify-between items-center gap-3 print:hidden">
                         <a href="{{ route('peminjaman.index', request()->query()) }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300">Kembali</a>
                         
                         <div class="flex gap-3">

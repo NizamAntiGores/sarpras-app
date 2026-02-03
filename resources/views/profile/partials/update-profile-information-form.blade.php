@@ -24,13 +24,29 @@
             <x-input-error class="mt-2" :messages="$errors->get('name')" />
         </div>
 
-        @if($user->kelas)
+        <!-- Nomor Induk (NIS/NIP) -->
+        <div>
+            <x-input-label for="nomor_induk" :value="$user->role === 'siswa' ? 'NISN / NIS' : 'NIP / Nomor Induk'" />
+            <x-text-input id="nomor_induk" name="nomor_induk" type="text" class="mt-1 block w-full"
+                :value="old('nomor_induk', $user->nomor_induk)" />
+            <x-input-error class="mt-2" :messages="$errors->get('nomor_induk')" />
+        </div>
+
+        <!-- Kelas (Khusus Siswa) -->
+        @if($user->role === 'siswa')
             <div>
                 <x-input-label for="kelas" value="Kelas" />
-                <x-text-input id="kelas" name="kelas" type="text" class="mt-1 block w-full bg-gray-100"
-                    :value="$user->kelas" disabled />
+                <x-text-input id="kelas" name="kelas" type="text" class="mt-1 block w-full" :value="old('kelas', $user->kelas)" placeholder="Contoh: XII RPL 1" />
+                <x-input-error class="mt-2" :messages="$errors->get('kelas')" />
             </div>
         @endif
+
+        <!-- Kontak / No HP -->
+        <div>
+            <x-input-label for="kontak" value="Nomor HP / WhatsApp" />
+            <x-text-input id="kontak" name="kontak" type="text" class="mt-1 block w-full" :value="old('kontak', $user->kontak)" placeholder="08..." />
+            <x-input-error class="mt-2" :messages="$errors->get('kontak')" />
+        </div>
 
         <div>
             <x-input-label for="email" :value="__('Email')" />

@@ -160,7 +160,7 @@ class PeminjamanController extends Controller
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Peminjaman tidak boleh lebih dari 7 hari. Silakan ajukan perpanjangan nanti jika diperlukan.');
+                ->with('error', 'Peminjaman tidak boleh lebih dari 7 hari. Silakan buat peminjaman baru jika diperlukan.');
         }
 
         DB::beginTransaction();
@@ -536,53 +536,5 @@ class PeminjamanController extends Controller
         return redirect()
             ->route('peminjaman.index')
             ->with('success', 'Data peminjaman berhasil dihapus.');
-    }
-
-    /**
-     * Handle extension request from user.
-     */
-    public function extend(Request $request, Peminjaman $peminjaman): RedirectResponse
-    {
-        $user = auth()->user();
-
-        // Validasi Owner
-        if ($peminjaman->user_id !== $user->id) {
-            abort(403, 'Anda tidak berhak mengajukan perpanjangan untuk peminjaman ini.');
-        }
-
-        // Hanya bisa diperpanjang jika status 'disetujui' (sedang dipinjam)
-        if ($peminjaman->status !== 'disetujui') {
-            return back()->with('error', 'Hanya peminjaman yang sedang aktif yang bisa diperpanjang.');
-        }
-
-        $validated = $request->validate([
-            'tgl_kembali_baru' => 'required|date|after:today',
-            'alasan' => 'required|string|max:255',
-        ], [
-            'tgl_kembali_baru.after' => 'Tanggal perpanjangan harus setelah hari ini.',
-            'alasan.required' => 'Alasan perpanjangan wajib diisi.',
-        ]);
-
-        $oldDate = \Carbon\Carbon::parse($peminjaman->tgl_kembali_rencana);
-        $newDate = \Carbon\Carbon::parse($validated['tgl_kembali_baru']);
-
-        // Validasi Max Extension (Misal: Maksimal +7 hari dari rencana awal)
-        if ($oldDate->diffInDays($newDate) > 7) {
-            return back()->with('error', 'Perpanjangan maksimal 7 hari dari tanggal rencana awal.');
-        }
-
-        // Proses Update
-        // Status diubah jadi MENUNGGU lagi agar Admin notice dan approve ulang
-        $peminjaman->update([
-            'status' => 'menunggu', // Reset status to waiting approval
-            'tgl_kembali_rencana' => $validated['tgl_kembali_baru'],
-            'keterangan' => $peminjaman->keterangan . " | [REQ-EXT] Perpanjangan diajukan tgl " . now()->format('d/m') . ". Alasan: " . $validated['alasan'],
-            // Reset petugas approval karena butuh approval baru
-            'petugas_id' => null,
-        ]);
-
-        \App\Helpers\LogHelper::record('update', "Mengajukan perpanjangan peminjaman (ID: {$peminjaman->id}) sampai tgl " . $newDate->format('d M Y'));
-
-        return redirect()->back()->with('success', 'Pengajuan perpanjangan berhasil dikirim. Menunggu persetujuan petugas.');
     }
 }

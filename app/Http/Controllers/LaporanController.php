@@ -17,13 +17,23 @@ class LaporanController extends Controller
     public function assetHealth(Request $request): View
     {
         $lokasiId = $request->input('lokasi_id');
+        $kategoriId = $request->input('kategori_id');
+        
         $lokasiList = \App\Models\Lokasi::orderBy('nama_lokasi')->get();
+        $kategoriList = \App\Models\Kategori::orderBy('nama_kategori')->get();
+        
         $selectedLokasi = $lokasiId ? \App\Models\Lokasi::find($lokasiId) : null;
+        $selectedKategori = $kategoriId ? \App\Models\Kategori::find($kategoriId) : null;
 
-        // Base query with optional lokasi filter
+        // Base query with optional lokasi and kategori filter
         $unitQuery = SarprasUnit::query();
         if ($lokasiId) {
             $unitQuery->where('lokasi_id', $lokasiId);
+        }
+        if ($kategoriId) {
+            $unitQuery->whereHas('sarpras', function ($q) use ($kategoriId) {
+                $q->where('kategori_id', $kategoriId);
+            });
         }
 
         // 1. Ringkasan Kondisi Aset (Chart Pie)
@@ -39,6 +49,15 @@ class LaporanController extends Controller
             })
             ->get();
 
+        // 2.5 Daftar Semua Unit (untuk detail view - only when filter is applied)
+        $daftarUnit = null;
+        if ($lokasiId || $kategoriId) {
+            $daftarUnit = (clone $unitQuery)->with(['sarpras.kategori', 'lokasi'])
+                ->orderBy('sarpras_id')
+                ->paginate(15)
+                ->appends(request()->query());
+        }
+
         // 3. Top 10 Aset Paling Sering Rusak (Historical Analysis)
         $seringRusakQuery = DB::table('pengembalian_details')
             ->join('sarpras_units', 'pengembalian_details.sarpras_unit_id', '=', 'sarpras_units.id')
@@ -47,6 +66,9 @@ class LaporanController extends Controller
 
         if ($lokasiId) {
             $seringRusakQuery->where('sarpras_units.lokasi_id', $lokasiId);
+        }
+        if ($kategoriId) {
+            $seringRusakQuery->where('sarpras.kategori_id', $kategoriId);
         }
 
         $seringRusak = $seringRusakQuery
@@ -63,6 +85,11 @@ class LaporanController extends Controller
                 $q->where('lokasi_id', $lokasiId);
             });
         }
+        if ($kategoriId) {
+            $asetHilangQuery->whereHas('pengembalianDetail.sarprasUnit.sarpras', function ($q) use ($kategoriId) {
+                $q->where('kategori_id', $kategoriId);
+            });
+        }
         $asetHilang = $asetHilangQuery->latest()->get();
 
         // 5. Riwayat Maintenance Terakhir
@@ -72,37 +99,90 @@ class LaporanController extends Controller
                 $q->where('lokasi_id', $lokasiId);
             });
         }
+        if ($kategoriId) {
+            $maintenanceQuery->whereHas('sarprasUnit.sarpras', function ($q) use ($kategoriId) {
+                $q->where('kategori_id', $kategoriId);
+            });
+        }
         $riwayatMaintenance = $maintenanceQuery->orderBy('tanggal_selesai', 'desc')->limit(10)->get();
 
-        // 6. Per-Location Summary (only when no filter applied)
+        // 6. Per-Location Summary (only when no lokasi filter applied)
         $lokasiSummary = [];
         if (! $lokasiId) {
-            $lokasiSummary = \App\Models\Lokasi::withCount([
-                'units as total_unit',
-                'units as tersedia' => function ($q) {
+            $lokasiSummaryQuery = \App\Models\Lokasi::query();
+            
+            // Apply kategori filter to lokasi summary
+            $kategoriFilterId = $kategoriId;
+            $lokasiSummary = $lokasiSummaryQuery->withCount([
+                'units as total_unit' => function ($q) use ($kategoriFilterId) {
+                    if ($kategoriFilterId) {
+                        $q->whereHas('sarpras', fn($sq) => $sq->where('kategori_id', $kategoriFilterId));
+                    }
+                },
+                'units as tersedia' => function ($q) use ($kategoriFilterId) {
                     $q->where('status', 'tersedia')->where('kondisi', 'baik');
+                    if ($kategoriFilterId) {
+                        $q->whereHas('sarpras', fn($sq) => $sq->where('kategori_id', $kategoriFilterId));
+                    }
                 },
-                'units as dipinjam' => function ($q) {
+                'units as dipinjam' => function ($q) use ($kategoriFilterId) {
                     $q->where('status', 'dipinjam');
+                    if ($kategoriFilterId) {
+                        $q->whereHas('sarpras', fn($sq) => $sq->where('kategori_id', $kategoriFilterId));
+                    }
                 },
-                'units as rusak' => function ($q) {
+                'units as rusak' => function ($q) use ($kategoriFilterId) {
                     $q->whereIn('kondisi', ['rusak_ringan', 'rusak_berat']);
+                    if ($kategoriFilterId) {
+                        $q->whereHas('sarpras', fn($sq) => $sq->where('kategori_id', $kategoriFilterId));
+                    }
                 },
-                'units as maintenance' => function ($q) {
+                'units as maintenance' => function ($q) use ($kategoriFilterId) {
                     $q->where('status', 'maintenance');
+                    if ($kategoriFilterId) {
+                        $q->whereHas('sarpras', fn($sq) => $sq->where('kategori_id', $kategoriFilterId));
+                    }
                 },
             ])->get();
+        }
+
+        // 7. Per-Kategori Summary (only when no kategori filter applied)
+        $kategoriSummary = [];
+        if (! $kategoriId) {
+            $lokasiFilterId = $lokasiId;
+            $kategoriSummary = \App\Models\Kategori::withCount([
+                'sarpras as total_unit' => function ($q) use ($lokasiFilterId) {
+                    // Count units through sarpras
+                },
+            ])->get()->map(function ($kategori) use ($lokasiFilterId) {
+                $unitsQuery = SarprasUnit::whereHas('sarpras', fn($q) => $q->where('kategori_id', $kategori->id));
+                if ($lokasiFilterId) {
+                    $unitsQuery->where('lokasi_id', $lokasiFilterId);
+                }
+                
+                $kategori->total_unit = (clone $unitsQuery)->count();
+                $kategori->tersedia = (clone $unitsQuery)->where('status', 'tersedia')->where('kondisi', 'baik')->count();
+                $kategori->dipinjam = (clone $unitsQuery)->where('status', 'dipinjam')->count();
+                $kategori->rusak = (clone $unitsQuery)->whereIn('kondisi', ['rusak_ringan', 'rusak_berat'])->count();
+                $kategori->maintenance = (clone $unitsQuery)->where('status', 'maintenance')->count();
+                
+                return $kategori;
+            });
         }
 
         return view('laporan.asset_health', compact(
             'kondisiSummary',
             'asetRusak',
+            'daftarUnit',
             'seringRusak',
             'asetHilang',
             'riwayatMaintenance',
             'lokasiList',
+            'kategoriList',
             'selectedLokasi',
-            'lokasiSummary'
+            'selectedKategori',
+            'lokasiSummary',
+            'kategoriSummary'
         ));
     }
 }

@@ -206,6 +206,9 @@ class DashboardController extends Controller
                         $query->bisaDipinjam();
                     }
                 ])
+                ->when(!$user->isGuru(), function ($query) {
+                    $query->where('tipe', '!=', 'bahan');
+                })
                 ->having('available_count', '>', 0)
                 ->orderBy('nama_barang')
                 ->limit(8)
@@ -234,6 +237,9 @@ class DashboardController extends Controller
                         $query->bisaDipinjam();
                     }
                 ])
+                    ->when(!$user->isGuru(), function ($query) {
+                        $query->where('tipe', '!=', 'bahan');
+                    })
                     ->having('available_count', '>', 0)
                     ->count(),
 

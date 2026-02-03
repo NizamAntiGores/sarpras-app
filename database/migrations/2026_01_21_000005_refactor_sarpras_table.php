@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -15,7 +14,7 @@ return new class extends Migration
     {
         Schema::table('sarpras', function (Blueprint $table) {
             // Tambah kolom deskripsi jika belum ada
-            if (!Schema::hasColumn('sarpras', 'deskripsi')) {
+            if (! Schema::hasColumn('sarpras', 'deskripsi')) {
                 $table->text('deskripsi')->nullable()->after('foto');
             }
         });
@@ -43,16 +42,16 @@ return new class extends Migration
     {
         Schema::table('sarpras', function (Blueprint $table) {
             // Kembalikan kolom stok-based
-            if (!Schema::hasColumn('sarpras', 'stok')) {
+            if (! Schema::hasColumn('sarpras', 'stok')) {
                 $table->integer('stok')->default(0);
             }
-            if (!Schema::hasColumn('sarpras', 'stok_rusak')) {
+            if (! Schema::hasColumn('sarpras', 'stok_rusak')) {
                 $table->integer('stok_rusak')->default(0);
             }
-            if (!Schema::hasColumn('sarpras', 'kondisi_awal')) {
+            if (! Schema::hasColumn('sarpras', 'kondisi_awal')) {
                 $table->enum('kondisi_awal', ['baik', 'rusak'])->default('baik');
             }
-            
+
             // Drop kolom deskripsi
             if (Schema::hasColumn('sarpras', 'deskripsi')) {
                 $table->dropColumn('deskripsi');

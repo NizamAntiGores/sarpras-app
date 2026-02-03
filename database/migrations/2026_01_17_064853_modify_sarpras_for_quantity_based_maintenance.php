@@ -17,7 +17,7 @@ return new class extends Migration
         Schema::table('sarpras', function (Blueprint $table) {
             // Hapus kolom status_barang
             $table->dropColumn('status_barang');
-            
+
             // Tambah kolom stok_rusak
             $table->integer('stok_rusak')->default(0)->after('stok');
         });
@@ -31,7 +31,7 @@ return new class extends Migration
         Schema::table('sarpras', function (Blueprint $table) {
             // Kembalikan kolom status_barang
             $table->enum('status_barang', ['tersedia', 'dipinjam', 'maintenance'])->default('tersedia')->after('kondisi_awal');
-            
+
             // Hapus kolom stok_rusak
             $table->dropColumn('stok_rusak');
         });

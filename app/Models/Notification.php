@@ -24,8 +24,11 @@ class Notification extends Model
 
     // Notification Types
     const TYPE_PEMINJAMAN_APPROVED = 'peminjaman_approved';
+
     const TYPE_PEMINJAMAN_REJECTED = 'peminjaman_rejected';
+
     const TYPE_PENGADUAN_UPDATED = 'pengaduan_updated';
+
     const TYPE_REMINDER_JATUH_TEMPO = 'reminder_jatuh_tempo';
 
     /**

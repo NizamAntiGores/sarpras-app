@@ -2,8 +2,11 @@
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Manajemen Sarpras</h2>
-            <a href="{{ route('sarpras.create') }}" class="mt-3 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold uppercase hover:bg-blue-700">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <a href="{{ route('sarpras.create') }}"
+                class="mt-3 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold uppercase hover:bg-blue-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
                 Tambah Barang
             </a>
         </div>
@@ -11,12 +14,14 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            
+
             @if (session('success'))
-                <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">{{ session('success') }}</div>
+                <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+                    {{ session('success') }}</div>
             @endif
             @if (session('error'))
-                <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">{{ session('error') }}</div>
+                <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">{{ session('error') }}
+                </div>
             @endif
 
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
@@ -43,9 +48,12 @@
 
                     {{-- Search Bar --}}
                     <div class="mb-6">
-                        <form action="{{ route('sarpras.index') }}" method="GET" class="flex flex-col md:flex-row gap-4">
+                        <form action="{{ route('sarpras.index') }}" method="GET"
+                            class="flex flex-col md:flex-row gap-4">
                             <div class="flex-1 min-w-[200px]">
-                                <select name="kategori_id" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm" onchange="this.form.submit()">
+                                <select name="kategori_id"
+                                    class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm"
+                                    onchange="this.form.submit()">
                                     <option value="">Semua Kategori</option>
                                     @foreach($kategoriList as $kat)
                                         <option value="{{ $kat->id }}" {{ request('kategori_id') == $kat->id ? 'selected' : '' }}>
@@ -56,12 +64,14 @@
                             </div>
                             <div class="flex-grow relative">
                                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
                                 </span>
-                                <input type="text" name="search" id="search" value="{{ request('search') }}" 
-                                       class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
-                                       placeholder="Cari nama atau kode barang..."
-                                       oninput="debounceSubmit()">
+                                <input type="text" name="search" id="search" value="{{ request('search') }}"
+                                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    placeholder="Cari nama atau kode barang..." oninput="debounceSubmit()">
                             </div>
                             <script>
                                 let timeout = null;
@@ -73,11 +83,11 @@
                                         form.submit();
                                     }, 600); // Wait 600ms after user stops typing
                                 }
-                                
+
                                 // Auto-focus input after reload if searching
-                                document.addEventListener("DOMContentLoaded", function() {
+                                document.addEventListener("DOMContentLoaded", function () {
                                     const searchInput = document.getElementById('search');
-                                    if(searchInput && searchInput.value) {
+                                    if (searchInput && searchInput.value) {
                                         searchInput.focus();
                                         // Move cursor to end
                                         const val = searchInput.value;
@@ -86,11 +96,13 @@
                                     }
                                 });
                             </script>
-                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
+                            <button type="submit"
+                                class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
                                 Cari
                             </button>
                             @if(request('search') || request('kategori_id'))
-                                <a href="{{ route('sarpras.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:ring ring-blue-200 active:text-gray-800 active:bg-gray-50 disabled:opacity-25 transition ease-in-out duration-150">
+                                <a href="{{ route('sarpras.index') }}"
+                                    class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:ring ring-blue-200 active:text-gray-800 active:bg-gray-50 disabled:opacity-25 transition ease-in-out duration-150">
                                     Reset
                                 </a>
                             @endif
@@ -102,12 +114,18 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Foto</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kode</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Barang</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total Unit</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Foto
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kode
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama
+                                        Barang</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori
+                                    </th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total
+                                        Unit</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aksi
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -115,72 +133,146 @@
                                     <tr class="hover:bg-gray-50">
                                         <td class="px-4 py-4">
                                             @if ($item->foto)
-                                                <img src="{{ Storage::url($item->foto) }}" alt="{{ $item->nama_barang }}" 
-                                                     class="w-12 h-12 object-cover rounded-lg border border-gray-200">
+                                                <img src="{{ Storage::url($item->foto) }}" alt="{{ $item->nama_barang }}"
+                                                    class="w-12 h-12 object-cover rounded-lg border border-gray-200">
                                             @else
-                                                <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
-                                                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                <div
+                                                    class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                                                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                     </svg>
                                                 </div>
                                             @endif
                                         </td>
-                                        <td class="px-4 py-4"><span class="px-2 py-1 text-xs font-mono bg-gray-100 rounded">{{ $item->kode_barang }}</span></td>
+                                        <td class="px-4 py-4"><span
+                                                class="px-2 py-1 text-xs font-mono bg-gray-100 rounded">{{ $item->kode_barang }}</span>
+                                        </td>
                                         <td class="px-4 py-4">
                                             <div class="text-sm font-medium text-gray-900">{{ $item->nama_barang }}</div>
                                         </td>
-                                        <td class="px-4 py-4"><span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">{{ $item->kategori->nama_kategori ?? '-' }}</span></td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex flex-col items-start gap-1">
+                                                <span
+                                                    class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">{{ $item->kategori->nama_kategori ?? '-' }}</span>
+                                                @if($item->tipe == 'bahan')
+                                                    <span
+                                                        class="px-2 py-0.5 text-[10px] rounded border border-amber-200 bg-amber-50 text-amber-700">Habis
+                                                        Pakai</span>
+                                                @else
+                                                    <span
+                                                        class="px-2 py-0.5 text-[10px] rounded border border-gray-200 bg-gray-50 text-gray-600">Aset</span>
+                                                @endif
+                                            </div>
+                                        </td>
                                         <td class="px-4 py-4 text-center">
                                             {{-- Ringkasan Unit --}}
-                                            <div class="flex flex-col items-center">
-                                                <span class="text-lg font-bold text-gray-700">{{ $item->total_unit ?? 0 }}</span>
-                                                <div class="flex gap-1 mt-1">
-                                                    @if (($item->stok_tersedia ?? 0) > 0)
-                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-green-100 text-green-700 font-semibold" title="Tersedia">✅ {{ $item->stok_tersedia }}</span>
-                                                    @endif
-                                                    {{-- Note: For dipinjam_count, we might want to include pending requests or keep it strictly 'currently borrowed' --}}
-                                                    @if (($item->dipinjam_count ?? 0) > 0)
-                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-orange-100 text-orange-700 font-semibold" title="Dipinjam">👋 {{ $item->dipinjam_count }}</span>
-                                                    @endif
-                                                    @if (($item->maintenance_count ?? 0) > 0)
-                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-red-100 text-red-700 font-semibold" title="Maintenance">🔧 {{ $item->maintenance_count }}</span>
-                                                    @endif
-                                                    @if (($item->rusak_berat_count ?? 0) > 0)
-                                                        <span class="px-1.5 py-0.5 text-xs rounded bg-gray-800 text-white font-semibold" title="Rusak Berat">💀 {{ $item->rusak_berat_count }}</span>
-                                                    @endif
+                                            <div class="w-32 mx-auto">
+                                                <div class="flex justify-between items-end mb-1">
+                                                    <span class="text-xs font-medium text-gray-500">Total</span>
+                                                    <span
+                                                        class="text-lg font-bold text-gray-800">{{ $item->total_unit ?? 0 }}</span>
+                                                </div>
+
+                                                {{-- Progress Bar --}}
+                                                <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden flex mb-2">
+                                                    @php
+                                                        $total = $item->total_unit > 0 ? $item->total_unit : 1;
+                                                        $tersediaPct = (($item->stok_tersedia ?? 0) / $total) * 100;
+                                                        $dipinjamPct = (($item->dipinjam_count ?? 0) / $total) * 100;
+                                                        $rusakPct = (($item->maintenance_count ?? 0) + ($item->rusak_berat_count ?? 0)) / $total * 100;
+                                                    @endphp
+                                                    <div class="bg-green-500" style="width: {{ $tersediaPct }}%"
+                                                        title="Tersedia: {{ $item->stok_tersedia ?? 0 }}"></div>
+                                                    <div class="bg-yellow-400" style="width: {{ $dipinjamPct }}%"
+                                                        title="Dipinjam: {{ $item->dipinjam_count ?? 0 }}"></div>
+                                                    <div class="bg-red-500" style="width: {{ $rusakPct }}%"
+                                                        title="Tidak Tersedia: {{ ($item->maintenance_count ?? 0) + ($item->rusak_berat_count ?? 0) }}">
+                                                    </div>
+                                                </div>
+
+                                                {{-- Legend / Mini Stats --}}
+                                                <div class="flex justify-between text-[10px] font-medium px-0.5">
+                                                    <div class="flex items-center gap-1" title="Tersedia">
+                                                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                                        <span class="text-green-700">{{ $item->stok_tersedia ?? 0 }}</span>
+                                                    </div>
+                                                    <div class="flex items-center gap-1" title="Dipinjam">
+                                                        <div class="w-2 h-2 rounded-full bg-yellow-400"></div>
+                                                        <span
+                                                            class="text-yellow-700">{{ $item->dipinjam_count ?? 0 }}</span>
+                                                    </div>
+                                                    <div class="flex items-center gap-1" title="Rusak/Maintenance">
+                                                        <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                                                        <span
+                                                            class="text-red-700">{{ ($item->maintenance_count ?? 0) + ($item->rusak_berat_count ?? 0) }}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="px-4 py-4 text-center">
                                             <div class="flex flex-col items-center gap-2">
-                                                {{-- Tombol Lihat Unit & Tambah Unit --}}
-                                                <div class="flex gap-2">
-                                                    <a href="{{ route('sarpras.units.index', $item) }}" 
-                                                       class="inline-flex items-center px-2 py-1 bg-teal-100 text-teal-700 rounded text-xs font-medium hover:bg-teal-200"
-                                                       title="Lihat unit {{ $item->nama_barang }}">
-                                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-                                                        Lihat Unit
+                                                <div class="flex items-center justify-center space-x-3">
+                                                    {{-- Shortcut: Lihat Unit (Utama) --}}
+                                                    <a href="{{ route('sarpras.units.index', $item) }}"
+                                                        class="text-teal-600 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 p-1.5 rounded-lg transition"
+                                                        title="Lihat Daftar Unit">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                                                        </svg>
                                                     </a>
-                                                    <a href="{{ route('sarpras.units.create', $item) }}" 
-                                                       class="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium hover:bg-green-200"
-                                                       title="Tambah unit {{ $item->nama_barang }}">
-                                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                                        Tambah Unit
+
+                                                    {{-- Shortcut: Tambah Unit --}}
+                                                    <a href="{{ route('sarpras.units.create', $item) }}"
+                                                        class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-1.5 rounded-lg transition"
+                                                        title="Tambah Unit Baru">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M12 4v16m8-8H4" />
+                                                        </svg>
                                                     </a>
-                                                </div>
-                                                {{-- Tombol Detail, Edit, Hapus --}}
-                                                <div class="flex items-center justify-center space-x-2">
-                                                    <a href="{{ route('sarpras.show', $item) }}" class="text-gray-600 hover:text-gray-900" title="Detail">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+
+                                                    {{-- Detail Sarpras (General Info) --}}
+                                                    <a href="{{ route('sarpras.show', $item) }}"
+                                                        class="text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 p-1.5 rounded-lg transition"
+                                                        title="Detail Informasi Barang">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
                                                     </a>
-                                                    <a href="{{ route('sarpras.edit', $item) }}" class="text-blue-600 hover:text-blue-900" title="Edit">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+
+                                                    <a href="{{ route('sarpras.edit', $item) }}"
+                                                        class="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-1.5 rounded-lg transition"
+                                                        title="Edit Data Barang">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
                                                     </a>
+
                                                     @if (auth()->user()->role === 'admin')
-                                                        <form action="{{ route('sarpras.destroy', $item) }}" method="POST" class="inline" onsubmit="return confirm('Yakin hapus barang ini?');">
+                                                        <form action="{{ route('sarpras.destroy', $item) }}" method="POST"
+                                                            class="inline"
+                                                            onsubmit="return confirm('Yakin hapus barang ini?');">
                                                             @csrf @method('DELETE')
-                                                            <button type="submit" class="text-red-600 hover:text-red-900" title="Hapus">
-                                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                            <button type="submit"
+                                                                class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-lg transition"
+                                                                title="Hapus Barang">
+                                                                <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                                    viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        stroke-width="2"
+                                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
                                                             </button>
                                                         </form>
                                                     @endif
@@ -190,7 +282,8 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">Belum ada data sarpras</td>
+                                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">Belum ada data sarpras
+                                        </td>
                                     </tr>
                                 @endforelse
                             </tbody>

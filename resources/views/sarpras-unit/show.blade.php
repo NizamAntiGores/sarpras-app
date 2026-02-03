@@ -69,10 +69,7 @@
                             <p class="text-sm text-gray-500">Tanggal Perolehan</p>
                             <p class="font-semibold">{{ $unit->tanggal_perolehan ? $unit->tanggal_perolehan->format('d M Y') : '-' }}</p>
                         </div>
-                        <div>
-                            <p class="text-sm text-gray-500">Nilai Perolehan</p>
-                            <p class="font-semibold">{{ $unit->nilai_perolehan ? 'Rp ' . number_format($unit->nilai_perolehan, 0, ',', '.') : '-' }}</p>
-                        </div>
+
                     </div>
                 </div>
             </div>

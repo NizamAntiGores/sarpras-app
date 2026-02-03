@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\SarprasUnit;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Illuminate\Http\RedirectResponse;
 
 class TrashController extends Controller
 {
@@ -22,13 +22,23 @@ class TrashController extends Controller
             ->orderBy('deleted_at', 'desc')
             ->paginate(5, ['*'], 'sarpras_page');
 
+        // Deleted Lokasi
+        $deletedLokasi = \App\Models\Lokasi::onlyTrashed()
+            ->orderBy('deleted_at', 'desc')
+            ->paginate(5, ['*'], 'lokasi_page');
+
+        // Deleted Kategori
+        $deletedKategori = \App\Models\Kategori::onlyTrashed()
+            ->orderBy('deleted_at', 'desc')
+            ->paginate(5, ['*'], 'kategori_page');
+
         // Deleted Units
         $units = SarprasUnit::with(['sarpras', 'lokasi'])
             ->where('status', SarprasUnit::STATUS_DIHAPUSBUKUKAN)
             ->orderBy('updated_at', 'desc')
             ->paginate(15, ['*'], 'unit_page');
 
-        return view('trash.index', compact('units', 'deletedSarpras'));
+        return view('trash.index', compact('units', 'deletedSarpras', 'deletedLokasi', 'deletedKategori'));
     }
 
     /**
@@ -37,7 +47,7 @@ class TrashController extends Controller
     public function restoreUnit($id): RedirectResponse
     {
         $unit = SarprasUnit::findOrFail($id);
-        
+
         if ($unit->status !== SarprasUnit::STATUS_DIHAPUSBUKUKAN) {
             return redirect()->back()->with('error', 'Unit ini tidak dalam status dihapusbukukan.');
         }
@@ -60,8 +70,8 @@ class TrashController extends Controller
     public function restoreSarpras($id): RedirectResponse
     {
         $sarpras = \App\Models\Sarpras::withTrashed()->findOrFail($id);
-        
-        if (!$sarpras->trashed()) {
+
+        if (! $sarpras->trashed()) {
             return redirect()->back()->with('error', 'Data ini sudah aktif.');
         }
 
@@ -70,5 +80,41 @@ class TrashController extends Controller
         \App\Helpers\LogHelper::record('update', "Mengembalikan (restore) Master Sarpras {$sarpras->nama_barang} dari sampah.");
 
         return redirect()->route('trash.index')->with('success', "Master Barang {$sarpras->nama_barang} berhasil dikembalikan. Silakan cek unit-nya.");
+    }
+
+    /**
+     * Restore the specified Lokasi.
+     */
+    public function restoreLokasi($id): RedirectResponse
+    {
+        $lokasi = \App\Models\Lokasi::withTrashed()->findOrFail($id);
+
+        if (! $lokasi->trashed()) {
+            return redirect()->back()->with('error', 'Data ini sudah aktif.');
+        }
+
+        $lokasi->restore();
+
+        \App\Helpers\LogHelper::record('update', "Mengembalikan (restore) Lokasi {$lokasi->nama_lokasi} dari sampah.");
+
+        return redirect()->route('trash.index')->with('success', "Lokasi {$lokasi->nama_lokasi} berhasil dikembalikan.");
+    }
+
+    /**
+     * Restore the specified Kategori.
+     */
+    public function restoreKategori($id): RedirectResponse
+    {
+        $kategori = \App\Models\Kategori::withTrashed()->findOrFail($id);
+
+        if (! $kategori->trashed()) {
+            return redirect()->back()->with('error', 'Data ini sudah aktif.');
+        }
+
+        $kategori->restore();
+
+        \App\Helpers\LogHelper::record('update', "Mengembalikan (restore) Kategori {$kategori->nama_kategori} dari sampah.");
+
+        return redirect()->route('trash.index')->with('success', "Kategori {$kategori->nama_kategori} berhasil dikembalikan.");
     }
 }

@@ -29,7 +29,9 @@ class BarangHilang extends Model
      * Konstanta untuk status
      */
     const STATUS_BELUM_DIGANTI = 'belum_diganti';
+
     const STATUS_SUDAH_DIGANTI = 'sudah_diganti';
+
     const STATUS_DIPUTIHKAN = 'diputihkan';
 
     /**

@@ -92,7 +92,7 @@
         <!-- Master Data Group (Admin) -->
         @if (auth()->user()->role === 'admin')
             <div class="pt-2">
-                <div x-data="{ open: {{ (request()->routeIs('users.*') || request()->routeIs('lokasi.*') || request()->routeIs('kategori.*') || request()->routeIs('activity-logs.*') || request()->routeIs('trash.*')) ? 'true' : 'false' }} }">
+                <div x-data="{ open: {{ (request()->routeIs('users.*') || request()->routeIs('whitelist.*') || request()->routeIs('lokasi.*') || request()->routeIs('kategori.*') || request()->routeIs('activity-logs.*') || request()->routeIs('trash.*')) ? 'true' : 'false' }} }">
                     <button @click="open = !open" class="flex items-center justify-between w-full px-4 py-2.5 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors duration-200">
                         <div class="flex items-center">
                             <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -103,6 +103,9 @@
                     <div x-show="open" class="space-y-1 pl-11 pr-2 mt-1" style="display: none;">
                         <a href="{{ route('users.index') }}" class="block px-3 py-2 text-sm rounded-md transition {{ request()->routeIs('users.*') ? 'text-blue-600 bg-blue-50 font-medium' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50' }}">
                             Kelola User
+                        </a>
+                        <a href="{{ route('whitelist.index') }}" class="block px-3 py-2 text-sm rounded-md transition {{ request()->routeIs('whitelist.*') ? 'text-blue-600 bg-blue-50 font-medium' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50' }}">
+                            Whitelist Siswa/Guru
                         </a>
                         <a href="{{ route('lokasi.index') }}" class="block px-3 py-2 text-sm rounded-md transition {{ request()->routeIs('lokasi.*') ? 'text-blue-600 bg-blue-50 font-medium' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50' }}">
                             Lokasi
@@ -137,12 +140,12 @@
             
             {{-- Notifications --}}
             @php
-                $unreadCount = \App\Models\Notification::where('user_id', auth()->id())->whereNull('read_at')->count();
+                $unreadCount = \App\Models\Notification::where('user_id', auth()->id())->unread()->count();
             @endphp
             <a href="{{ route('notifications.index') }}" class="relative p-1.5 text-gray-400 hover:text-gray-600 transition">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
                 @if($unreadCount > 0)
-                    <span class="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
+                    <span class="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white animate-pulse"></span>
                 @endif
             </a>
         </div>

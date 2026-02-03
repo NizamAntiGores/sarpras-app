@@ -19,7 +19,7 @@ return new class extends Migration
                 $table->dropForeign(['sarpras_id']);
                 $table->dropColumn('sarpras_id');
             }
-            
+
             if (Schema::hasColumn('peminjaman', 'jumlah_pinjam')) {
                 $table->dropColumn('jumlah_pinjam');
             }
@@ -32,10 +32,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('peminjaman', function (Blueprint $table) {
-            if (!Schema::hasColumn('peminjaman', 'sarpras_id')) {
+            if (! Schema::hasColumn('peminjaman', 'sarpras_id')) {
                 $table->foreignId('sarpras_id')->nullable()->constrained('sarpras')->onDelete('cascade');
             }
-            if (!Schema::hasColumn('peminjaman', 'jumlah_pinjam')) {
+            if (! Schema::hasColumn('peminjaman', 'jumlah_pinjam')) {
                 $table->integer('jumlah_pinjam')->default(1);
             }
         });

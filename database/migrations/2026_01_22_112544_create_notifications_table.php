@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('link')->nullable(); // URL to redirect when clicked
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
-            
+
             $table->index(['user_id', 'read_at']);
         });
     }

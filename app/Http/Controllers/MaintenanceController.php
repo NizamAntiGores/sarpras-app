@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Maintenance;
+use App\Models\Sarpras;
 use App\Models\SarprasUnit;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class MaintenanceController extends Controller
 {
@@ -51,15 +52,25 @@ class MaintenanceController extends Controller
         }
 
         // Ambil unit yang tersedia untuk maintenance (tidak sedang dipinjam)
-        $units = SarprasUnit::with('sarpras')
-            ->where('status', '!=', SarprasUnit::STATUS_DIPINJAM)
-            ->where('status', '!=', SarprasUnit::STATUS_DIHAPUSBUKUKAN)
+        $rawUnits = SarprasUnit::with('sarpras', 'lokasi')
+            ->whereNotIn('status', [SarprasUnit::STATUS_DIPINJAM, SarprasUnit::STATUS_DIHAPUSBUKUKAN])
             ->orderBy('kode_unit')
             ->get();
 
+        // Group by Sarpras ID for Accordion UI
+        $availableUnits = $rawUnits->groupBy('sarpras_id');
+
+        // Get Sarpras that have units available
+        $sarprasList = Sarpras::whereIn('id', $availableUnits->keys())
+            ->orderBy('nama_barang')
+            ->get();
+
+        // Keep flat units for fallback or specific logic if needed, but mostly we use the grouped structure
+        $units = $rawUnits;
+
         $selectedKondisi = $request->query('kondisi');
 
-        return view('maintenance.create', compact('units', 'selectedUnit', 'selectedKondisi'));
+        return view('maintenance.create', compact('sarprasList', 'availableUnits', 'units', 'selectedUnit', 'selectedKondisi'));
     }
 
     /**
@@ -114,7 +125,7 @@ class MaintenanceController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return redirect()
                 ->back()
                 ->withInput()
@@ -167,7 +178,7 @@ class MaintenanceController extends Controller
             // Jika status berubah menjadi selesai
             if ($validated['status'] === Maintenance::STATUS_SELESAI) {
                 $validated['tanggal_selesai'] = $validated['tanggal_selesai'] ?? now();
-                
+
                 // Update kondisi unit
                 $unit->update([
                     'kondisi' => $validated['kondisi_setelah'],
@@ -194,7 +205,7 @@ class MaintenanceController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return redirect()
                 ->back()
                 ->withInput()

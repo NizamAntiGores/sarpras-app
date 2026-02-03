@@ -32,13 +32,13 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('pengembalian', function (Blueprint $table) {
-            if (!Schema::hasColumn('pengembalian', 'kondisi_akhir')) {
+            if (! Schema::hasColumn('pengembalian', 'kondisi_akhir')) {
                 $table->enum('kondisi_akhir', ['baik', 'rusak_ringan', 'rusak_berat', 'hilang'])->default('baik');
             }
-            if (!Schema::hasColumn('pengembalian', 'foto_kondisi')) {
+            if (! Schema::hasColumn('pengembalian', 'foto_kondisi')) {
                 $table->string('foto_kondisi')->nullable();
             }
-            if (!Schema::hasColumn('pengembalian', 'denda')) {
+            if (! Schema::hasColumn('pengembalian', 'denda')) {
                 $table->integer('denda')->nullable();
             }
         });

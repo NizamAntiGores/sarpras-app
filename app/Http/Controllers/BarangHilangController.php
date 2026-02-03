@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\BarangHilang;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class BarangHilangController extends Controller
@@ -30,9 +30,9 @@ class BarangHilangController extends Controller
         $sudahDiganti = BarangHilang::where('status', BarangHilang::STATUS_SUDAH_DIGANTI)->count();
 
         return view('barang-hilang.index', compact(
-            'barangHilang', 
-            'totalHilang', 
-            'belumDiganti', 
+            'barangHilang',
+            'totalHilang',
+            'belumDiganti',
             'sudahDiganti'
         ));
     }
@@ -52,7 +52,7 @@ class BarangHilangController extends Controller
             'keterangan' => $validated['keterangan'] ?? $barangHilang->keterangan,
         ]);
 
-        $message = match($validated['status']) {
+        $message = match ($validated['status']) {
             'sudah_diganti' => 'Barang telah ditandai sebagai sudah diganti.',
             'diputihkan' => 'Barang telah diputihkan.',
             default => 'Status barang dikembalikan ke belum diganti.',

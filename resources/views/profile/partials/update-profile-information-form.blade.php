@@ -19,8 +19,33 @@
 
         <div>
             <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
+            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)"
+                required autofocus autocomplete="name" />
             <x-input-error class="mt-2" :messages="$errors->get('name')" />
+        </div>
+
+        <!-- Nomor Induk (NIS/NIP) -->
+        <div>
+            <x-input-label for="nomor_induk" :value="$user->role === 'siswa' ? 'NISN / NIS' : 'NIP / Nomor Induk'" />
+            <x-text-input id="nomor_induk" name="nomor_induk" type="text" class="mt-1 block w-full"
+                :value="old('nomor_induk', $user->nomor_induk)" />
+            <x-input-error class="mt-2" :messages="$errors->get('nomor_induk')" />
+        </div>
+
+        <!-- Kelas (Khusus Siswa) -->
+        @if($user->role === 'siswa')
+            <div>
+                <x-input-label for="kelas" value="Kelas" />
+                <x-text-input id="kelas" name="kelas" type="text" class="mt-1 block w-full" :value="old('kelas', $user->kelas)" placeholder="Contoh: XII RPL 1" />
+                <x-input-error class="mt-2" :messages="$errors->get('kelas')" />
+            </div>
+        @endif
+
+        <!-- Kontak / No HP -->
+        <div>
+            <x-input-label for="kontak" value="Nomor HP / WhatsApp" />
+            <x-text-input id="kontak" name="kontak" type="text" class="mt-1 block w-full" :value="old('kontak', $user->kontak)" placeholder="08..." />
+            <x-input-error class="mt-2" :messages="$errors->get('kontak')" />
         </div>
 
         <div>
@@ -28,12 +53,13 @@
             <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
             <x-input-error class="mt-2" :messages="$errors->get('email')" />
 
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && !$user->hasVerifiedEmail())
                 <div>
                     <p class="text-sm mt-2 text-gray-800">
                         {{ __('Your email address is unverified.') }}
 
-                        <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <button form="send-verification"
+                            class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                             {{ __('Click here to re-send the verification email.') }}
                         </button>
                     </p>
@@ -51,13 +77,8 @@
             <x-primary-button>{{ __('Save') }}</x-primary-button>
 
             @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600"
-                >{{ __('Saved.') }}</p>
+                <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)"
+                    class="text-sm text-gray-600">{{ __('Saved.') }}</p>
             @endif
         </div>
     </form>

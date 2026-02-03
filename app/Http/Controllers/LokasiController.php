@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lokasi;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class LokasiController extends Controller
@@ -15,8 +15,8 @@ class LokasiController extends Controller
     public function index(): View
     {
         $lokasi = Lokasi::withCount(['units as units_count' => function ($query) {
-                $query->where('status', '!=', \App\Models\SarprasUnit::STATUS_DIHAPUSBUKUKAN);
-            }])
+            $query->where('status', '!=', \App\Models\SarprasUnit::STATUS_DIHAPUSBUKUKAN);
+        }])
             ->orderBy('nama_lokasi')
             ->paginate(10);
 
@@ -65,7 +65,7 @@ class LokasiController extends Controller
     public function update(Request $request, Lokasi $lokasi): RedirectResponse
     {
         $validated = $request->validate([
-            'nama_lokasi' => 'required|string|max:255|unique:lokasi,nama_lokasi,' . $lokasi->id,
+            'nama_lokasi' => 'required|string|max:255|unique:lokasi,nama_lokasi,'.$lokasi->id,
             'keterangan' => 'nullable|string|max:500',
         ], [
             'nama_lokasi.required' => 'Nama lokasi wajib diisi.',
@@ -92,6 +92,8 @@ class LokasiController extends Controller
         }
 
         $lokasi->delete();
+
+        \App\Helpers\LogHelper::record('delete', "Menghapus lokasi: {$lokasi->nama_lokasi}");
 
         return redirect()
             ->route('lokasi.index')

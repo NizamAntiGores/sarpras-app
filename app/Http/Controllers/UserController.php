@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\View\View;
 
 class UserController extends Controller
 {
@@ -27,13 +27,13 @@ class UserController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('nomor_induk', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('nomor_induk', 'like', "%{$search}%");
             });
         }
 
         $users = $query->paginate(10)->withQueryString();
-        
+
         return view('users.index', compact('users'));
     }
 
@@ -56,7 +56,8 @@ class UserController extends Controller
             'nomor_induk' => 'nullable|string|max:50|unique:users,nomor_induk',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|in:admin,petugas,peminjam',
+            'role' => 'required|in:admin,petugas,peminjam,guru,siswa',
+            'kelas' => 'nullable|string|max:20',
             'kontak' => 'nullable|string|max:20',
         ], [
             'name.required' => 'Nama wajib diisi.',
@@ -71,6 +72,7 @@ class UserController extends Controller
         User::create([
             'name' => $validated['name'],
             'nomor_induk' => $validated['nomor_induk'] ?? null,
+            'kelas' => $validated['kelas'] ?? null,
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
@@ -102,7 +104,8 @@ class UserController extends Controller
             'nomor_induk' => 'nullable|string|max:50|unique:users,nomor_induk,' . $user->id,
             'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
-            'role' => 'required|in:admin,petugas,peminjam',
+            'role' => 'required|in:admin,petugas,peminjam,guru,siswa',
+            'kelas' => 'nullable|string|max:20',
             'kontak' => 'nullable|string|max:20',
         ], [
             'name.required' => 'Nama wajib diisi.',
@@ -116,6 +119,7 @@ class UserController extends Controller
         $user->update([
             'name' => $validated['name'],
             'nomor_induk' => $validated['nomor_induk'] ?? null,
+            'kelas' => $validated['kelas'] ?? null,
             'email' => $validated['email'],
             'role' => $validated['role'],
             'kontak' => $validated['kontak'] ?? null,

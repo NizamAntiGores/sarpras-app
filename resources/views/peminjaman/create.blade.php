@@ -76,13 +76,23 @@
                                     <div class="flex flex-col md:flex-row gap-3">
                                         {{-- Category Filter --}}
                                         <div class="w-full md:w-48">
-                                            <select id="filterKategori" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                            <select id="filterKategori" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 mb-2 md:mb-0">
                                                 <option value="">Semua Kategori</option>
                                                 @foreach ($sarprasList->pluck('kategori')->unique('id')->filter() as $kategori)
                                                     <option value="{{ $kategori->id }}">{{ $kategori->nama_kategori }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
+                                        {{-- Tipe Filter (Special for Guru) --}}
+                                        @if(auth()->user()->isGuru())
+                                        <div class="w-full md:w-40">
+                                            <select id="filterTipe" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                <option value="">Semua Tipe</option>
+                                                <option value="asset">Aset (Kembali)</option>
+                                                <option value="bahan">Bahan (Habis Pakai)</option>
+                                            </select>
+                                        </div>
+                                        @endif
                                         {{-- Search Box --}}
                                         <div class="flex-1 relative">
                                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -104,7 +114,8 @@
                                             <div class="sarpras-group border-b border-gray-100 last:border-b-0" 
                                                  data-id="{{ $sarpras->id }}" 
                                                  data-nama="{{ strtolower($sarpras->nama_barang) }}"
-                                                 data-kategori="{{ $sarpras->kategori_id }}">
+                                                 data-kategori="{{ $sarpras->kategori_id }}"
+                                                 data-tipe="{{ $sarpras->tipe }}">
                                                 {{-- Collapsible Header --}}
                                                 <button type="button" 
                                                         class="w-full flex items-center justify-between p-3 bg-white hover:bg-gray-50 transition sarpras-header"
@@ -116,6 +127,11 @@
                                                         <div class="text-left">
                                                             <span class="font-medium text-gray-800">{{ $sarpras->nama_barang }}</span>
                                                             <span class="text-gray-500 text-sm ml-2">({{ $sarpras->kode_barang }})</span>
+                                                            @if($sarpras->tipe == 'bahan')
+                                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                                                                    Habis Pakai
+                                                                </span>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                     <div class="flex items-center gap-2">
@@ -309,14 +325,20 @@
         function applyFilters() {
             const searchTerm = document.getElementById('searchUnit').value.toLowerCase();
             const kategoriFilter = document.getElementById('filterKategori');
+            const tipeFilter = document.getElementById('filterTipe'); // New Tipe Filter
+            
             const kategoriId = kategoriFilter ? kategoriFilter.value : '';
+            const tipeVal = tipeFilter ? tipeFilter.value : '';
             
             document.querySelectorAll('.sarpras-group').forEach(group => {
                 const namaBarang = group.dataset.nama;
                 const groupKategori = group.dataset.kategori;
+                const groupTipe = group.dataset.tipe; // Get Tipe
                 
                 // Check category filter
                 const matchesKategori = !kategoriId || groupKategori === kategoriId;
+                // Check tipe filter
+                const matchesTipe = !tipeVal || groupTipe === tipeVal;
                 
                 // Check search filter
                 const units = group.querySelectorAll('.unit-item');
@@ -326,7 +348,7 @@
                     const kodeUnit = unit.dataset.kode;
                     const matchesSearch = !searchTerm || namaBarang.includes(searchTerm) || kodeUnit.includes(searchTerm);
                     
-                    if (matchesSearch && matchesKategori) {
+                    if (matchesSearch && matchesKategori && matchesTipe) {
                         unit.style.display = '';
                         hasVisibleUnit = true;
                     } else {
@@ -335,7 +357,7 @@
                 });
                 
                 // Show/hide group
-                if (matchesKategori && (hasVisibleUnit || namaBarang.includes(searchTerm) || !searchTerm)) {
+                if (matchesKategori && matchesTipe && (hasVisibleUnit || namaBarang.includes(searchTerm) || !searchTerm)) {
                     group.style.display = '';
                     // Auto-expand if searching
                     if (searchTerm && hasVisibleUnit) {
@@ -355,6 +377,10 @@
         const filterKategori = document.getElementById('filterKategori');
         if (filterKategori) {
             filterKategori.addEventListener('change', applyFilters);
+        }
+        const filterTipe = document.getElementById('filterTipe');
+        if (filterTipe) {
+            filterTipe.addEventListener('change', applyFilters);
         }
 
         // Initial filter if sarpras_id is provided

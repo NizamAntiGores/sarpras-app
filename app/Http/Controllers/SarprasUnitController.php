@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Lokasi;
 use App\Models\Sarpras;
 use App\Models\SarprasUnit;
-use App\Models\Lokasi;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class SarprasUnitController extends Controller
 {
@@ -21,7 +21,7 @@ class SarprasUnitController extends Controller
 
         // Pencarian berdasarkan kode unit
         if ($request->filled('search')) {
-            $query->where('kode_unit', 'like', '%' . $request->search . '%');
+            $query->where('kode_unit', 'like', '%'.$request->search.'%');
         }
 
         // Filter berdasarkan status
@@ -55,7 +55,7 @@ class SarprasUnitController extends Controller
     public function create(Sarpras $sarpras): View
     {
         $lokasis = Lokasi::orderBy('nama_lokasi')->get();
-        
+
         return view('sarpras-unit.create', compact('sarpras', 'lokasis'));
     }
 
@@ -70,7 +70,6 @@ class SarprasUnitController extends Controller
             'lokasi_id' => 'required|exists:lokasi,id',
             'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat',
             'tanggal_perolehan' => 'nullable|date',
-            'nilai_perolehan' => 'nullable|integer|min:0',
         ], [
             'jumlah_unit.required' => 'Jumlah unit wajib diisi.',
             'jumlah_unit.min' => 'Minimal 1 unit.',
@@ -94,7 +93,6 @@ class SarprasUnitController extends Controller
                     'kondisi' => $validated['kondisi'],
                     'status' => SarprasUnit::STATUS_TERSEDIA,
                     'tanggal_perolehan' => $validated['tanggal_perolehan'] ?? now(),
-                    'nilai_perolehan' => $validated['nilai_perolehan'] ?? null,
                 ]);
 
                 $unitsCreated[] = $kodeUnit;
@@ -103,8 +101,8 @@ class SarprasUnitController extends Controller
             DB::commit();
 
             $logDescription = count($unitsCreated) === 1
-                ? "Menambahkan unit untuk {$sarpras->nama_barang}: " . $unitsCreated[0]
-                : "Menambahkan " . count($unitsCreated) . " unit untuk {$sarpras->nama_barang}: " . $unitsCreated[0] . " sampai " . end($unitsCreated);
+                ? "Menambahkan unit untuk {$sarpras->nama_barang}: ".$unitsCreated[0]
+                : 'Menambahkan '.count($unitsCreated)." unit untuk {$sarpras->nama_barang}: ".$unitsCreated[0].' sampai '.end($unitsCreated);
 
             \App\Helpers\LogHelper::record('create', $logDescription);
 
@@ -114,11 +112,11 @@ class SarprasUnitController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+                ->with('error', 'Terjadi kesalahan: '.$e->getMessage());
         }
     }
 
@@ -170,7 +168,6 @@ class SarprasUnitController extends Controller
             'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat',
             'status' => 'required|in:tersedia,dipinjam,maintenance,dihapusbukukan',
             'tanggal_perolehan' => 'nullable|date',
-            'nilai_perolehan' => 'nullable|integer|min:0',
         ]);
 
         // Validasi: unit yang sedang dipinjam tidak bisa diubah statusnya secara manual

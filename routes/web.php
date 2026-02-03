@@ -15,6 +15,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SarprasController;
 use App\Http\Controllers\SarprasUnitController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WhitelistController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,6 +27,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
+
+// API: Lookup NISN/NIP untuk form registrasi (Public route)
+Route::get('/api/whitelist/lookup', [WhitelistController::class, 'lookup'])->name('whitelist.lookup');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
@@ -241,6 +245,17 @@ Route::middleware('auth')->group(function () {
         ])->name('trash.kategori.restore');
 
         Route::resource('users', UserController::class)->except(['show']);
+
+        // =============================================
+        // WHITELIST MANAGEMENT (Admin only)
+        // =============================================
+        Route::get('/whitelist', [WhitelistController::class, 'index'])->name('whitelist.index');
+        Route::get('/whitelist/create', [WhitelistController::class, 'create'])->name('whitelist.create');
+        Route::post('/whitelist', [WhitelistController::class, 'store'])->name('whitelist.store');
+        Route::delete('/whitelist/{whitelist}', [WhitelistController::class, 'destroy'])->name('whitelist.destroy');
+        Route::get('/whitelist/import', [WhitelistController::class, 'importForm'])->name('whitelist.import');
+        Route::post('/whitelist/import', [WhitelistController::class, 'import'])->name('whitelist.import.process');
+        Route::get('/whitelist/template', [WhitelistController::class, 'downloadTemplate'])->name('whitelist.template');
     });
 });
 

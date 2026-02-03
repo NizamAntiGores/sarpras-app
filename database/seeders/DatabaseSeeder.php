@@ -4,16 +4,9 @@ namespace Database\Seeders;
 
 use App\Models\Kategori;
 use App\Models\Lokasi;
-use App\Models\Maintenance;
-use App\Models\Peminjaman;
-use App\Models\PeminjamanDetail;
-use App\Models\Pengembalian;
-use App\Models\PengembalianDetail;
 use App\Models\Sarpras;
 use App\Models\SarprasUnit;
 use App\Models\User;
-use Carbon\Carbon;
-use Illuminate\Support\Str;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -24,335 +17,297 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->command->info('🧹 Membersihkan database dan memulai seeding baru...');
+        $this->command->info('🌱 Memulai seeding database...');
 
         // =============================================
-        // 1. ITEMS & LOCATIONS (DATA MASTER)
+        // 1. USERS (Admin & Petugas only)
         // =============================================
+        $this->command->info('👥 Membuat user admin & petugas...');
 
-        // --- LOKASI ---
+        User::create([
+            'name' => 'Super Admin',
+            'email' => 'admin@gmail.com',
+            'password' => Hash::make('password'),
+            'nomor_induk' => 'ADM001',
+            'role' => 'admin',
+            'kontak' => '081234567890',
+            'email_verified_at' => now(),
+        ]);
+
+        $petugas = User::create([
+            'name' => 'Petugas Sarpras',
+            'email' => 'petugas@gmail.com',
+            'password' => Hash::make('password'),
+            'nomor_induk' => 'PTG001',
+            'role' => 'petugas',
+            'kontak' => '081234567891',
+            'email_verified_at' => now(),
+        ]);
+
+        // =============================================
+        // 2. LOKASI
+        // =============================================
+        $this->command->info('📍 Membuat data lokasi...');
+
         $lokasiList = [
-            ['nama' => 'Gudang Utama', 'desc' => 'Penyimpanan utama barang elektronik dan ATK'],
-            ['nama' => 'Lab Komputer 1', 'desc' => 'Laboratorium Rekayasa Perangkat Lunak'],
-            ['nama' => 'Lab Komputer 2', 'desc' => 'Laboratorium Multimedia'],
-            ['nama' => 'Ruang Guru', 'desc' => 'Ruang staf pengajar'],
-            ['nama' => 'Perpustakaan', 'desc' => 'Pusat sumber belajar'],
-            ['nama' => 'Ruang OSIS', 'desc' => 'Ruang organisasi siswa'],
+            'Ruang Kelas X-A',
+            'Ruang Kelas X-B',
+            'Ruang Kelas XI-A',
+            'Ruang Kelas XI-B',
+            'Ruang Kelas XII-A',
+            'Lab Komputer 1',
+            'Lab Komputer 2',
+            'Lab Multimedia',
+            'Perpustakaan',
+            'Ruang Guru',
+            'Ruang TU',
+            'Aula',
+            'Gudang Utama',
         ];
 
         $lokasis = [];
-        foreach ($lokasiList as $l) {
-            $lokasis[$l['nama']] = Lokasi::create([
-                'nama_lokasi' => $l['nama'],
-                'keterangan' => $l['desc']
-            ]);
+        foreach ($lokasiList as $nama) {
+            $lokasis[$nama] = Lokasi::create(['nama_lokasi' => $nama]);
         }
 
-        // --- KATEGORI ---
-        $kategoriList = ['Elektronik', 'Furniture', 'Alat Praktik', 'Olahraga', 'Audio Visual'];
+        // =============================================
+        // 3. KATEGORI
+        // =============================================
+        $this->command->info('📂 Membuat data kategori...');
+
+        $kategoriList = ['Elektronik', 'Furniture', 'Alat Praktik', 'Olahraga', 'Audio Visual', 'ATK'];
         $kategoris = [];
-        foreach ($kategoriList as $k) {
-            $kategoris[$k] = Kategori::create(['nama_kategori' => $k]);
+        foreach ($kategoriList as $nama) {
+            $kategoris[$nama] = Kategori::create(['nama_kategori' => $nama]);
         }
 
         // =============================================
-        // 2. USERS (PENGGUNA)
+        // 4. SARPRAS & UNITS
         // =============================================
+        $this->command->info('📦 Membuat data barang & unit...');
 
-        // --- SUPER ADMIN ---
-        $admin = User::create([
-            'name' => 'Super Admin',
-            'nomor_induk' => 'ADM001',
-            'email' => 'admin@gmail.com',
-            'password' => 'password',
-            'role' => 'admin',
-            'kontak' => '08111111111',
-            'email_verified_at' => now(),
-        ]);
-
-        // --- PETUGAS ---
-        $petugas1 = User::create([
-            'name' => 'Budi Santoso (Petugas)',
-            'nomor_induk' => 'PTG001',
-            'email' => 'petugas@gmail.com',
-            'password' => 'password',
-            'role' => 'petugas',
-            'kontak' => '08222222222',
-            'email_verified_at' => now(),
-        ]);
-
-        // Initialize Faker
-        $faker = \Faker\Factory::create('id_ID');
-
-        // --- GURU (3 Orang) ---
-        $gurus = [];
-        $dataGuru = [
-            ['nama' => 'Pak Joko (MTK)', 'nip' => '198001012005011001', 'email' => 'joko@guru.com'],
-            ['nama' => 'Bu Siti (B.Indo)', 'nip' => '198502022010012002', 'email' => 'siti@guru.com'],
-            ['nama' => 'Pak Andi (Produktif)', 'nip' => '199003032015011003', 'email' => 'andi@guru.com'],
+        // --- BARANG TIPE ASSET (ada kode unik per unit) ---
+        $assetsData = [
+            [
+                'nama' => 'Laptop ASUS VivoBook',
+                'kategori' => 'Elektronik',
+                'units' => [
+                    ['kode' => 'LPT-001', 'lokasi' => 'Lab Komputer 1'],
+                    ['kode' => 'LPT-002', 'lokasi' => 'Lab Komputer 1'],
+                    ['kode' => 'LPT-003', 'lokasi' => 'Lab Komputer 1'],
+                    ['kode' => 'LPT-004', 'lokasi' => 'Lab Komputer 2'],
+                    ['kode' => 'LPT-005', 'lokasi' => 'Lab Komputer 2'],
+                ],
+            ],
+            [
+                'nama' => 'Proyektor Epson',
+                'kategori' => 'Audio Visual',
+                'units' => [
+                    ['kode' => 'PRJ-001', 'lokasi' => 'Ruang Kelas X-A'],
+                    ['kode' => 'PRJ-002', 'lokasi' => 'Ruang Kelas XI-A'],
+                    ['kode' => 'PRJ-003', 'lokasi' => 'Aula'],
+                ],
+            ],
+            [
+                'nama' => 'Kamera DSLR Canon',
+                'kategori' => 'Audio Visual',
+                'units' => [
+                    ['kode' => 'CAM-001', 'lokasi' => 'Lab Multimedia'],
+                    ['kode' => 'CAM-002', 'lokasi' => 'Lab Multimedia'],
+                ],
+            ],
+            [
+                'nama' => 'Meja Siswa',
+                'kategori' => 'Furniture',
+                'units' => [
+                    ['kode' => 'MJS-001', 'lokasi' => 'Ruang Kelas X-A'],
+                    ['kode' => 'MJS-002', 'lokasi' => 'Ruang Kelas X-A'],
+                    ['kode' => 'MJS-003', 'lokasi' => 'Ruang Kelas X-B'],
+                    ['kode' => 'MJS-004', 'lokasi' => 'Ruang Kelas X-B'],
+                ],
+            ],
+            [
+                'nama' => 'Kursi Siswa',
+                'kategori' => 'Furniture',
+                'units' => [
+                    ['kode' => 'KRS-001', 'lokasi' => 'Ruang Kelas X-A'],
+                    ['kode' => 'KRS-002', 'lokasi' => 'Ruang Kelas X-A'],
+                    ['kode' => 'KRS-003', 'lokasi' => 'Ruang Kelas X-B'],
+                    ['kode' => 'KRS-004', 'lokasi' => 'Ruang Kelas X-B'],
+                ],
+            ],
+            [
+                'nama' => 'Multimeter Digital',
+                'kategori' => 'Alat Praktik',
+                'units' => [
+                    ['kode' => 'MTR-001', 'lokasi' => 'Lab Komputer 1'],
+                    ['kode' => 'MTR-002', 'lokasi' => 'Lab Komputer 1'],
+                    ['kode' => 'MTR-003', 'lokasi' => 'Lab Komputer 2'],
+                ],
+            ],
         ];
 
-        foreach ($dataGuru as $g) {
-            $gurus[] = User::create([
-                'name' => $g['nama'],
-                'nomor_induk' => $g['nip'],
-                'email' => $g['email'],
-                'password' => 'password',
-                'role' => 'guru',
-                'kontak' => '08333333333',
-                'email_verified_at' => now(),
-            ]);
-        }
-
-        // --- SISWA (5 Orang) ---
-        $siswas = [];
-        $dataSiswa = [
-            ['nama' => 'Rizky (XII RPL 1)', 'nis' => '1001', 'kelas' => 'XII RPL 1', 'email' => 'rizky@siswa.com'],
-            ['nama' => 'Sarah (XII RPL 2)', 'nis' => '1002', 'kelas' => 'XII RPL 2', 'email' => 'sarah@siswa.com'],
-            ['nama' => 'Dimas (XI TKJ 1)', 'nis' => '1003', 'kelas' => 'XI TKJ 1', 'email' => 'dimas@siswa.com'],
-            ['nama' => 'Putri (XI DKV 1)', 'nis' => '1004', 'kelas' => 'XI DKV 1', 'email' => 'putri@siswa.com'],
-            ['nama' => 'Bayu (X RPL 1)', 'nis' => '1005', 'kelas' => 'X RPL 1', 'email' => 'bayu@siswa.com'],
-        ];
-
-        foreach ($dataSiswa as $s) {
-            $siswas[] = User::create([
-                'name' => $s['nama'],
-                'nomor_induk' => $s['nis'],
-                'kelas' => $s['kelas'],
-                'email' => $s['email'],
-                'password' => 'password',
-                'role' => 'siswa',
-                'kontak' => '08444444444',
-                'email_verified_at' => now(),
-            ]);
-        }
-
-        // =============================================
-        // 3. SARPRAS & UNITS (BARANG)
-        // =============================================
-
-        $items = [
-            [
-                'kode' => 'LPT-ASUS',
-                'nama' => 'Laptop ASUS ROG',
-                'kategori' => $kategoris['Elektronik']->id,
-                'count' => 10,
-                'lokasi' => $lokasis['Lab Komputer 1']->id,
-                'tipe' => 'asset'
-            ],
-            [
-                'kode' => 'PRJ-EPSON',
-                'nama' => 'Proyektor Epson EB-X500',
-                'kategori' => $kategoris['Audio Visual']->id,
-                'count' => 5,
-                'lokasi' => $lokasis['Gudang Utama']->id,
-                'tipe' => 'asset'
-            ],
-            [
-                'kode' => 'CAM-CANON',
-                'nama' => 'Kamera Canon EOS 3000D',
-                'kategori' => $kategoris['Alat Praktik']->id,
-                'count' => 3,
-                'lokasi' => $lokasis['Lab Komputer 2']->id,
-                'tipe' => 'asset'
-            ],
-            [
-                'kode' => 'TRP-XL',
-                'nama' => 'Tripod Excell',
-                'kategori' => $kategoris['Alat Praktik']->id,
-                'count' => 5,
-                'lokasi' => $lokasis['Lab Komputer 2']->id,
-                'tipe' => 'asset'
-            ],
-            [
-                'kode' => 'SPK-JBL',
-                'nama' => 'Speaker JBL PartyBox',
-                'kategori' => $kategoris['Audio Visual']->id,
-                'count' => 2,
-                'lokasi' => $lokasis['Ruang OSIS']->id,
-                'tipe' => 'asset'
-            ],
-            // Bahan Habis Pakai
-            [
-                'kode' => 'KBL-UTP',
-                'nama' => 'Kabel UTP Cat6 (Roll)',
-                'kategori' => $kategoris['Elektronik']->id,
-                'count' => 10,
-                'lokasi' => $lokasis['Gudang Utama']->id,
-                'tipe' => 'bahan'
-            ]
-        ];
-
-        $allUnits = []; // Store usable units for loans
-
-        foreach ($items as $item) {
+        $kodeBarang = 1;
+        foreach ($assetsData as $asset) {
             $sarpras = Sarpras::create([
-                'kode_barang' => $item['kode'],
-                'nama_barang' => $item['nama'],
-                'kategori_id' => $item['kategori'],
-                'tipe' => $item['tipe'],
-                'foto' => null // Bisa diisi path dummy jika ada
+                'kode_barang' => 'SRP' . str_pad($kodeBarang++, 4, '0', STR_PAD_LEFT),
+                'nama_barang' => $asset['nama'],
+                'kategori_id' => $kategoris[$asset['kategori']]->id,
+                'tipe' => 'asset',
+                'deskripsi' => 'Barang inventaris ' . $asset['nama'],
             ]);
 
-            // Create Units
-            for ($i = 1; $i <= $item['count']; $i++) {
-                $unit = SarprasUnit::create([
+            foreach ($asset['units'] as $unit) {
+                SarprasUnit::create([
                     'sarpras_id' => $sarpras->id,
-                    'kode_unit' => $item['kode'] . '-' . str_pad($i, 3, '0', STR_PAD_LEFT),
-                    'lokasi_id' => $item['lokasi'],
-                    'kondisi' => 'baik',
-                    'status' => 'tersedia',
-                    'tanggal_perolehan' => now()->subMonths(rand(1, 24)),
+                    'kode_unit' => $unit['kode'],
+                    'lokasi_id' => $lokasis[$unit['lokasi']]->id,
+                    'kondisi' => SarprasUnit::KONDISI_BAIK,
+                    'status' => SarprasUnit::STATUS_TERSEDIA,
+                    'tanggal_perolehan' => now()->subYears(rand(0, 4)),
                 ]);
-                $allUnits[$item['kode']][] = $unit;
+            }
+        }
+
+        // --- BARANG OLAHRAGA (asset, bukan habis pakai) ---
+        $olahragaAssets = [
+            [
+                'nama' => 'Bola Voli Mikasa',
+                'kategori' => 'Olahraga',
+                'units' => [
+                    ['kode' => 'BLV-001', 'lokasi' => 'Gudang Utama'],
+                    ['kode' => 'BLV-002', 'lokasi' => 'Gudang Utama'],
+                    ['kode' => 'BLV-003', 'lokasi' => 'Gudang Utama'],
+                    ['kode' => 'BLV-004', 'lokasi' => 'Gudang Utama'],
+                    ['kode' => 'BLV-005', 'lokasi' => 'Gudang Utama'],
+                ],
+            ],
+            [
+                'nama' => 'Bola Basket Molten',
+                'kategori' => 'Olahraga',
+                'units' => [
+                    ['kode' => 'BLB-001', 'lokasi' => 'Gudang Utama'],
+                    ['kode' => 'BLB-002', 'lokasi' => 'Gudang Utama'],
+                    ['kode' => 'BLB-003', 'lokasi' => 'Gudang Utama'],
+                    ['kode' => 'BLB-004', 'lokasi' => 'Gudang Utama'],
+                ],
+            ],
+            [
+                'nama' => 'Raket Badminton Yonex',
+                'kategori' => 'Olahraga',
+                'units' => [
+                    ['kode' => 'RKT-001', 'lokasi' => 'Gudang Utama'],
+                    ['kode' => 'RKT-002', 'lokasi' => 'Gudang Utama'],
+                    ['kode' => 'RKT-003', 'lokasi' => 'Gudang Utama'],
+                    ['kode' => 'RKT-004', 'lokasi' => 'Gudang Utama'],
+                    ['kode' => 'RKT-005', 'lokasi' => 'Gudang Utama'],
+                    ['kode' => 'RKT-006', 'lokasi' => 'Gudang Utama'],
+                ],
+            ],
+            [
+                'nama' => 'Net Voli',
+                'kategori' => 'Olahraga',
+                'units' => [
+                    ['kode' => 'NTV-001', 'lokasi' => 'Gudang Utama'],
+                    ['kode' => 'NTV-002', 'lokasi' => 'Gudang Utama'],
+                ],
+            ],
+        ];
+
+        foreach ($olahragaAssets as $asset) {
+            $sarpras = Sarpras::create([
+                'kode_barang' => 'SRP' . str_pad($kodeBarang++, 4, '0', STR_PAD_LEFT),
+                'nama_barang' => $asset['nama'],
+                'kategori_id' => $kategoris[$asset['kategori']]->id,
+                'tipe' => 'asset',
+                'deskripsi' => 'Peralatan olahraga ' . $asset['nama'],
+            ]);
+
+            foreach ($asset['units'] as $unit) {
+                SarprasUnit::create([
+                    'sarpras_id' => $sarpras->id,
+                    'kode_unit' => $unit['kode'],
+                    'lokasi_id' => $lokasis[$unit['lokasi']]->id,
+                    'kondisi' => SarprasUnit::KONDISI_BAIK,
+                    'status' => SarprasUnit::STATUS_TERSEDIA,
+                    'tanggal_perolehan' => now()->subYears(rand(0, 2)),
+                ]);
+            }
+        }
+
+        // --- BARANG TIPE BAHAN (consumable, habis pakai) ---
+        $bahanData = [
+            [
+                'nama' => 'Spidol Whiteboard',
+                'kategori' => 'ATK',
+                'jumlah' => 50,
+                'lokasi' => 'Gudang Utama',
+            ],
+            [
+                'nama' => 'Penghapus Papan Tulis',
+                'kategori' => 'ATK',
+                'jumlah' => 20,
+                'lokasi' => 'Gudang Utama',
+            ],
+            [
+                'nama' => 'Shuttlecock',
+                'kategori' => 'Olahraga',
+                'jumlah' => 30,
+                'lokasi' => 'Gudang Utama',
+            ],
+            [
+                'nama' => 'Kapur Tulis',
+                'kategori' => 'ATK',
+                'jumlah' => 100,
+                'lokasi' => 'Gudang Utama',
+            ],
+            [
+                'nama' => 'Toner Printer',
+                'kategori' => 'ATK',
+                'jumlah' => 10,
+                'lokasi' => 'Ruang TU',
+            ],
+            [
+                'nama' => 'Kabel HDMI 2m',
+                'kategori' => 'Elektronik',
+                'jumlah' => 15,
+                'lokasi' => 'Lab Multimedia',
+            ],
+        ];
+
+        foreach ($bahanData as $bahan) {
+            $sarpras = Sarpras::create([
+                'kode_barang' => 'SRP' . str_pad($kodeBarang++, 4, '0', STR_PAD_LEFT),
+                'nama_barang' => $bahan['nama'],
+                'kategori_id' => $kategoris[$bahan['kategori']]->id,
+                'tipe' => 'bahan',
+                'deskripsi' => 'Barang habis pakai ' . $bahan['nama'],
+            ]);
+
+            // Untuk bahan, buat unit sebanyak jumlahnya dengan kode auto-generated
+            for ($i = 1; $i <= $bahan['jumlah']; $i++) {
+                SarprasUnit::create([
+                    'sarpras_id' => $sarpras->id,
+                    'kode_unit' => $sarpras->kode_barang . '-' . str_pad($i, 3, '0', STR_PAD_LEFT),
+                    'lokasi_id' => $lokasis[$bahan['lokasi']]->id,
+                    'kondisi' => SarprasUnit::KONDISI_BAIK,
+                    'status' => SarprasUnit::STATUS_TERSEDIA,
+                    'tanggal_perolehan' => now(),
+                ]);
             }
         }
 
         // =============================================
-        // 4. PEMINJAMAN (LOAN HISTORY)
+        // SELESAI
         // =============================================
-
-        // CASE 1: Siswa Pinjam Laptop (SUDAH SELESAI / DIKEMBALIKAN)
-        // -----------------------------------------------------------
-        $peminjam = $siswas[0]; // Rizky
-        $unitLaptop = $allUnits['LPT-ASUS'][0];
-
-        $loan1 = Peminjaman::create([
-            'user_id' => $peminjam->id,
-            'petugas_id' => $petugas1->id,
-            'tgl_pinjam' => now()->subDays(5),
-            'tgl_kembali_rencana' => now()->subDays(4),
-            'status' => 'selesai',
-            'keterangan' => 'Mengerjakan tugas coding',
-            'qr_code' => 'QR-' . uniqid(),
-        ]);
-
-        PeminjamanDetail::create([
-            'peminjaman_id' => $loan1->id,
-            'sarpras_unit_id' => $unitLaptop->id,
-        ]);
-
-        // Pengembalian
-        $return1 = Pengembalian::create([
-            'peminjaman_id' => $loan1->id,
-            'petugas_id' => $petugas1->id,
-            'tgl_kembali_aktual' => now()->subDays(4), // Tepat waktu
-        ]);
-
-        PengembalianDetail::create([
-            'pengembalian_id' => $return1->id,
-            'sarpras_unit_id' => $unitLaptop->id,
-            'kondisi_akhir' => 'baik',
-        ]);
-
-
-        // CASE 2: Guru Pinjam Proyektor (SEDANG DIPINJAM - MASIH AMAN)
-        // -------------------------------------------------------------
-        $peminjam = $gurus[0]; // Pak Joko
-        $unitProyektor = $allUnits['PRJ-EPSON'][0];
-        $unitProyektor->update(['status' => 'dipinjam']);
-
-        $loan2 = Peminjaman::create([
-            'user_id' => $peminjam->id,
-            'petugas_id' => $petugas1->id,
-            'tgl_pinjam' => now()->subHours(5),
-            'tgl_kembali_rencana' => now()->addDays(1), // Besok kembali
-            'status' => 'disetujui',
-            'keterangan' => 'Mengajar Matematika di X RPL 1',
-            'qr_code' => 'QR-' . uniqid(),
-        ]);
-
-        PeminjamanDetail::create([
-            'peminjaman_id' => $loan2->id,
-            'sarpras_unit_id' => $unitProyektor->id,
-        ]);
-
-
-        // CASE 3: Siswa Pinjam Kamera (TERLAMBAT - DANGER)
-        // -------------------------------------------------------------
-        $peminjam = $siswas[3]; // Putri
-        $unitKamera = $allUnits['CAM-CANON'][0];
-        $unitKamera->update(['status' => 'dipinjam']);
-
-        $loan3 = Peminjaman::create([
-            'user_id' => $peminjam->id,
-            'petugas_id' => $petugas1->id,
-            'tgl_pinjam' => now()->subDays(10),
-            'tgl_kembali_rencana' => now()->subDays(7), // Sudah lewat 3 hari
-            'status' => 'disetujui',
-            'keterangan' => 'Dokumentasi kegiatan sekolah',
-            'qr_code' => 'QR-' . uniqid(),
-        ]);
-
-        PeminjamanDetail::create([
-            'peminjaman_id' => $loan3->id,
-            'sarpras_unit_id' => $unitKamera->id,
-        ]);
-
-
-        // CASE 4: Guru Pinjam Speaker (MENUNGGU PERSETUJUAN)
-        // -------------------------------------------------------------
-        $peminjam = $gurus[1]; // Bu Siti
-        $unitSpeaker = $allUnits['SPK-JBL'][0];
-
-        $loan4 = Peminjaman::create([
-            'user_id' => $peminjam->id,
-            'petugas_id' => null, // Belum disetujui
-            'tgl_pinjam' => now(), // Hari ini
-            'tgl_kembali_rencana' => now()->addDays(1),
-            'status' => 'menunggu',
-            'keterangan' => 'Latihan drama bahasa indonesia',
-            'qr_code' => null,
-        ]);
-
-        PeminjamanDetail::create([
-            'peminjaman_id' => $loan4->id,
-            'sarpras_unit_id' => $unitSpeaker->id,
-        ]);
-
-
-        // CASE 5: Siswa Request Alat Tapi Ditolak
-        // -------------------------------------------------------------
-        $peminjam = $siswas[4]; // Bayu
-        $unitLaptop2 = $allUnits['LPT-ASUS'][5];
-
-        $loan5 = Peminjaman::create([
-            'user_id' => $peminjam->id,
-            'petugas_id' => $petugas1->id,
-            'tgl_pinjam' => now()->subDays(1),
-            'tgl_kembali_rencana' => now()->addDays(1),
-            'status' => 'ditolak',
-            'keterangan' => 'Main game',
-            'catatan_petugas' => 'Peminjaman hanya untuk keperluan akademik',
-            'qr_code' => null,
-        ]);
-
-        PeminjamanDetail::create([
-            'peminjaman_id' => $loan5->id,
-            'sarpras_unit_id' => $unitLaptop2->id,
-        ]);
-
-        // =============================================
-        // 5. MAINTENANCE
-        // =============================================
-
-        $unitRusak = $allUnits['LPT-ASUS'][9];
-        $unitRusak->update(['status' => 'maintenance', 'kondisi' => 'rusak_ringan']);
-
-        Maintenance::create([
-            'sarpras_unit_id' => $unitRusak->id,
-            'petugas_id' => $petugas1->id,
-            'jenis' => 'perbaikan',
-            'deskripsi' => 'Keyboard tombol "A" lepas',
-            'tanggal_mulai' => now()->subDays(2),
-            'status' => 'sedang_berlangsung',
-            'biaya' => 50000
-        ]);
-
-        $this->command->info('✅ Seeding selesai! Database refreshed with minimal data.');
-        $this->command->info("   - Admin: admin@gmail.com | password");
-        $this->command->info("   - Guru: joko@guru.com | password (NIP: 198001012005011001)");
-        $this->command->info("   - Siswa: rizky@siswa.com | password (NIS: 1001)");
-        $this->command->info("   - Petugas: petugas@gmail.com | password");
+        $this->command->newLine();
+        $this->command->info('✅ Seeding selesai!');
+        $this->command->table(
+            ['Akun', 'Email', 'Password'],
+            [
+                ['Admin', 'admin@gmail.com', 'password'],
+                ['Petugas', 'petugas@gmail.com', 'password'],
+            ]
+        );
     }
 }

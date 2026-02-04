@@ -104,7 +104,11 @@
                                         <div class="flex-1 min-w-0 pr-4">
                                             <div class="flex items-center justify-between mb-2">
                                                 <p class="text-sm font-medium text-blue-600 truncate">
-                                                    {{ $item->lokasi->nama_lokasi ?? 'Lokasi Tidak Diketahui' }}
+                                                    @if($item->jenis === 'tempat')
+                                                        🏫 {{ $item->lokasi?->nama_lokasi ?? $item->lokasi_lainnya ?? 'Lokasi Tidak Diketahui' }}
+                                                    @else
+                                                        📦 {{ $item->sarpras?->nama_barang ?? $item->barang_lainnya ?? 'Barang Tidak Diketahui' }}
+                                                    @endif
                                                 </p>
                                                 <div class="ml-2 flex-shrink-0 flex">
                                                     @php
@@ -144,7 +148,7 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                             d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                     </svg>
-                                                    {{ $item->user->name }}
+                                                    {{ $item->user?->name ?? 'User Dihapus' }}
                                                 </div>
                                                 <div class="flex items-center">
                                                     <svg class="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" fill="none"

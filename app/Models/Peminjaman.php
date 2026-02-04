@@ -31,6 +31,8 @@ class Peminjaman extends Model
         'qr_code',
         'keterangan',
         'catatan_petugas',
+        'handover_at',
+        'handover_by',
     ];
 
     /**
@@ -39,6 +41,7 @@ class Peminjaman extends Model
     protected $casts = [
         'tgl_pinjam' => 'date',
         'tgl_kembali_rencana' => 'date',
+        'handover_at' => 'datetime',
     ];
 
     /**
@@ -108,6 +111,38 @@ class Peminjaman extends Model
     }
 
     /**
+     * Get petugas yang menyerahkan barang (handover)
+     */
+    public function handoverPetugas(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'handover_by')->withTrashed();
+    }
+
+    /**
+     * Cek apakah barang sudah diserahkan (pickup sudah dilakukan)
+     */
+    public function isHandedOver(): bool
+    {
+        return $this->handover_at !== null;
+    }
+
+    /**
+     * Cek apakah peminjaman siap untuk pickup (disetujui tapi belum diambil)
+     */
+    public function isReadyForPickup(): bool
+    {
+        return $this->status === self::STATUS_DISETUJUI && !$this->isHandedOver();
+    }
+
+    /**
+     * Cek apakah peminjaman sedang berjalan (sudah diambil, belum dikembalikan)
+     */
+    public function isOngoing(): bool
+    {
+        return $this->status === self::STATUS_DISETUJUI && $this->isHandedOver();
+    }
+
+    /**
      * Scope untuk peminjaman yang aktif (disetujui tapi belum selesai)
      */
     public function scopeAktif($query)
@@ -121,6 +156,24 @@ class Peminjaman extends Model
     public function scopeMenunggu($query)
     {
         return $query->where('status', self::STATUS_MENUNGGU);
+    }
+
+    /**
+     * Scope untuk peminjaman yang sudah disetujui tapi belum diambil
+     */
+    public function scopeReadyForPickup($query)
+    {
+        return $query->where('status', self::STATUS_DISETUJUI)
+            ->whereNull('handover_at');
+    }
+
+    /**
+     * Scope untuk peminjaman yang sedang berjalan (sudah diambil)
+     */
+    public function scopeOngoing($query)
+    {
+        return $query->where('status', self::STATUS_DISETUJUI)
+            ->whereNotNull('handover_at');
     }
 
     /**

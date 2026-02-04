@@ -12,8 +12,11 @@ class Pengaduan extends Model
 
     protected $fillable = [
         'user_id',
+        'jenis',
         'sarpras_id',
+        'barang_lainnya',
         'lokasi_id',
+        'lokasi_lainnya',
         'judul',
         'deskripsi',
         'foto',
@@ -21,6 +24,10 @@ class Pengaduan extends Model
         'catatan_petugas',
         'petugas_id',
     ];
+
+    // Jenis Constants
+    const JENIS_TEMPAT = 'tempat';
+    const JENIS_BARANG = 'barang';
 
     // Status Constants
     const STATUS_BELUM = 'belum_ditindaklanjuti';

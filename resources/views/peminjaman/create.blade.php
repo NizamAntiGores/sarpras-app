@@ -223,10 +223,10 @@
                         {{-- Keterangan/Alasan --}}
                         <div>
                             <label for="keterangan" class="block text-sm font-medium text-gray-700 mb-1">
-                                Alasan/Keperluan Peminjaman
+                                Alasan/Keperluan Peminjaman <span class="text-red-500">*</span>
                             </label>
-                            <textarea name="keterangan" id="keterangan" rows="3"
-                                      placeholder="Jelaskan keperluan peminjaman barang..."
+                            <textarea name="keterangan" id="keterangan" rows="3" required
+                                      placeholder="Jelaskan keperluan peminjaman barang, misalnya: untuk praktikum, acara sekolah, dll."
                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('keterangan') border-red-500 @enderror">{{ old('keterangan') }}</textarea>
                             @error('keterangan')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

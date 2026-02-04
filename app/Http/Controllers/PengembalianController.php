@@ -16,7 +16,12 @@ use Illuminate\View\View;
 class PengembalianController extends Controller
 {
     /**
-     * Lookup peminjaman by QR code and redirect to pengembalian form.
+     * Lookup peminjaman by QR code and redirect based on status.
+     * 
+     * Logic:
+     * - Jika status 'disetujui' DAN belum handover -> redirect ke handover (serah terima)
+     * - Jika status 'disetujui' DAN sudah handover -> redirect ke pengembalian
+     * - Selain itu -> tampilkan pesan error sesuai kondisi
      */
     public function lookupByQrCode(Request $request)
     {
@@ -32,11 +37,30 @@ class PengembalianController extends Controller
             return redirect()->route('peminjaman.index')->with('error', 'Peminjaman dengan kode QR tersebut tidak ditemukan.');
         }
 
-        if ($peminjaman->status !== 'disetujui') {
-            return redirect()->route('peminjaman.show', $peminjaman)->with('error', 'Peminjaman ini tidak dalam status aktif untuk dikembalikan.');
+        // Route based on current state
+        if ($peminjaman->status === 'disetujui') {
+            if ($peminjaman->isReadyForPickup()) {
+                // Belum diambil -> arahkan ke halaman serah terima (handover)
+                return redirect()->route('peminjaman.handover', $peminjaman);
+            } else {
+                // Sudah diambil -> arahkan ke halaman pengembalian
+                return redirect()->route('pengembalian.create', $peminjaman);
+            }
         }
 
-        return redirect()->route('pengembalian.create', $peminjaman);
+        if ($peminjaman->status === 'selesai') {
+            return redirect()->route('peminjaman.show', $peminjaman)->with('info', 'Peminjaman ini sudah selesai dikembalikan.');
+        }
+
+        if ($peminjaman->status === 'menunggu') {
+            return redirect()->route('peminjaman.show', $peminjaman)->with('error', 'Peminjaman ini masih menunggu persetujuan.');
+        }
+
+        if ($peminjaman->status === 'ditolak') {
+            return redirect()->route('peminjaman.show', $peminjaman)->with('error', 'Peminjaman ini sudah ditolak.');
+        }
+
+        return redirect()->route('peminjaman.show', $peminjaman);
     }
 
     /**
@@ -48,6 +72,12 @@ class PengembalianController extends Controller
         // Hanya bisa mengembalikan peminjaman yang statusnya 'disetujui'
         if ($peminjaman->status !== 'disetujui') {
             abort(403, 'Peminjaman ini tidak dalam status aktif.');
+        }
+
+        // Cek apakah sudah di-handover (sudah diserahkan ke peminjam)
+        if ($peminjaman->isReadyForPickup()) {
+            return redirect()->route('peminjaman.handover', $peminjaman)
+                ->with('error', 'Barang belum diserahkan. Lakukan serah terima terlebih dahulu.');
         }
 
         // Cek apakah sudah ada pengembalian

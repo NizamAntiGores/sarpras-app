@@ -15,8 +15,8 @@ class PengaduanController extends Controller
         $query = \App\Models\Pengaduan::with(['user', 'sarpras', 'lokasi', 'petugas'])
             ->latest();
 
-        // Filter role
-        if ($user->role === 'peminjam') {
+        // Filter role - Siswa/Guru/Peminjam hanya bisa lihat pengaduan sendiri
+        if ($user->isPeminjam()) {
             $query->where('user_id', $user->id);
         }
 
@@ -59,12 +59,28 @@ class PengaduanController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'jenis' => 'required|in:tempat,barang',
             'judul' => 'required|string|max:255',
             'deskripsi' => 'required|string',
-            'lokasi_id' => 'required|exists:lokasi,id',
+            'lokasi_id' => 'nullable|exists:lokasi,id',
+            'lokasi_lainnya' => 'nullable|string|max:255',
             'sarpras_id' => 'nullable|exists:sarpras,id',
+            'barang_lainnya' => 'nullable|string|max:255',
             'foto' => 'nullable|image|max:2048',
+        ], [
+            'jenis.required' => 'Pilih jenis pengaduan.',
         ]);
+
+        // Custom validation: harus pilih salah satu (dropdown atau lainnya)
+        if ($validated['jenis'] === 'tempat') {
+            if (empty($validated['lokasi_id']) && empty($validated['lokasi_lainnya'])) {
+                return back()->withInput()->withErrors(['lokasi_id' => 'Pilih lokasi atau isi "Lainnya".']);
+            }
+        } elseif ($validated['jenis'] === 'barang') {
+            if (empty($validated['sarpras_id']) && empty($validated['barang_lainnya'])) {
+                return back()->withInput()->withErrors(['sarpras_id' => 'Pilih barang atau isi "Lainnya".']);
+            }
+        }
 
         $fotoPath = null;
         if ($request->hasFile('foto')) {
@@ -73,10 +89,13 @@ class PengaduanController extends Controller
 
         \App\Models\Pengaduan::create([
             'user_id' => auth()->id(),
+            'jenis' => $validated['jenis'],
             'judul' => $validated['judul'],
             'deskripsi' => $validated['deskripsi'],
-            'lokasi_id' => $validated['lokasi_id'],
+            'lokasi_id' => $validated['lokasi_id'] ?? null,
+            'lokasi_lainnya' => $validated['lokasi_lainnya'] ?? null,
             'sarpras_id' => $validated['sarpras_id'] ?? null,
+            'barang_lainnya' => $validated['barang_lainnya'] ?? null,
             'foto' => $fotoPath,
             'status' => 'belum_ditindaklanjuti',
         ]);

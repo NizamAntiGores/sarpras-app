@@ -142,7 +142,7 @@ class PeminjamanController extends Controller
             'unit_ids.*' => 'exists:sarpras_units,id',
             'tgl_pinjam' => 'required|date|after_or_equal:today',
             'tgl_kembali_rencana' => 'required|date|after:tgl_pinjam',
-            'keterangan' => 'nullable|string|max:500',
+            'keterangan' => 'required|string|max:500',
         ], [
             'unit_ids.required' => 'Pilih minimal 1 unit barang.',
             'unit_ids.min' => 'Pilih minimal 1 unit barang.',
@@ -150,6 +150,7 @@ class PeminjamanController extends Controller
             'tgl_pinjam.after_or_equal' => 'Tanggal pinjam tidak boleh sebelum hari ini.',
             'tgl_kembali_rencana.required' => 'Tanggal kembali rencana wajib diisi.',
             'tgl_kembali_rencana.after' => 'Tanggal kembali harus setelah tanggal pinjam.',
+            'keterangan.required' => 'Keterangan/tujuan peminjaman wajib diisi.',
         ]);
 
         // Custom Validation: Batas Peminjaman Maksimal 7 Hari
@@ -537,4 +538,74 @@ class PeminjamanController extends Controller
             ->route('peminjaman.index')
             ->with('success', 'Data peminjaman berhasil dihapus.');
     }
+
+    /**
+     * Show the handover (serah terima) page.
+     * Petugas akan menyerahkan barang kepada peminjam.
+     */
+    public function handover(Peminjaman $peminjaman): View
+    {
+        $user = auth()->user();
+
+        // Hanya admin dan petugas yang bisa melakukan handover
+        if ($user->isPeminjam()) {
+            abort(403, 'Anda tidak memiliki akses untuk melakukan serah terima.');
+        }
+
+        // Pastikan status 'disetujui' dan belum diambil
+        if (!$peminjaman->isReadyForPickup()) {
+            return redirect()->route('peminjaman.show', $peminjaman)
+                ->with('error', 'Peminjaman ini tidak dalam status siap untuk diambil.');
+        }
+
+        $peminjaman->load([
+            'user',
+            'details.sarprasUnit.sarpras.kategori',
+            'details.sarprasUnit.lokasi',
+            'petugas',
+        ]);
+
+        return view('peminjaman.handover', compact('peminjaman'));
+    }
+
+    /**
+     * Process the handover (serah terima) - record that items have been handed to borrower.
+     */
+    public function processHandover(Request $request, Peminjaman $peminjaman): RedirectResponse
+    {
+        $user = auth()->user();
+
+        // Hanya admin dan petugas
+        if ($user->isPeminjam()) {
+            abort(403, 'Anda tidak memiliki akses untuk melakukan serah terima.');
+        }
+
+        // Pastikan status 'disetujui' dan belum diambil
+        if (!$peminjaman->isReadyForPickup()) {
+            return redirect()->route('peminjaman.show', $peminjaman)
+                ->with('error', 'Peminjaman ini tidak dalam status siap untuk diambil.');
+        }
+
+        // Update handover info
+        $peminjaman->update([
+            'handover_at' => now(),
+            'handover_by' => $user->id,
+        ]);
+
+        \App\Helpers\LogHelper::record('update', "Serah terima peminjaman (ID: {$peminjaman->id}) kepada {$peminjaman->user->name}");
+
+        // Kirim notifikasi ke peminjam
+        \App\Models\Notification::send(
+            $peminjaman->user_id,
+            \App\Models\Notification::TYPE_PEMINJAMAN_APPROVED,
+            'Barang Telah Diserahkan 📦',
+            'Barang peminjaman telah diserahkan kepada Anda oleh ' . $user->name . '. Jangan lupa kembalikan tepat waktu!',
+            route('peminjaman.show', $peminjaman)
+        );
+
+        return redirect()
+            ->route('peminjaman.show', $peminjaman)
+            ->with('success', 'Serah terima berhasil! Barang telah diserahkan kepada ' . $peminjaman->user->name . '.');
+    }
 }
+

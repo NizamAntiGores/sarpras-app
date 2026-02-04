@@ -85,57 +85,75 @@
 
                             <script>
                                 function checkAllGood() {
-                                    // Select all radio buttons with value 'baik'
-                                    document.querySelectorAll('input[value="baik"]').forEach(radio => {
+                                    // Select all radio buttons with value 'baik' and trigger change
+                                    document.querySelectorAll('input.kondisi-radio[value="baik"]').forEach(radio => {
                                         radio.checked = true;
+                                        // Dispatch change event for Alpine.js to pick up
+                                        radio.dispatchEvent(new Event('change'));
                                     });
                                 }
                             </script>
 
                             @foreach ($peminjaman->details as $index => $detail)
-                                <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
+                                @php $unitId = $detail->sarpras_unit_id; @endphp
+                                <div class="bg-white border rounded-xl overflow-hidden shadow-sm" 
+                                     x-data="{ kondisi: '{{ old("kondisi_{$unitId}", '') }}' }">
                                     <div class="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
                                         <div>
                                             <span class="font-bold text-gray-700">Unit #{{ $index + 1 }}</span>
                                             <span class="mx-2 text-gray-300">|</span>
                                             <span class="font-mono text-blue-600 font-medium">{{ $detail->sarprasUnit->kode_unit }}</span>
+                                            <span class="ml-2 text-sm text-gray-500">{{ $detail->sarprasUnit?->sarpras?->nama_barang ?? '' }}</span>
                                         </div>
                                         <div class="text-sm text-gray-500">
-                                            Kondisi Awal: {{ ucfirst(str_replace('_', ' ', $detail->sarprasUnit->kondisi)) }}
+                                            Kondisi Awal: 
+                                            <span class="font-medium {{ $detail->sarprasUnit->kondisi === 'baik' ? 'text-green-600' : 'text-yellow-600' }}">
+                                                {{ ucfirst(str_replace('_', ' ', $detail->sarprasUnit->kondisi)) }}
+                                            </span>
                                         </div>
                                     </div>
 
-                                    <div class="p-6 space-y-6">
+                                    <div class="p-6 space-y-4">
                                         {{-- Kondisi Radio --}}
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-3">Kondisi Akhir <span class="text-red-500">*</span></label>
                                             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                                @php $unitId = $detail->sarpras_unit_id; @endphp
-                                                
                                                 <label class="relative cursor-pointer">
-                                                    <input type="radio" name="kondisi_{{ $unitId }}" value="baik" class="peer sr-only" required {{ old("kondisi_{$unitId}") == 'baik' ? 'checked' : '' }}>
-                                                    <div class="p-3 border rounded-lg text-center peer-checked:border-green-500 peer-checked:bg-green-50 hover:bg-gray-50 transition">
+                                                    <input type="radio" name="kondisi_{{ $unitId }}" value="baik" 
+                                                           class="peer sr-only kondisi-radio" required 
+                                                           x-on:change="kondisi = 'baik'"
+                                                           {{ old("kondisi_{$unitId}") == 'baik' ? 'checked' : '' }}>
+                                                    <div class="p-3 border-2 rounded-lg text-center peer-checked:border-green-500 peer-checked:bg-green-50 hover:bg-gray-50 transition">
                                                         <div class="text-2xl mb-1">✅</div>
                                                         <div class="font-medium text-sm text-green-700">Baik</div>
                                                     </div>
                                                 </label>
                                                 <label class="relative cursor-pointer">
-                                                    <input type="radio" name="kondisi_{{ $unitId }}" value="rusak_ringan" class="peer sr-only" {{ old("kondisi_{$unitId}") == 'rusak_ringan' ? 'checked' : '' }}>
-                                                    <div class="p-3 border rounded-lg text-center peer-checked:border-yellow-500 peer-checked:bg-yellow-50 hover:bg-gray-50 transition">
+                                                    <input type="radio" name="kondisi_{{ $unitId }}" value="rusak_ringan" 
+                                                           class="peer sr-only kondisi-radio" 
+                                                           x-on:change="kondisi = 'rusak_ringan'"
+                                                           {{ old("kondisi_{$unitId}") == 'rusak_ringan' ? 'checked' : '' }}>
+                                                    <div class="p-3 border-2 rounded-lg text-center peer-checked:border-yellow-500 peer-checked:bg-yellow-50 hover:bg-gray-50 transition">
                                                         <div class="text-2xl mb-1">⚠️</div>
                                                         <div class="font-medium text-sm text-yellow-700">Rusak Ringan</div>
                                                     </div>
                                                 </label>
                                                 <label class="relative cursor-pointer">
-                                                    <input type="radio" name="kondisi_{{ $unitId }}" value="rusak_berat" class="peer sr-only" {{ old("kondisi_{$unitId}") == 'rusak_berat' ? 'checked' : '' }}>
-                                                    <div class="p-3 border rounded-lg text-center peer-checked:border-orange-500 peer-checked:bg-orange-50 hover:bg-gray-50 transition">
+                                                    <input type="radio" name="kondisi_{{ $unitId }}" value="rusak_berat" 
+                                                           class="peer sr-only kondisi-radio"
+                                                           x-on:change="kondisi = 'rusak_berat'"
+                                                           {{ old("kondisi_{$unitId}") == 'rusak_berat' ? 'checked' : '' }}>
+                                                    <div class="p-3 border-2 rounded-lg text-center peer-checked:border-orange-500 peer-checked:bg-orange-50 hover:bg-gray-50 transition">
                                                         <div class="text-2xl mb-1">🔧</div>
                                                         <div class="font-medium text-sm text-orange-700">Rusak Berat</div>
                                                     </div>
                                                 </label>
                                                 <label class="relative cursor-pointer">
-                                                    <input type="radio" name="kondisi_{{ $unitId }}" value="hilang" class="peer sr-only" {{ old("kondisi_{$unitId}") == 'hilang' ? 'checked' : '' }}>
-                                                    <div class="p-3 border rounded-lg text-center peer-checked:border-red-500 peer-checked:bg-red-50 hover:bg-gray-50 transition">
+                                                    <input type="radio" name="kondisi_{{ $unitId }}" value="hilang" 
+                                                           class="peer sr-only kondisi-radio"
+                                                           x-on:change="kondisi = 'hilang'"
+                                                           {{ old("kondisi_{$unitId}") == 'hilang' ? 'checked' : '' }}>
+                                                    <div class="p-3 border-2 rounded-lg text-center peer-checked:border-red-500 peer-checked:bg-red-50 hover:bg-gray-50 transition">
                                                         <div class="text-2xl mb-1">❌</div>
                                                         <div class="font-medium text-sm text-red-700">Hilang</div>
                                                     </div>
@@ -146,20 +164,36 @@
                                             @enderror
                                         </div>
 
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            {{-- Catatan --}}
-                                            <div>
-                                                <label for="catatan_{{ $unitId }}" class="block text-sm font-medium text-gray-700 mb-2">Catatan / Keterangan</label>
-                                                <textarea name="catatan_{{ $unitId }}" id="catatan_{{ $unitId }}" rows="2" 
-                                                          class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                                                          placeholder="Keterangan kondisi...">{{ old("catatan_{$unitId}") }}</textarea>
-                                            </div>
+                                        {{-- Catatan & Foto - HANYA muncul jika ada masalah --}}
+                                        <div x-show="kondisi && kondisi !== 'baik'" x-transition x-cloak>
+                                            <div class="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                                <p class="text-sm font-semibold text-red-700 mb-3 flex items-center gap-2">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                                    </svg>
+                                                    Ada masalah dengan unit ini - Harap isi detail berikut:
+                                                </p>
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {{-- Catatan --}}
+                                                    <div>
+                                                        <label for="catatan_{{ $unitId }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                                            Catatan / Keterangan <span class="text-red-500">*</span>
+                                                        </label>
+                                                        <textarea name="catatan_{{ $unitId }}" id="catatan_{{ $unitId }}" rows="2" 
+                                                                  class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                                                                  placeholder="Jelaskan masalah yang ditemukan...">{{ old("catatan_{$unitId}") }}</textarea>
+                                                    </div>
 
-                                            {{-- Upload Foto --}}
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-2">Foto Bukti (Opsional)</label>
-                                                <input type="file" name="foto_{{ $unitId }}" accept="image/*"
-                                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition">
+                                                    {{-- Upload Foto --}}
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                                            Foto Bukti <span class="text-red-500">*</span>
+                                                        </label>
+                                                        <input type="file" name="foto_{{ $unitId }}" accept="image/*"
+                                                               class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 transition">
+                                                        <p class="mt-1 text-xs text-gray-500">Upload foto kerusakan/bukti</p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

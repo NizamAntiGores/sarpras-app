@@ -111,7 +111,8 @@
                 </div>
             </div>
 
-            {{-- Riwayat Maintenance --}}
+            {{-- Riwayat Maintenance - Hanya untuk tipe asset --}}
+            @if($sarpras->tipe !== 'bahan')
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Riwayat Maintenance</h3>
@@ -149,6 +150,7 @@
                     @endif
                 </div>
             </div>
+            @endif
         </div>
     </div>
 </x-app-layout>

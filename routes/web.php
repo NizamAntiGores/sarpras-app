@@ -92,10 +92,10 @@ Route::middleware('auth')->group(function () {
             SarprasUnitController::class,
             'destroy'
         ])->name('sarpras.units.destroy');
-        Route::post('/sarpras/{sarpras}/units/bulk-update-kondisi', [
+        Route::post('/sarpras/{sarpras}/units/bulk-action', [
             SarprasUnitController::class,
-            'bulkUpdateKondisi'
-        ])->name('sarpras.units.bulk-update-kondisi');
+            'bulkAction'
+        ])->name('sarpras.units.bulk-action');
 
         // =============================================
 // MAINTENANCE ROUTES
@@ -158,6 +158,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/peminjaman/{peminjaman}/edit', [PeminjamanController::class, 'edit'])->name('peminjaman.edit');
         Route::put('/peminjaman/{peminjaman}', [PeminjamanController::class, 'update'])->name('peminjaman.update');
         Route::patch('/peminjaman/{peminjaman}', [PeminjamanController::class, 'update']);
+
+        // Handover Routes (Serah Terima)
+        Route::get('/peminjaman/{peminjaman}/handover', [PeminjamanController::class, 'handover'])->name('peminjaman.handover');
+        Route::post('/peminjaman/{peminjaman}/handover', [PeminjamanController::class, 'processHandover'])->name('peminjaman.handover.process');
 
         // Pengembalian Routes
         Route::post('/pengembalian/lookup-qr', [

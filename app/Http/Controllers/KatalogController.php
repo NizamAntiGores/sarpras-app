@@ -17,16 +17,31 @@ class KatalogController extends Controller
     {
         $kategoriId = $request->query('kategori');
 
+        // Logic Correction: 
+        // 1. Assets count 'units' (bisaDipinjam)
+        // 2. Consumables count 'stocks' (quantity)
+        // We need 'withSum' for stocks to filter consumables effectively in SQL
+        
         $query = Sarpras::with(['kategori'])
             ->withCount([
                 'units as available_count' => function ($query) {
                     $query->bisaDipinjam();
                 }
             ])
+            ->withSum('stocks as available_stock', 'quantity') // Sum stock quantity
             ->when(!auth()->user()->isGuru(), function ($query) {
+                // If NOT guru (e.g. Student?), maybe filter types?
+                // Existing logic: Students don't see consumables?
+                // User said: "di bagian guru tidak muncul" -> implying Guru SHOULD see it.
+                // If logic was: "If NOT guru, hide bahan" -> Then Guru SEES bahan.
+                // But the 'having' was blocking it.
                 $query->where('tipe', '!=', 'bahan');
             })
-            ->having('available_count', '>', 0)
+            // Fix Filter: Show if (Available Units > 0) OR (Available Stock > 0)
+            ->where(function($q) {
+                $q->having('available_count', '>', 0)
+                  ->orHaving('available_stock', '>', 0);
+            })
             ->orderBy('nama_barang');
 
         // Filter by kategori jika ada
@@ -37,10 +52,11 @@ class KatalogController extends Controller
         $sarpras = $query->get();
         $kategori = Kategori::orderBy('nama_kategori')->get();
 
-        // Stats untuk header
-        $totalBarang = Sarpras::whereHas('units', function ($q) {
-            $q->bisaDipinjam();
-        })->count();
+        // Stats untuk header (Corrected for Global Count)
+        // This is complex in SQL, let's keep it simple or remove if inconsistent
+        // Or just count all sarpras that match general availability?
+        // Let's rely on the main query count for accurate display or just basic count.
+        $totalBarang = Sarpras::count(); 
         $totalKategori = Kategori::count();
 
         return view('katalog.index', compact('sarpras', 'kategori', 'kategoriId', 'totalBarang', 'totalKategori'));

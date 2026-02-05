@@ -60,39 +60,64 @@ class Sarpras extends Model
     protected function totalUnit(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->activeUnits()->count(),
+            get: fn() => $this->activeUnits()->count(),
         );
     }
 
     /**
+     * Get inventory stocks (for consumables)
+     */
+    public function stocks(): HasMany
+    {
+        return $this->hasMany(ItemStock::class, 'sarpras_id');
+    }
+
+    /**
      * Accessor untuk stok tersedia (unit yang bisa dipinjam)
+     * Menggunakan konsep "Storefront" (Hanya barang di lokasi is_storefront=true)
      */
     protected function stokTersedia(): Attribute
     {
         return Attribute::make(
             get: function () {
-                // Ambil semua unit yang secara fisik tersedia
-                $physicallyAvailable = $this->units()
-                    ->where('status', SarprasUnit::STATUS_TERSEDIA)
-                    ->where('kondisi', '!=', SarprasUnit::KONDISI_RUSAK_BERAT);
+                // LOGIC 1: ASSET (Type A) - Track by Unit
+                // ----------------------------------------
+                if ($this->tipe !== 'bahan') { // Assuming 'bahan' is the identifier for Consumable
+    
+                    // Ambil unit yang fisik di Storefront & Available
+                    $physicallyAvailable = $this->units()
+                        ->whereHas('lokasi', fn($q) => $q->where('is_storefront', true))
+                        ->where('status', SarprasUnit::STATUS_TERSEDIA)
+                        ->where('kondisi', '!=', SarprasUnit::KONDISI_RUSAK_BERAT);
 
-                // Hitung ID unit yang sedang dalam pengajuan 'menunggu'
-                // Kita harus join ke tabel peminjaman_detail lalu ke peminjaman
-                // Di Laravel Eloquent, kita bisa pakai whereHas di level unit
-                // Tapi karena kita sudah di level Sarpras, kita ambil unit ID-nya saja.
+                    // Exclude yang sedang di-booking (Pending Peminjaman)
+                    $availableUnitIds = $physicallyAvailable->pluck('id');
 
-                // Ambil ID unit milik sarpras ini yang statusnya 'tersedia'
-                $availableUnitIds = $physicallyAvailable->pluck('id');
+                    $pendingCount = \App\Models\PeminjamanDetail::whereIn('sarpras_unit_id', $availableUnitIds)
+                        ->whereHas('peminjaman', function ($q) {
+                            $q->where('status', 'menunggu');
+                        })
+                        ->count();
 
-                // Cek dari ID tersebut, mana yang ada di peminjaman dengan status 'menunggu'
-                $pendingCount = \App\Models\PeminjamanDetail::whereIn('sarpras_unit_id', $availableUnitIds)
-                    ->whereHas('peminjaman', function ($q) {
-                        $q->where('status', 'menunggu');
-                    })
-                    ->count();
+                    return $physicallyAvailable->count() - $pendingCount;
+                }
 
-                // Stok Tampil = Fisik Tersedia - Sedang Diajukan
-                return $physicallyAvailable->count() - $pendingCount;
+                // LOGIC 2: CONSUMABLE (Type B) - Track by Quantity
+                // ----------------------------------------
+                else {
+                    // 1. Total Fisik di Storefront
+                    $physicalQty = $this->stocks()
+                        ->whereHas('lokasi', fn($q) => $q->where('is_storefront', true))
+                        ->sum('quantity');
+
+                    // 2. Total yang sedang diminta (Pending)
+                    // 2. Total yang sedang diminta (Pending)
+                    $pendingQty = \App\Models\PeminjamanDetail::whereHas('peminjaman', fn($q) => $q->where('status', 'menunggu'))
+                        ->where('sarpras_id', $this->id)
+                        ->sum('quantity');
+
+                    return max(0, $physicalQty - $pendingQty);
+                }
             }
         );
     }
@@ -103,7 +128,7 @@ class Sarpras extends Model
     protected function jumlahDipinjam(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->units()
+            get: fn() => $this->units()
                 ->where('status', SarprasUnit::STATUS_DIPINJAM)
                 ->count(),
         );
@@ -115,7 +140,7 @@ class Sarpras extends Model
     protected function jumlahMaintenance(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->units()
+            get: fn() => $this->units()
                 ->where('status', SarprasUnit::STATUS_MAINTENANCE)
                 ->count(),
         );
@@ -127,7 +152,7 @@ class Sarpras extends Model
     protected function jumlahRusak(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->units()
+            get: fn() => $this->units()
                 ->where('kondisi', '!=', SarprasUnit::KONDISI_BAIK)
                 ->whereNotIn('status', [SarprasUnit::STATUS_DIHAPUSBUKUKAN, SarprasUnit::STATUS_TERPAKAI])
                 ->count(),

@@ -39,7 +39,7 @@
                         </div>
                     </div>
 
-                    <form action="{{ route('sarpras.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                    <form action="{{ route('sarpras.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6" x-data="{ tipe: '{{ old('tipe', 'asset') }}' }">
                         @csrf
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -56,13 +56,13 @@
                             </div>
                         </div>
 
-                        {{-- TIPE BARANG (NEW) --}}
+                        {{-- TIPE BARANG --}}
                         <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
                             <h4 class="font-semibold text-gray-800 mb-3">Tipe Barang</h4>
                             <div class="flex space-x-4">
                                 <label class="flex items-center space-x-3 cursor-pointer">
                                     <input type="radio" name="tipe" value="asset" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                           {{ old('tipe', 'asset') === 'asset' ? 'checked' : '' }}>
+                                           x-model="tipe">
                                     <div class="text-sm">
                                         <span class="font-medium text-gray-900 block">Aset / Inventaris</span>
                                         <span class="text-xs text-gray-500">Barang modal yang memiliki nomor seri unik (Contoh: Laptop, Proyektor).</span>
@@ -70,12 +70,36 @@
                                 </label>
                                 <label class="flex items-center space-x-3 cursor-pointer">
                                     <input type="radio" name="tipe" value="bahan" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                           {{ old('tipe') === 'bahan' ? 'checked' : '' }}>
+                                           x-model="tipe">
                                     <div class="text-sm">
                                         <span class="font-medium text-gray-900 block">Bahan Habis Pakai</span>
                                         <span class="text-xs text-gray-500">Barang sekali pakai atau quantity-based (Contoh: Spidol, Tisu, Kertas).</span>
                                     </div>
                                 </label>
+                            </div>
+                        </div>
+
+                        {{-- LOKASI & STOK (KHUSUS BAHAN HABIS PAKAI) --}}
+                        <div x-show="tipe == 'bahan'" x-transition class="border border-indigo-200 rounded-lg p-4 bg-indigo-50" style="display: none;">
+                            <h4 class="font-semibold text-indigo-900 mb-3 flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                Lokasi & Stok Awal
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="lokasi_id" class="block text-sm font-medium text-indigo-900 mb-1">Lokasi Penyimpanan <span class="text-red-500">*</span></label>
+                                    <select name="lokasi_id" id="lokasi_id" class="w-full rounded-lg border-indigo-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                        <option value="">-- Pilih Lokasi --</option>
+                                        @foreach ($lokasi as $loc)
+                                            <option value="{{ $loc->id }}" {{ old('lokasi_id') == $loc->id ? 'selected' : '' }}>{{ $loc->nama_lokasi }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="stok_awal" class="block text-sm font-medium text-indigo-900 mb-1">Jumlah Stok Awal <span class="text-red-500">*</span></label>
+                                    <input type="number" name="stok_awal" id="stok_awal" value="{{ old('stok_awal', 0) }}" min="0"
+                                           class="w-full rounded-lg border-indigo-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                </div>
                             </div>
                         </div>
 

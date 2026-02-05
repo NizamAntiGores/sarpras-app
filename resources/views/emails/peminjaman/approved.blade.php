@@ -9,8 +9,15 @@ Peminjaman Anda telah disetujui! Berikut detailnya:
 
 ## Kode Peminjaman
 <x-mail::panel>
-<div style="text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 2px;">
-{{ $qrCode }}
+<div style="text-align: center;">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ $qrCode }}" alt="QR Code" style="width: 200px; height: 200px;">
+    <p style="margin-top: 15px; font-size: 14px; color: #555;">
+        <strong>QR Code ini berlaku untuk<br>PENGAMBILAN dan PENGEMBALIAN barang.</strong><br>
+        Harap simpan email ini.
+    </p>
+    <div style="margin-top: 10px; font-size: 18px; font-weight: bold; letter-spacing: 2px; color: #333;">
+        {{ $qrCode }}
+    </div>
 </div>
 </x-mail::panel>
 
@@ -35,12 +42,7 @@ Peminjaman Anda telah disetujui! Berikut detailnya:
 ## Instruksi Pengambilan
 
 1. Tunjukkan **kode peminjaman** di atas kepada petugas
-2. Atau buka halaman detail peminjaman untuk melihat **QR Code**
-3. Petugas akan memverifikasi dan menyerahkan barang
-
-<x-mail::button :url="route('peminjaman.show', $peminjaman)">
-Lihat QR Code
-</x-mail::button>
+2. Petugas akan memverifikasi dan menyerahkan barang
 
 ---
 

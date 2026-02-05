@@ -95,8 +95,12 @@
                             </script>
 
                             @foreach ($peminjaman->details as $index => $detail)
+                                @if(!$detail->sarpras_unit_id)
+                                    @continue
+                                @endif
+                                
                                 @php $unitId = $detail->sarpras_unit_id; @endphp
-                                <div class="bg-white border rounded-xl overflow-hidden shadow-sm" 
+                                <div class="bg-white border rounded-xl overflow-hidden shadow-sm"
                                      x-data="{ kondisi: '{{ old("kondisi_{$unitId}", '') }}' }">
                                     <div class="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
                                         <div>
@@ -106,66 +110,81 @@
                                             <span class="ml-2 text-sm text-gray-500">{{ $detail->sarprasUnit?->sarpras?->nama_barang ?? '' }}</span>
                                         </div>
                                         <div class="text-sm text-gray-500">
-                                            Kondisi Awal: 
-                                            <span class="font-medium {{ $detail->sarprasUnit->kondisi === 'baik' ? 'text-green-600' : 'text-yellow-600' }}">
-                                                {{ ucfirst(str_replace('_', ' ', $detail->sarprasUnit->kondisi)) }}
-                                            </span>
+                                            @if($detail->handed_over_at)
+                                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-700 border border-green-200">
+                                                    Diserahkan: {{ $detail->handed_over_at->format('d M H:i') }}
+                                                </span>
+                                            @else
+                                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200">
+                                                    ⚠️ Belum Diambil
+                                                </span>
+                                            @endif
                                         </div>
                                     </div>
 
                                     <div class="p-6 space-y-4">
-                                        {{-- Kondisi Radio --}}
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-3">Kondisi Akhir <span class="text-red-500">*</span></label>
-                                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                                <label class="relative cursor-pointer">
-                                                    <input type="radio" name="kondisi_{{ $unitId }}" value="baik" 
-                                                           class="peer sr-only kondisi-radio" required 
-                                                           x-on:change="kondisi = 'baik'"
-                                                           {{ old("kondisi_{$unitId}") == 'baik' ? 'checked' : '' }}>
-                                                    <div class="p-3 border-2 rounded-lg text-center peer-checked:border-green-500 peer-checked:bg-green-50 hover:bg-gray-50 transition">
-                                                        <div class="text-2xl mb-1">✅</div>
-                                                        <div class="font-medium text-sm text-green-700">Baik</div>
-                                                    </div>
-                                                </label>
-                                                <label class="relative cursor-pointer">
-                                                    <input type="radio" name="kondisi_{{ $unitId }}" value="rusak_ringan" 
-                                                           class="peer sr-only kondisi-radio" 
-                                                           x-on:change="kondisi = 'rusak_ringan'"
-                                                           {{ old("kondisi_{$unitId}") == 'rusak_ringan' ? 'checked' : '' }}>
-                                                    <div class="p-3 border-2 rounded-lg text-center peer-checked:border-yellow-500 peer-checked:bg-yellow-50 hover:bg-gray-50 transition">
-                                                        <div class="text-2xl mb-1">⚠️</div>
-                                                        <div class="font-medium text-sm text-yellow-700">Rusak Ringan</div>
-                                                    </div>
-                                                </label>
-                                                <label class="relative cursor-pointer">
-                                                    <input type="radio" name="kondisi_{{ $unitId }}" value="rusak_berat" 
-                                                           class="peer sr-only kondisi-radio"
-                                                           x-on:change="kondisi = 'rusak_berat'"
-                                                           {{ old("kondisi_{$unitId}") == 'rusak_berat' ? 'checked' : '' }}>
-                                                    <div class="p-3 border-2 rounded-lg text-center peer-checked:border-orange-500 peer-checked:bg-orange-50 hover:bg-gray-50 transition">
-                                                        <div class="text-2xl mb-1">🔧</div>
-                                                        <div class="font-medium text-sm text-orange-700">Rusak Berat</div>
-                                                    </div>
-                                                </label>
-                                                <label class="relative cursor-pointer">
-                                                    <input type="radio" name="kondisi_{{ $unitId }}" value="hilang" 
-                                                           class="peer sr-only kondisi-radio"
-                                                           x-on:change="kondisi = 'hilang'"
-                                                           {{ old("kondisi_{$unitId}") == 'hilang' ? 'checked' : '' }}>
-                                                    <div class="p-3 border-2 rounded-lg text-center peer-checked:border-red-500 peer-checked:bg-red-50 hover:bg-gray-50 transition">
-                                                        <div class="text-2xl mb-1">❌</div>
-                                                        <div class="font-medium text-sm text-red-700">Hilang</div>
-                                                    </div>
-                                                </label>
+                                        @if($detail->handed_over_at)
+                                            {{-- Kondisi Radio - Show only if Handed Over --}}
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-3">Kondisi Akhir <span class="text-red-500">*</span></label>
+                                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                    <label class="relative cursor-pointer">
+                                                        <input type="radio" name="kondisi_{{ $unitId }}" value="baik"
+                                                               class="peer sr-only kondisi-radio" required
+                                                               x-on:change="kondisi = 'baik'"
+                                                               {{ old("kondisi_{$unitId}") == 'baik' ? 'checked' : '' }}>
+                                                        <div class="p-3 border-2 rounded-lg text-center peer-checked:border-green-500 peer-checked:bg-green-50 hover:bg-gray-50 transition">
+                                                            <div class="text-2xl mb-1">✅</div>
+                                                            <div class="font-medium text-sm text-green-700">Baik</div>
+                                                        </div>
+                                                    </label>
+                                                    <label class="relative cursor-pointer">
+                                                        <input type="radio" name="kondisi_{{ $unitId }}" value="rusak_ringan"
+                                                               class="peer sr-only kondisi-radio"
+                                                               x-on:change="kondisi = 'rusak_ringan'"
+                                                               {{ old("kondisi_{$unitId}") == 'rusak_ringan' ? 'checked' : '' }}>
+                                                        <div class="p-3 border-2 rounded-lg text-center peer-checked:border-yellow-500 peer-checked:bg-yellow-50 hover:bg-gray-50 transition">
+                                                            <div class="text-2xl mb-1">⚠️</div>
+                                                            <div class="font-medium text-sm text-yellow-700">Rusak Ringan</div>
+                                                        </div>
+                                                    </label>
+                                                    <label class="relative cursor-pointer">
+                                                        <input type="radio" name="kondisi_{{ $unitId }}" value="rusak_berat"
+                                                               class="peer sr-only kondisi-radio"
+                                                               x-on:change="kondisi = 'rusak_berat'"
+                                                               {{ old("kondisi_{$unitId}") == 'rusak_berat' ? 'checked' : '' }}>
+                                                        <div class="p-3 border-2 rounded-lg text-center peer-checked:border-orange-500 peer-checked:bg-orange-50 hover:bg-gray-50 transition">
+                                                            <div class="text-2xl mb-1">🔧</div>
+                                                            <div class="font-medium text-sm text-orange-700">Rusak Berat</div>
+                                                        </div>
+                                                    </label>
+                                                    <label class="relative cursor-pointer">
+                                                        <input type="radio" name="kondisi_{{ $unitId }}" value="hilang"
+                                                               class="peer sr-only kondisi-radio"
+                                                               x-on:change="kondisi = 'hilang'"
+                                                               {{ old("kondisi_{$unitId}") == 'hilang' ? 'checked' : '' }}>
+                                                        <div class="p-3 border-2 rounded-lg text-center peer-checked:border-red-500 peer-checked:bg-red-50 hover:bg-gray-50 transition">
+                                                            <div class="text-2xl mb-1">❌</div>
+                                                            <div class="font-medium text-sm text-red-700">Hilang</div>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                                @error("kondisi_{$unitId}")
+                                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                                @enderror
                                             </div>
-                                            @error("kondisi_{$unitId}")
-                                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                            @enderror
-                                        </div>
 
-                                        {{-- Catatan & Foto - HANYA muncul jika ada masalah --}}
-                                        <div x-show="kondisi && kondisi !== 'baik'" x-transition x-cloak>
+                                            {{-- Catatan & Foto - HANYA muncul jika ada masalah --}}
+                                            <div x-show="kondisi && kondisi !== 'baik'" x-transition x-cloak>
+                                        @else
+                                            {{-- If NOT handed over --}}
+                                            <div class="bg-yellow-50 border border-yellow-200 rounded p-4 text-center">
+                                                <p class="text-yellow-700 font-medium">Barang ini tidak pernah diambil.</p>
+                                                <p class="text-sm text-yellow-600 mt-1">Status barang akan dikembalikan ke tersedia.</p>
+                                                <input type="hidden" name="unpicked_{{ $unitId }}" value="1">
+                                            </div>
+                                            <div style="display:none"> {{-- Hide render block for closure safety --}}
+                                        @endif
                                             <div class="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                                                 <p class="text-sm font-semibold text-red-700 mb-3 flex items-center gap-2">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

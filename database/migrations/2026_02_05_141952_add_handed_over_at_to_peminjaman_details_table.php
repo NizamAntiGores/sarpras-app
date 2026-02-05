@@ -4,17 +4,15 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('lokasi', function (Blueprint $table) {
-            $table->id();
-            $table->string('nama_lokasi');
-            $table->string('keterangan')->nullable();
-            $table->timestamps();
+        Schema::table('peminjaman_details', function (Blueprint $table) {
+            $table->timestamp('handed_over_at')->nullable()->after('quantity');
         });
     }
 
@@ -23,6 +21,8 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('lokasi');
+        Schema::table('peminjaman_details', function (Blueprint $table) {
+            $table->dropColumn('handed_over_at');
+        });
     }
 };

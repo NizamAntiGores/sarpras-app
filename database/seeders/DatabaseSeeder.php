@@ -27,7 +27,7 @@ class DatabaseSeeder extends Seeder
         User::create([
             'name' => 'Super Admin',
             'email' => 'admin@gmail.com',
-            'password' => Hash::make('password'),
+            'password' => 'password',
             'nomor_induk' => 'ADM001',
             'role' => 'admin',
             'kontak' => '081234567890',
@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
         $petugas = User::create([
             'name' => 'Petugas Sarpras',
             'email' => 'petugas@gmail.com',
-            'password' => Hash::make('password'),
+            'password' => 'password',
             'nomor_induk' => 'PTG001',
             'role' => 'petugas',
             'kontak' => '081234567891',
@@ -60,14 +60,20 @@ class DatabaseSeeder extends Seeder
             'Lab Multimedia',
             'Perpustakaan',
             'Ruang Guru',
-            'Ruang TU',
+            'Ruang TU' => true, // Storefront
             'Aula',
             'Gudang Utama',
         ];
 
         $lokasis = [];
-        foreach ($lokasiList as $nama) {
-            $lokasis[$nama] = Lokasi::create(['nama_lokasi' => $nama]);
+        foreach ($lokasiList as $key => $value) {
+            $isStorefront = is_bool($value) ? $value : false;
+            $nama = is_bool($value) ? $key : $value;
+
+            $lokasis[$nama] = Lokasi::create([
+                'nama_lokasi' => $nama,
+                'is_storefront' => $isStorefront
+            ]);
         }
 
         // =============================================
@@ -96,7 +102,7 @@ class DatabaseSeeder extends Seeder
                     ['kode' => 'LPT-002', 'lokasi' => 'Lab Komputer 1'],
                     ['kode' => 'LPT-003', 'lokasi' => 'Lab Komputer 1'],
                     ['kode' => 'LPT-004', 'lokasi' => 'Lab Komputer 2'],
-                    ['kode' => 'LPT-005', 'lokasi' => 'Lab Komputer 2'],
+                    ['kode' => 'LPT-005', 'lokasi' => 'Ruang TU'], // Available in Storefront
                 ],
             ],
             [
@@ -105,7 +111,7 @@ class DatabaseSeeder extends Seeder
                 'units' => [
                     ['kode' => 'PRJ-001', 'lokasi' => 'Ruang Kelas X-A'],
                     ['kode' => 'PRJ-002', 'lokasi' => 'Ruang Kelas XI-A'],
-                    ['kode' => 'PRJ-003', 'lokasi' => 'Aula'],
+                    ['kode' => 'PRJ-003', 'lokasi' => 'Ruang TU'], // Available in Storefront
                 ],
             ],
             [
@@ -142,7 +148,7 @@ class DatabaseSeeder extends Seeder
                 'units' => [
                     ['kode' => 'MTR-001', 'lokasi' => 'Lab Komputer 1'],
                     ['kode' => 'MTR-002', 'lokasi' => 'Lab Komputer 1'],
-                    ['kode' => 'MTR-003', 'lokasi' => 'Lab Komputer 2'],
+                    ['kode' => 'MTR-003', 'lokasi' => 'Ruang TU'], // Storefront
                 ],
             ],
         ];
@@ -178,8 +184,8 @@ class DatabaseSeeder extends Seeder
                     ['kode' => 'BLV-001', 'lokasi' => 'Gudang Utama'],
                     ['kode' => 'BLV-002', 'lokasi' => 'Gudang Utama'],
                     ['kode' => 'BLV-003', 'lokasi' => 'Gudang Utama'],
-                    ['kode' => 'BLV-004', 'lokasi' => 'Gudang Utama'],
-                    ['kode' => 'BLV-005', 'lokasi' => 'Gudang Utama'],
+                    ['kode' => 'BLV-004', 'lokasi' => 'Ruang TU'], // Available
+                    ['kode' => 'BLV-005', 'lokasi' => 'Ruang TU'], // Available
                 ],
             ],
             [
@@ -188,8 +194,8 @@ class DatabaseSeeder extends Seeder
                 'units' => [
                     ['kode' => 'BLB-001', 'lokasi' => 'Gudang Utama'],
                     ['kode' => 'BLB-002', 'lokasi' => 'Gudang Utama'],
-                    ['kode' => 'BLB-003', 'lokasi' => 'Gudang Utama'],
-                    ['kode' => 'BLB-004', 'lokasi' => 'Gudang Utama'],
+                    ['kode' => 'BLB-003', 'lokasi' => 'Ruang TU'], // Available
+                    ['kode' => 'BLB-004', 'lokasi' => 'Ruang TU'], // Available
                 ],
             ],
             [
@@ -199,9 +205,9 @@ class DatabaseSeeder extends Seeder
                     ['kode' => 'RKT-001', 'lokasi' => 'Gudang Utama'],
                     ['kode' => 'RKT-002', 'lokasi' => 'Gudang Utama'],
                     ['kode' => 'RKT-003', 'lokasi' => 'Gudang Utama'],
-                    ['kode' => 'RKT-004', 'lokasi' => 'Gudang Utama'],
-                    ['kode' => 'RKT-005', 'lokasi' => 'Gudang Utama'],
-                    ['kode' => 'RKT-006', 'lokasi' => 'Gudang Utama'],
+                    ['kode' => 'RKT-004', 'lokasi' => 'Ruang TU'], // Available
+                    ['kode' => 'RKT-005', 'lokasi' => 'Ruang TU'], // Available
+                    ['kode' => 'RKT-006', 'lokasi' => 'Ruang TU'], // Available
                 ],
             ],
             [
@@ -241,13 +247,13 @@ class DatabaseSeeder extends Seeder
                 'nama' => 'Spidol Whiteboard',
                 'kategori' => 'ATK',
                 'jumlah' => 50,
-                'lokasi' => 'Gudang Utama',
+                'lokasi' => 'Ruang TU', // Storefront
             ],
             [
                 'nama' => 'Penghapus Papan Tulis',
                 'kategori' => 'ATK',
                 'jumlah' => 20,
-                'lokasi' => 'Gudang Utama',
+                'lokasi' => 'Ruang TU', // Storefront
             ],
             [
                 'nama' => 'Shuttlecock',
@@ -284,17 +290,12 @@ class DatabaseSeeder extends Seeder
                 'deskripsi' => 'Barang habis pakai ' . $bahan['nama'],
             ]);
 
-            // Untuk bahan, buat unit sebanyak jumlahnya dengan kode auto-generated
-            for ($i = 1; $i <= $bahan['jumlah']; $i++) {
-                SarprasUnit::create([
-                    'sarpras_id' => $sarpras->id,
-                    'kode_unit' => $sarpras->kode_barang . '-' . str_pad($i, 3, '0', STR_PAD_LEFT),
-                    'lokasi_id' => $lokasis[$bahan['lokasi']]->id,
-                    'kondisi' => SarprasUnit::KONDISI_BAIK,
-                    'status' => SarprasUnit::STATUS_TERSEDIA,
-                    'tanggal_perolehan' => now(),
-                ]);
-            }
+            // Create ItemStock for Consumables
+            \App\Models\ItemStock::create([
+                'sarpras_id' => $sarpras->id,
+                'lokasi_id' => $lokasis[$bahan['lokasi']]->id,
+                'quantity' => $bahan['jumlah'],
+            ]);
         }
 
         // =============================================

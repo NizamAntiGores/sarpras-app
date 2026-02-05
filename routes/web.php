@@ -79,6 +79,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/sarpras/{sarpras}/edit', [SarprasController::class, 'edit'])->name('sarpras.edit');
         Route::put('/sarpras/{sarpras}', [SarprasController::class, 'update'])->name('sarpras.update');
         Route::patch('/sarpras/{sarpras}', [SarprasController::class, 'update']);
+        Route::post('/sarpras/{sarpras}/add-stock', [SarprasController::class, 'addStock'])->name('sarpras.add-stock'); // Quick Add Location Stock
 
         // =============================================
 // SARPRAS UNIT ROUTES (Nested under Sarpras)

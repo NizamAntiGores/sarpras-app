@@ -15,6 +15,23 @@
             {{-- Main Card --}}
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6">
+                    @if ($errors->any())
+                        <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                            <strong class="font-bold">Error!</strong>
+                            <span class="block sm:inline">
+                                @foreach ($errors->all() as $error)
+                                    <div>{{ $error }}</div>
+                                @endforeach
+                            </span>
+                        </div>
+                    @endif
+                    @if (session('error'))
+                        <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                            <strong class="font-bold">Gagal!</strong>
+                            <span class="block sm:inline">{{ session('error') }}</span>
+                        </div>
+                    @endif
+
                     {{-- Header with Status --}}
                     <div class="text-center mb-6">
                         <div class="inline-flex items-center px-4 py-2 bg-amber-100 text-amber-800 rounded-full text-lg font-medium">
@@ -71,90 +88,145 @@
                         </div>
                     </div>
 
-                    {{-- Daftar Barang yang Akan Diserahkan --}}
-                    <div class="mt-6 bg-green-50 rounded-lg p-4 border border-green-200">
-                        <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                            </svg>
-                            Barang yang Akan Diserahkan ({{ $peminjaman->details->count() }} unit)
-                        </h3>
+                    {{-- Form Serah Terima --}}
+                    <form action="{{ route('peminjaman.handover.process', $peminjaman) }}" method="POST">
+                        @csrf
                         
-                        @php
-                            $unitsByLocation = $peminjaman->details->groupBy(function($detail) {
-                                return $detail->sarprasUnit?->lokasi?->nama_lokasi ?? 'Lokasi Tidak Diketahui';
-                            });
-                        @endphp
+                        {{-- Daftar Barang yang Akan Diserahkan --}}
+                        <div class="mt-6 bg-green-50 rounded-lg p-4 border border-green-200">
+                            <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                                </svg>
+                                Barang yang Akan Diserahkan ({{ $peminjaman->details->count() }} unit)
+                            </h3>
+                            
+                            @php
+                                // Group logic: Assets by Location, Consumables separate
+                                $groupedDetails = $peminjaman->details->groupBy(function($detail) {
+                                    if ($detail->sarpras_unit_id && $detail->sarprasUnit) {
+                                        return $detail->sarprasUnit->lokasi->nama_lokasi ?? 'Lokasi Tidak Diketahui';
+                                    }
+                                    return 'Bahan Habis Pakai / Lainnya';
+                                });
+                            @endphp
 
-                        <div class="space-y-4">
-                            @foreach($unitsByLocation as $lokasi => $units)
-                                <div class="bg-white rounded-lg p-4 border border-green-100">
-                                    <p class="font-medium text-green-800 mb-3 flex items-center gap-2">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        </svg>
-                                        {{ $lokasi }}
-                                    </p>
-                                    <div class="space-y-2">
-                                        @foreach($units as $detail)
-                                            <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                                                <div class="flex items-center gap-3">
-                                                    <input type="checkbox" checked disabled class="h-5 w-5 text-green-600 rounded border-gray-300">
+                            <div class="space-y-6">
+                                @foreach($groupedDetails as $lokasi => $details)
+                                    <div class="bg-white rounded-lg p-4 border border-green-100 shadow-sm relative">
+                                         {{-- Location Header --}}
+                                        <div class="flex justify-between items-center mb-3">
+                                            <p class="font-bold text-gray-800 flex items-center gap-2 text-lg">
+                                                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                </svg>
+                                                {{ $lokasi }}
+                                            </p>
+                                            
+                                            {{-- Select All for this Location --}}
+                                            <label class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 cursor-pointer select-none">
+                                                <input type="checkbox" onchange="toggleLocation(this)" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
+                                                Pilih Semua di Sini
+                                            </label>
+                                        </div>
+
+                                        <div class="space-y-3">
+                                            @foreach($details as $detail)
+                                                @php
+                                                    $isHandedOver = !is_null($detail->handed_over_at);
+                                                @endphp
+                                                <div class="flex items-center justify-between p-3 rounded-lg border transition {{ $isHandedOver ? 'bg-gray-100 border-gray-200' : 'bg-white border-gray-200 hover:border-blue-300' }}">
+                                                    <div class="flex items-center gap-4">
+                                                        {{-- Checkbox --}}
+                                                        @if(!$isHandedOver)
+                                                            <input type="checkbox" name="detail_ids[]" value="{{ $detail->id }}" 
+                                                                   class="h-5 w-5 text-green-600 rounded border-gray-300 focus:ring-green-500 item-checkbox">
+                                                        @else
+                                                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                            </svg>
+                                                        @endif
+
+                                                        <div>
+                                                            @if($detail->sarpras_unit_id)
+                                                                <span class="font-mono font-bold text-gray-800">{{ $detail->sarprasUnit->kode_unit }}</span>
+                                                                <span class="text-gray-600 ml-2">{{ $detail->sarprasUnit->sarpras->nama_barang }}</span>
+                                                            @else
+                                                                <span class="font-bold text-gray-800">{{ $detail->sarpras->nama_barang }}</span>
+                                                                <span class="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded ml-2">{{ $detail->quantity }} Unit</span>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+
+                                                    {{-- Status Badge --}}
                                                     <div>
-                                                        <span class="font-mono font-medium text-gray-800">{{ $detail->sarprasUnit->kode_unit ?? '-' }}</span>
-                                                        <span class="text-gray-500 ml-2">{{ $detail->sarprasUnit?->sarpras?->nama_barang ?? '-' }}</span>
+                                                        @if($isHandedOver)
+                                                            <span class="px-2 py-1 rounded bg-green-100 text-green-800 text-xs font-semibold">
+                                                                Sudah Diserahkan
+                                                                <br>
+                                                                <span class="text-[10px] text-green-600">{{ \Carbon\Carbon::parse($detail->handed_over_at)->format('H:i') }}</span>
+                                                            </span>
+                                                        @else
+                                                            @if($detail->sarpras_unit_id)
+                                                                <span class="px-2 py-1 rounded-full text-xs {{ $detail->sarprasUnit->kondisi === 'baik' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700' }}">
+                                                                    {{ ucfirst(str_replace('_', ' ', $detail->sarprasUnit->kondisi ?? '-')) }}
+                                                                </span>
+                                                            @else
+                                                                <span class="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">Habis Pakai</span>
+                                                            @endif
+                                                        @endif
                                                     </div>
                                                 </div>
-                                                <span class="px-2 py-1 rounded-full text-xs {{ $detail->sarprasUnit->kondisi === 'baik' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">
-                                                    {{ ucfirst(str_replace('_', ' ', $detail->sarprasUnit->kondisi ?? '-')) }}
-                                                </span>
-                                            </div>
-                                        @endforeach
+                                            @endforeach
+                                        </div>
                                     </div>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        {{-- Keterangan Peminjaman --}}
+                        @if($peminjaman->keterangan)
+                            <div class="mt-6 bg-gray-50 rounded-lg p-4 mx-1">
+                                <h3 class="font-semibold text-gray-800 mb-2">Keterangan dari Peminjam</h3>
+                                <p class="text-gray-700">{{ $peminjaman->keterangan }}</p>
+                            </div>
+                        @endif
+
+                        {{-- Confirmation Section --}}
+                        <div class="mt-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border-2 border-amber-300 sticky bottom-4 shadow-lg z-10">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-bold text-amber-800">Konfirmasi Serah Terima</h3>
+                                    <p class="text-amber-600 text-sm">Centang barang yang fisik-nya Anda serahkan saat ini.</p>
                                 </div>
-                            @endforeach
+                                <div class="flex gap-3">
+                                    <a href="{{ route('peminjaman.show', $peminjaman) }}" class="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition shadow-sm">
+                                        Kembali
+                                    </a>
+                                    <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition shadow-md flex items-center gap-2 transform active:scale-95">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        Serahkan Barang Terpilih
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </form>
 
-                    {{-- Keterangan Peminjaman --}}
-                    @if($peminjaman->keterangan)
-                        <div class="mt-6 bg-gray-50 rounded-lg p-4">
-                            <h3 class="font-semibold text-gray-800 mb-2">Keterangan dari Peminjam</h3>
-                            <p class="text-gray-700">{{ $peminjaman->keterangan }}</p>
-                        </div>
-                    @endif
-
-                    {{-- Confirmation Section --}}
-                    <div class="mt-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border-2 border-amber-300">
-                        <div class="text-center mb-4">
-                            <h3 class="text-lg font-bold text-amber-800">Konfirmasi Serah Terima</h3>
-                            <p class="text-amber-600 text-sm mt-1">Pastikan semua barang sudah diperiksa kondisinya sebelum diserahkan</p>
-                        </div>
-                        
-                        <form action="{{ route('peminjaman.handover.process', $peminjaman) }}" method="POST" class="text-center">
-                            @csrf
+                    <script>
+                        function toggleLocation(sourceCheckbox) {
+                            // Find parent container
+                            const container = sourceCheckbox.closest('.bg-white');
+                            // Find all item checkboxes inside
+                            const checkboxes = container.querySelectorAll('.item-checkbox');
                             
-                            <div class="bg-white rounded-lg p-4 mb-4 text-left">
-                                <label class="flex items-start gap-3 cursor-pointer">
-                                    <input type="checkbox" id="confirm_handover" required class="h-5 w-5 mt-0.5 text-green-600 rounded border-gray-300 focus:ring-green-500">
-                                    <span class="text-gray-700">Saya telah memeriksa dan menyerahkan <strong>{{ $peminjaman->details->count() }} unit</strong> barang kepada <strong>{{ $peminjaman->user->name }}</strong></span>
-                                </label>
-                            </div>
-
-                            <div class="flex justify-center gap-4">
-                                <a href="{{ route('peminjaman.show', $peminjaman) }}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition">
-                                    Batal
-                                </a>
-                                <button type="submit" class="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition flex items-center gap-2">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                    </svg>
-                                    Konfirmasi Serah Terima
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                            checkboxes.forEach(cb => {
+                                cb.checked = sourceCheckbox.checked;
+                            });
+                        }
+                    </script>
                 </div>
             </div>
         </div>

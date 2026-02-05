@@ -10,11 +10,8 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('lokasi', function (Blueprint $table) {
-            $table->id();
-            $table->string('nama_lokasi');
-            $table->string('keterangan')->nullable();
-            $table->timestamps();
+        Schema::table('lokasi', function (Blueprint $table) {
+            $table->boolean('is_storefront')->default(false)->after('nama_lokasi');
         });
     }
 
@@ -23,6 +20,8 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('lokasi');
+        Schema::table('lokasi', function (Blueprint $table) {
+            $table->dropColumn('is_storefront');
+        });
     }
 };

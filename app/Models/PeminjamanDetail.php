@@ -21,6 +21,8 @@ class PeminjamanDetail extends Model
     protected $fillable = [
         'peminjaman_id',
         'sarpras_unit_id',
+        'sarpras_id',
+        'quantity',
     ];
 
     /**
@@ -32,10 +34,18 @@ class PeminjamanDetail extends Model
     }
 
     /**
-     * Get unit yang dipinjam
+     * Get unit yang dipinjam (Nullable if Consumable)
      */
     public function sarprasUnit(): BelongsTo
     {
         return $this->belongsTo(SarprasUnit::class, 'sarpras_unit_id');
+    }
+
+    /**
+     * Get master barang (Optional/Redundant for Asset, Mandatory for Consumable if not using Unit)
+     */
+    public function sarpras(): BelongsTo
+    {
+        return $this->belongsTo(Sarpras::class, 'sarpras_id');
     }
 }

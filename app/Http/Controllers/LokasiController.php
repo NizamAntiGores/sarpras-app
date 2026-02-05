@@ -14,11 +14,13 @@ class LokasiController extends Controller
      */
     public function index(): View
     {
-        $lokasi = Lokasi::withCount(['units as units_count' => function ($query) {
-            $query->where('status', '!=', \App\Models\SarprasUnit::STATUS_DIHAPUSBUKUKAN);
-        }])
+        $lokasi = Lokasi::withCount([
+            'units as units_count' => function ($query) {
+                $query->where('status', '!=', \App\Models\SarprasUnit::STATUS_DIHAPUSBUKUKAN);
+            }
+        ])
             ->orderBy('nama_lokasi')
-            ->paginate(10);
+            ->paginate(25);
 
         return view('lokasi.index', compact('lokasi'));
     }
@@ -65,7 +67,7 @@ class LokasiController extends Controller
     public function update(Request $request, Lokasi $lokasi): RedirectResponse
     {
         $validated = $request->validate([
-            'nama_lokasi' => 'required|string|max:255|unique:lokasi,nama_lokasi,'.$lokasi->id,
+            'nama_lokasi' => 'required|string|max:255|unique:lokasi,nama_lokasi,' . $lokasi->id,
             'keterangan' => 'nullable|string|max:500',
         ], [
             'nama_lokasi.required' => 'Nama lokasi wajib diisi.',

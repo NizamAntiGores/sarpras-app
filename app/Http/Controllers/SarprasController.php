@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Kategori;
+use App\Models\Lokasi; // Added
 use App\Models\Sarpras;
 use App\Models\SarprasUnit;
 use Illuminate\Http\RedirectResponse;
@@ -104,8 +105,59 @@ class SarprasController extends Controller
             ->withQueryString();
 
         $kategoriList = Kategori::orderBy('nama_kategori')->get();
+        $lokasiList = Lokasi::orderBy('nama_lokasi')->get(); // Added for filter
 
-        return view('sarpras.index', compact('sarpras', 'stats', 'kategoriList'));
+        // --- NEW LOGIC: Unit View if Location Selected ---
+        if ($lokasiId) {
+            $unitQuery = SarprasUnit::query()
+                ->with(['sarpras.kategori', 'lokasi'])
+                ->where('lokasi_id', $lokasiId)
+                ->where('status', '!=', SarprasUnit::STATUS_DIHAPUSBUKUKAN); // Standard filter
+
+            // Apply Filters to Unit Query
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $unitQuery->where(function ($q) use ($search) {
+                    $q->where('kode_unit', 'like', "%{$search}%")
+                        ->orWhereHas('sarpras', function ($s) use ($search) {
+                            $s->where('nama_barang', 'like', "%{$search}%")
+                                ->orWhere('kode_barang', 'like', "%{$search}%");
+                        });
+                });
+            }
+
+            if ($request->filled('kategori_id')) {
+                $unitQuery->whereHas('sarpras', function ($q) use ($request) {
+                    $q->where('kategori_id', $request->kategori_id);
+                });
+            }
+
+            if ($request->filled('tipe')) {
+                $unitQuery->whereHas('sarpras', function ($q) use ($request) {
+                    $q->where('tipe', $request->tipe);
+                });
+            }
+
+            // Special filters mapping for units
+            if ($request->filled('filter')) {
+                if ($request->filter === 'stok_habis') {
+                    // Logic: Not really applicable to single unit lists unless we check status?
+                    // Let's ignore or map 'stok_habis' -> maybe 'maintenance'? No, inconsistent.
+                    // Let's just ignore inventory-level filters in unit view for now.
+                }
+            }
+
+            $units = $unitQuery->orderBy('kode_unit')->paginate(15)->withQueryString();
+
+            // Recalculate stats SPECIFIC to this location? Or keep global?
+            // User likely wants global stats OR location stats. Let's keep global for now to avoid confusion unless requested.
+
+            return view('sarpras.index', compact('units', 'stats', 'kategoriList', 'lokasiList'));
+        }
+
+        // --- END NEW LOGIC ---
+
+        return view('sarpras.index', compact('sarpras', 'stats', 'kategoriList', 'lokasiList'));
     }
 
     /**

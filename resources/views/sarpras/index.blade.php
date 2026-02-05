@@ -63,6 +63,18 @@
                                     @endforeach
                                 </select>
                             </div>
+                            <div class="min-w-[180px]">
+                                <select name="lokasi_id"
+                                    class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm"
+                                    onchange="this.form.submit()">
+                                    <option value="">Semua Lokasi (View Barang)</option>
+                                    @foreach($lokasiList as $lok)
+                                        <option value="{{ $lok->id }}" {{ request('lokasi_id') == $lok->id ? 'selected' : '' }}>
+                                            {{ $lok->nama_lokasi }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
                             <div class="min-w-[150px]">
                                 <select name="tipe"
                                     class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm"
@@ -128,7 +140,78 @@
                     </div>
 
                     {{-- Table --}}
+                    {{-- Table Content Switching --}}
                     <div class="overflow-x-auto">
+                        @if(isset($units))
+                            {{-- UNIT VIEW (When Location is Selected) --}}
+                            <div class="mb-2 p-2 bg-blue-50 text-blue-700 text-sm rounded border border-blue-200 flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Menampilkan data <strong>&nbsp;Satuan Unit&nbsp;</strong> pada lokasi terpilih.
+                            </div>
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kode Unit</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Barang</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Kondisi</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    @forelse ($units as $unit)
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-4 py-4 whitespace-nowrap">
+                                                <span class="font-mono text-sm font-medium text-gray-900">{{ $unit->kode_unit }}</span>
+                                            </td>
+                                            <td class="px-4 py-4">
+                                                <div class="text-sm text-gray-900">{{ $unit->sarpras->nama_barang }}</div>
+                                                <div class="text-xs text-gray-500">{{ $unit->sarpras->kode_barang }}</div>
+                                            </td>
+                                            <td class="px-4 py-4">
+                                                <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
+                                                    {{ $unit->sarpras->kategori->nama_kategori ?? '-' }}
+                                                </span>
+                                            </td>
+                                            <td class="px-4 py-4 text-center">
+                                                @if($unit->kondisi == 'baik')
+                                                    <span class="px-2 py-1 text-xs text-green-800 bg-green-100 rounded-full">Baik</span>
+                                                @elseif($unit->kondisi == 'rusak_ringan')
+                                                    <span class="px-2 py-1 text-xs text-yellow-800 bg-yellow-100 rounded-full">Rusak Ringan</span>
+                                                @else
+                                                    <span class="px-2 py-1 text-xs text-red-800 bg-red-100 rounded-full">Rusak Berat</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-4 py-4 text-center">
+                                                @if($unit->status == 'tersedia')
+                                                    <span class="px-2 py-1 text-xs text-green-800 bg-green-100 rounded-full">Tersedia</span>
+                                                @elseif($unit->status == 'dipinjam')
+                                                    <span class="px-2 py-1 text-xs text-blue-800 bg-blue-100 rounded-full">Dipinjam</span>
+                                                @elseif($unit->status == 'maintenance')
+                                                    <span class="px-2 py-1 text-xs text-orange-800 bg-orange-100 rounded-full">Maintenance</span>
+                                                @else
+                                                    <span class="px-2 py-1 text-xs text-gray-800 bg-gray-100 rounded-full">{{ ucfirst($unit->status) }}</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-4 py-4 text-center">
+                                                <a href="{{ route('sarpras.show', $unit->sarpras_id) }}" class="text-blue-600 hover:text-blue-900 text-sm">Detail Barang</a>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                                Tidak ada unit ditemukan di lokasi ini.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                             @if ($units->hasPages())
+                                <div class="mt-6 border-t pt-4">{{ $units->links() }}</div>
+                            @endif
+                        @else
+                            {{-- DEFAULT ITEM VIEW --}}
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
@@ -306,12 +389,11 @@
                                 @endforelse
                             </tbody>
                         </table>
+                        @if ($sarpras->hasPages())
+                            <div class="mt-6 border-t pt-4">{{ $sarpras->links() }}</div>
+                        @endif
+                        @endif
                     </div>
-
-                    @if ($sarpras->hasPages())
-                        <div class="mt-6 border-t pt-4">{{ $sarpras->links() }}</div>
-                    @endif
-                </div>
             </div>
         </div>
     </div>

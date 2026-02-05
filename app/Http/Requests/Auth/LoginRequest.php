@@ -42,11 +42,24 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt(['nomor_induk' => $this->nomor_induk, 'password' => $this->password], $this->boolean('remember'))) {
+        $input = $this->nomor_induk;
+        $field = filter_var($input, FILTER_VALIDATE_EMAIL) ? 'email' : 'nomor_induk';
+
+        // Restriction: Email login only for Admin & Petugas
+        if ($field === 'email') {
+            $user = \App\Models\User::where('email', $input)->first();
+            if ($user && !in_array($user->role, ['admin', 'petugas'])) { // Assuming 'admin' and 'petugas' are the role values
+                throw ValidationException::withMessages([
+                    'nomor_induk' => 'Login via Email hanya untuk Admin/Petugas. Siswa/Guru gunakan NISN/NIP.',
+                ]);
+            }
+        }
+
+        if (!Auth::attempt([$field => $input, 'password' => $this->password], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'nomor_induk' => 'NISN/NIP atau password salah.',
+                'nomor_induk' => 'NISN/NIP/Email atau password salah.',
             ]);
         }
 
@@ -60,7 +73,7 @@ class LoginRequest extends FormRequest
      */
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
         }
 
@@ -81,6 +94,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('nomor_induk')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('nomor_induk')) . '|' . $this->ip());
     }
 }

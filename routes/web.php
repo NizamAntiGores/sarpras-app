@@ -3,6 +3,7 @@
 use App\Http\Controllers\BarangHilangController;
 use App\Http\Controllers\BarangRusakController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExportPdfController;
 use App\Http\Controllers\KatalogController;
 use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\LokasiController;
@@ -107,6 +108,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/maintenance/{maintenance}/edit', [MaintenanceController::class, 'edit'])->name('maintenance.edit');
         Route::put('/maintenance/{maintenance}', [MaintenanceController::class, 'update'])->name('maintenance.update');
         Route::delete('/maintenance/{maintenance}', [MaintenanceController::class, 'destroy'])->name('maintenance.destroy');
+
+        // =============================================
+        // EXPORT PDF ROUTES (Admin & Petugas)
+        // =============================================
+        Route::prefix('export')->name('export.')->group(function () {
+            Route::get('/peminjaman', [ExportPdfController::class, 'peminjaman'])->name('peminjaman');
+            Route::get('/barang-hilang', [ExportPdfController::class, 'barangHilang'])->name('barang-hilang');
+            Route::get('/maintenance', [ExportPdfController::class, 'maintenance'])->name('maintenance');
+            Route::get('/sarpras', [ExportPdfController::class, 'sarpras'])->name('sarpras');
+            Route::get('/sarpras/{sarpras}/units', [ExportPdfController::class, 'sarprasUnits'])->name('sarpras.units');
+            Route::get('/activity-logs', [ExportPdfController::class, 'activityLogs'])->name('activity-logs');
+            Route::get('/asset-health', [ExportPdfController::class, 'assetHealth'])->name('asset-health');
+        });
     });
 
     // Destroy Sarpras - Hanya Admin

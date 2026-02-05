@@ -17,7 +17,8 @@
 
             @if (session('success'))
                 <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
-                    {{ session('success') }}</div>
+                    {{ session('success') }}
+                </div>
             @endif
             @if (session('error'))
                 <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">{{ session('error') }}
@@ -50,7 +51,7 @@
                     <div class="mb-6">
                         <form action="{{ route('sarpras.index') }}" method="GET"
                             class="flex flex-col md:flex-row gap-4">
-                            <div class="flex-1 min-w-[200px]">
+                            <div class="min-w-[180px]">
                                 <select name="kategori_id"
                                     class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm"
                                     onchange="this.form.submit()">
@@ -60,6 +61,15 @@
                                             {{ $kat->nama_kategori }}
                                         </option>
                                     @endforeach
+                                </select>
+                            </div>
+                            <div class="min-w-[150px]">
+                                <select name="tipe"
+                                    class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm"
+                                    onchange="this.form.submit()">
+                                    <option value="">Semua Tipe</option>
+                                    <option value="aset" {{ request('tipe') == 'aset' ? 'selected' : '' }}>Aset</option>
+                                    <option value="bahan" {{ request('tipe') == 'bahan' ? 'selected' : '' }}>Habis Pakai</option>
                                 </select>
                             </div>
                             <div class="flex-grow relative">
@@ -100,12 +110,20 @@
                                 class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
                                 Cari
                             </button>
-                            @if(request('search') || request('kategori_id'))
+                            @if(request('search') || request('kategori_id') || request('tipe'))
                                 <a href="{{ route('sarpras.index') }}"
                                     class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:ring ring-blue-200 active:text-gray-800 active:bg-gray-50 disabled:opacity-25 transition ease-in-out duration-150">
                                     Reset
                                 </a>
                             @endif
+                            <a href="{{ route('export.sarpras', request()->query()) }}"
+                                class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 transition ease-in-out duration-150 gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                PDF
+                            </a>
                         </form>
                     </div>
 

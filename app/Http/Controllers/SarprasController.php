@@ -52,10 +52,10 @@ class SarprasController extends Controller
         // Search logic
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
-                $q->where('nama_barang', 'like', '%'.$request->search.'%')
-                    ->orWhere('kode_barang', 'like', '%'.$request->search.'%')
+                $q->where('nama_barang', 'like', '%' . $request->search . '%')
+                    ->orWhere('kode_barang', 'like', '%' . $request->search . '%')
                     ->orWhereHas('units', function ($u) use ($request) {
-                        $u->where('kode_unit', 'like', '%'.$request->search.'%');
+                        $u->where('kode_unit', 'like', '%' . $request->search . '%');
                     });
             });
         }
@@ -63,6 +63,11 @@ class SarprasController extends Controller
         // Filter by Kategori
         if ($request->filled('kategori_id')) {
             $query->where('kategori_id', $request->kategori_id);
+        }
+
+        // Filter by Tipe (aset / bahan)
+        if ($request->filled('tipe')) {
+            $query->where('tipe', $request->tipe);
         }
 
         // Filter by Lokasi (only show Sarpras that have units in this location)
@@ -197,7 +202,7 @@ class SarprasController extends Controller
     public function update(Request $request, Sarpras $sarpras): RedirectResponse
     {
         $validated = $request->validate([
-            'kode_barang' => 'required|string|max:50|unique:sarpras,kode_barang,'.$sarpras->id,
+            'kode_barang' => 'required|string|max:50|unique:sarpras,kode_barang,' . $sarpras->id,
             'nama_barang' => 'required|string|max:255',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'kategori_id' => 'required|exists:kategori,id',

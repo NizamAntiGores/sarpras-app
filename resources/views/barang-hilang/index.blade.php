@@ -33,7 +33,7 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6">
                     {{-- Filter --}}
-                    <div class="mb-6 flex gap-4 items-center">
+                    <div class="mb-6 flex gap-4 items-center justify-between">
                         <form method="GET" class="flex gap-2">
                             <select name="status" class="rounded-lg border-gray-300 text-sm" onchange="this.form.submit()">
                                 <option value="">Semua Status</option>
@@ -42,6 +42,13 @@
                                 <option value="diputihkan" {{ request('status') === 'diputihkan' ? 'selected' : '' }}>Diputihkan</option>
                             </select>
                         </form>
+                        <a href="{{ route('export.barang-hilang', request()->query()) }}" 
+                           class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 inline-flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Export PDF
+                        </a>
                     </div>
 
                     @if ($barangHilang->isEmpty())

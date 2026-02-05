@@ -99,22 +99,42 @@ class PeminjamanController extends Controller
     {
         $selectedSarprasId = $request->query('sarpras_id');
 
-        // Ambil semua sarpras yang memiliki unit tersedia
         // Filter: Hanya Guru yang bisa melihat barang 'bahan' (sekali pakai)
+        // Ambil SEMUA barang yang punya stok di lokasi storefront (MANAPUN)
         $user = auth()->user();
-        // Ambil semua sarpras
-        // Filter: Hanya Guru yang bisa melihat barang 'bahan' (sekali pakai)
-        $user = auth()->user();
+        
         $sarprasList = Sarpras::with(['kategori'])
             ->when(!$user->isGuru(), function ($query) {
                 $query->where('tipe', '!=', 'bahan');
             })
+            // Filter: Must have stock/units in ANY storefront location
+            ->where(function($query) use ($user) {
+                // 1. Check ASSETS (Unit Based) in Storefronts
+                 $query->whereHas('units', function($q) {
+                    $q->aktif()->whereHas('lokasi', fn($l) => $l->where('is_storefront', true));
+                })
+                // 2. Check CONSUMABLES (Quantity Based) in Storefronts
+                ->orWhere(function($sub) use ($user) {
+                     if ($user->isGuru()) {
+                         $sub->where('tipe', 'bahan')
+                               ->whereHas('stocks', function($q) {
+                                   $q->where('quantity', '>', 0)
+                                     ->whereHas('lokasi', fn($l) => $l->where('is_storefront', true));
+                               });
+                     }
+                });
+            })
             ->orderBy('nama_barang')
             ->get()
+            // Post-query filtering to ensure availability count > 0 after excluding pending items
             ->filter(function ($sarpras) {
-                // Filter barang yang stoknya > 0
+                // Reuse existing accessor logic but make sure we only count STOREFRONT stock
+                // The accessor `stok_tersedia` already handles logic for "Storefront Only" 
+                // as per previous conversation? checking model...
+                // Yes, I updated Sarpras::stokTersedia to filter by is_storefront=true.
                 return $sarpras->stok_tersedia > 0;
             });
+
 
         // Ambil ID unit yang sedang dalam pengajuan 'menunggu'
         $pendingUnitIds = PeminjamanDetail::whereHas('peminjaman', function ($q) {
@@ -122,16 +142,30 @@ class PeminjamanController extends Controller
         })->pluck('sarpras_unit_id');
 
         // Ambil semua unit yang bisa dipinjam, grouped by sarpras
-        // Exclude unit yang status fisiknya tidak tersedia, sedang dalam pengajuan menunggu, atau TIDAK di Storefront
+        // Exclude unit yang status fisiknya tidak tersedia, sedang dalam pengajuan menunggu
+        // Must be in a Storefront location
         $availableUnits = SarprasUnit::with('sarpras', 'lokasi')
             ->bisaDipinjam()
-            ->whereHas('lokasi', function ($q) {
+            ->whereHas('lokasi', function($q) {
                 $q->where('is_storefront', true);
             })
             ->whereNotIn('id', $pendingUnitIds)
             ->orderBy('kode_unit')
             ->get()
             ->groupBy('sarpras_id');
+            
+        // Calculate consumable stocks per location for detail view?
+        // Let's pass the stock data for consumables to the view
+        // Need to know WHICH locations catch have stock
+        foreach ($sarprasList as $item) {
+            if ($item->tipe == 'bahan') {
+                $item->stock_details = $item->stocks()
+                    ->where('quantity', '>', 0)
+                    ->whereHas('lokasi', fn($l) => $l->where('is_storefront', true))
+                    ->with('lokasi')
+                    ->get();
+            }
+        }
 
         return view('peminjaman.create', compact('sarprasList', 'availableUnits', 'selectedSarprasId'));
     }
@@ -149,7 +183,24 @@ class PeminjamanController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        // Fix: Re-index 'consumables' array to standard numerical index AND cast qty to integer
+        // This prevents validation issues with associative keys (e.g. '12_11') and treats "30.0" as 30
+        if ($request->has('consumables') && is_array($request->consumables)) {
+            $cleaned = [];
+            foreach ($request->consumables as $item) {
+                // Ensure item is array and has qty
+                if (is_array($item) && isset($item['qty'])) {
+                    $item['qty'] = (int) $item['qty']; // Force Check: Cast to integer
+                    $cleaned[] = $item;
+                }
+            }
+            $request->merge(['consumables' => $cleaned]);
+        }
+
+        // Check if this is a consumable-only request
+        $isConsumableOnly = empty($request->unit_ids) && !empty($request->consumables);
+
+        $rules = [
             // Input untuk Assets (Array of Unit IDs)
             'unit_ids' => 'nullable|array',
             'unit_ids.*' => 'exists:sarpras_units,id',
@@ -160,20 +211,33 @@ class PeminjamanController extends Controller
             'consumables.*.qty' => 'integer|min:1',
 
             'tgl_pinjam' => 'required|date|after_or_equal:today',
-            'tgl_kembali_rencana' => 'required|date|after:tgl_pinjam',
             'keterangan' => 'required|string|max:500',
-        ]);
+        ];
 
-        if (empty($validated['unit_ids']) && empty($validated['consumables'])) {
+        // Conditional Validation: Return Date only required if borrowing Assets (Units)
+        if (!$isConsumableOnly) {
+            $rules['tgl_kembali_rencana'] = 'required|date|after:tgl_pinjam';
+        } else {
+            $rules['tgl_kembali_rencana'] = 'nullable|date';
+        }
+
+        $validated = $request->validate($rules);
+
+        if (empty($request->unit_ids) && empty($request->consumables)) {
             return redirect()->back()->withInput()->with('error', 'Pilih minimal satu barang (Asset atau Bahan).');
         }
 
-        // Custom Validation: Batas Peminjaman Maksimal 7 Hari
+        // Auto-fill tgl_kembali_rencana for consumables if not provided
+        if ($isConsumableOnly && empty($validated['tgl_kembali_rencana'])) {
+            $validated['tgl_kembali_rencana'] = $validated['tgl_pinjam'];
+        }
+
+        // Custom Validation: Batas Peminjaman Maksimal 7 Hari (Only for Assets)
         $tglPinjam = \Carbon\Carbon::parse($validated['tgl_pinjam']);
         $tglKembali = \Carbon\Carbon::parse($validated['tgl_kembali_rencana']);
 
-        if ($tglPinjam->diffInDays($tglKembali) > 7) {
-            return redirect()->back()->withInput()->with('error', 'Peminjaman tidak boleh lebih dari 7 hari.');
+        if (!$isConsumableOnly && $tglPinjam->diffInDays($tglKembali) > 7) {
+            return redirect()->back()->withInput()->with('error', 'Peminjaman aset tidak boleh lebih dari 7 hari.');
         }
 
         DB::beginTransaction();
@@ -468,32 +532,17 @@ class PeminjamanController extends Controller
                     }
                 }
 
-                // Jika SEMUA barang adalah 'bahan' (habis pakai), maka transaksi langsung SELESAI
-                // Tidak perlu menunggu pengembalian
+                // Jika SEMUA barang adalah 'bahan' (habis pakai), KITA TIDAK AUTO-COMPLETE
+                // User request: "guru kudu ambil aja, trus nanti diserahin barangnya ama petugas nah baru deh selesai"
+                // Jadi status tetap 'disetujui' sampai dilakukan handover.
+                
+                /* 
+                // OLD LOGIC (Auto Complete) - REMOVED PER REQUEST
                 if ($allBahan) {
                     $newStatus = 'selesai';
-                    // Auto-create record pengembalian (formalitas sistem)
-                    $pengembalian = \App\Models\Pengembalian::create([
-                        'peminjaman_id' => $peminjaman->id,
-                        'petugas_id' => $user->id,
-                        'tgl_kembali_aktual' => now(),
-                    ]);
-
-                    foreach ($peminjaman->details as $detail) {
-                        // Only add details if they have unit_id? 
-                        // Or add dummy logic for consistency?
-                        // For consumables, pengembalian detail usually not relevant unless tracking waste.
-                        // Let's skip creating PengembalianDetail for consumables as they are gone.
-                        if ($detail->sarpras_unit_id) {
-                            \App\Models\PengembalianDetail::create([
-                                'pengembalian_id' => $pengembalian->id,
-                                'sarpras_unit_id' => $detail->sarpras_unit_id,
-                                'kondisi_akhir' => 'baik',
-                                'denda' => 0,
-                            ]);
-                        }
-                    }
-                }
+                    // ... code removed ...
+                } 
+                */
 
                 // Generate QR code
                 $peminjaman->qr_code = 'QR-' . strtoupper(Str::random(10));
@@ -628,6 +677,9 @@ class PeminjamanController extends Controller
     /**
      * Process the handover (serah terima) - record that items have been handed to borrower.
      */
+    /**
+     * Process the granular handover (serah terima per item).
+     */
     public function processHandover(Request $request, Peminjaman $peminjaman): RedirectResponse
     {
         $user = auth()->user();
@@ -637,32 +689,91 @@ class PeminjamanController extends Controller
             abort(403, 'Anda tidak memiliki akses untuk melakukan serah terima.');
         }
 
-        // Pastikan status 'disetujui' dan belum diambil
-        if (!$peminjaman->isReadyForPickup()) {
-            return redirect()->route('peminjaman.show', $peminjaman)
-                ->with('error', 'Peminjaman ini tidak dalam status siap untuk diambil.');
-        }
-
-        // Update handover info
-        $peminjaman->update([
-            'handover_at' => now(),
-            'handover_by' => $user->id,
+        // Validate selection
+        $validated = $request->validate([
+            'detail_ids' => 'required|array',
+            'detail_ids.*' => 'exists:peminjaman_details,id',
         ]);
 
-        \App\Helpers\LogHelper::record('update', "Serah terima peminjaman (ID: {$peminjaman->id}) kepada {$peminjaman->user->name}");
+        DB::beginTransaction();
+        try {
+            // 1. Mark selected items as handed over
+            $now = now();
+            foreach ($validated['detail_ids'] as $detailId) {
+                // Ensure detail belongs to this peminjaman
+                $detail = $peminjaman->details()->find($detailId);
+                if ($detail && is_null($detail->handed_over_at)) {
+                    $detail->update([
+                        'handed_over_at' => $now,
+                        'handed_over_by' => $user->id
+                    ]);
+                }
+            }
 
-        // Kirim notifikasi ke peminjam
-        \App\Models\Notification::send(
-            $peminjaman->user_id,
-            \App\Models\Notification::TYPE_PEMINJAMAN_APPROVED,
-            'Barang Telah Diserahkan 📦',
-            'Barang peminjaman telah diserahkan kepada Anda oleh ' . $user->name . '. Jangan lupa kembalikan tepat waktu!',
-            route('peminjaman.show', $peminjaman)
-        );
+            // 2. Determine Loan Status Change
+            // If loan is Consumable-Only -> Status becomes 'selesai' immediately upon handover (nothing to return)
+            // If loan has Assets -> Status becomes 'dipinjam'
+            
+            $hasAssets = $peminjaman->details()->whereNotNull('sarpras_unit_id')->exists();
+            $allConsumables = !$hasAssets; // Simplified specific check
 
-        return redirect()
-            ->route('peminjaman.show', $peminjaman)
-            ->with('success', 'Serah terima berhasil! Barang telah diserahkan kepada ' . $peminjaman->user->name . '.');
+            // Check if this is the FIRST handover action (Status still 'disetujui')
+            if ($peminjaman->status == 'disetujui') {
+                if ($allConsumables) {
+                    $peminjaman->update([
+                        'status' => 'selesai', // Consumables: Done after pickup
+                        'petugas_id' => $user->id,
+                    ]);
+                    
+                    // Auto-create Pengembalian record for consistency (optional but good for logs)
+                    // We can skip detail creation since no units are returned.
+                     \App\Models\Pengembalian::create([
+                        'peminjaman_id' => $peminjaman->id,
+                        'petugas_id' => $user->id,
+                        'tgl_kembali_aktual' => now(),
+                    ]);
+                    
+                } else {
+                    $peminjaman->update([
+                        'status' => 'dipinjam', // Assets: Ongoing loan
+                        'petugas_id' => $user->id,
+                    ]);
+                }
+            }
+            
+            // Update global handover timestamp metadata if null (start date)
+            if (is_null($peminjaman->handover_at)) {
+                $peminjaman->update([
+                    'handover_at' => $now, 
+                    'handover_by' => $user->id
+                ]);
+            }
+
+            // 3. Log Activity
+            $count = count($validated['detail_ids']);
+            \App\Helpers\LogHelper::record('update', "Serah terima {$count} item peminjaman (ID: {$peminjaman->id}) oleh {$user->name}");
+
+            // 4. Notification? Maybe only if ALL items are taken?
+            // Let's send a notification about "Partial Pickup" or just "Pickup Started"
+            // For now, let's notify simply.
+             \App\Models\Notification::send(
+                $peminjaman->user_id,
+                \App\Models\Notification::TYPE_PEMINJAMAN_APPROVED,
+                'Barang Diambil 📦',
+                "Sebanyak {$count} item telah diserahkan kepada Anda. Cek status peminjaman.",
+                route('peminjaman.show', $peminjaman)
+            );
+
+            DB::commit();
+
+            return redirect()
+                ->route('peminjaman.show', $peminjaman)
+                ->with('success', "Berhasil menyerahkan {$count} item.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal memproses serah terima: ' . $e->getMessage());
+        }
     }
 }
 

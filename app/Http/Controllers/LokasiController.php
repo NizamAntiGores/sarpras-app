@@ -41,6 +41,7 @@ class LokasiController extends Controller
         $validated = $request->validate([
             'nama_lokasi' => 'required|string|max:255|unique:lokasi,nama_lokasi',
             'keterangan' => 'nullable|string|max:500',
+            'is_storefront' => 'nullable|boolean',
         ], [
             'nama_lokasi.required' => 'Nama lokasi wajib diisi.',
             'nama_lokasi.unique' => 'Nama lokasi sudah ada.',
@@ -69,6 +70,7 @@ class LokasiController extends Controller
         $validated = $request->validate([
             'nama_lokasi' => 'required|string|max:255|unique:lokasi,nama_lokasi,' . $lokasi->id,
             'keterangan' => 'nullable|string|max:500',
+            'is_storefront' => 'nullable|boolean',
         ], [
             'nama_lokasi.required' => 'Nama lokasi wajib diisi.',
             'nama_lokasi.unique' => 'Nama lokasi sudah ada.',

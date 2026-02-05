@@ -43,6 +43,19 @@
                         </div>
                     @endif
 
+
+
+
+                    @if(!isset($sarprasList) || $sarprasList->isEmpty())
+                        <div class="text-center py-12 text-gray-500">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                            </svg>
+                            <p class="text-lg">Tidak ada barang yang tersedia untuk dipinjam saat ini.</p>
+                        </div>
+                    @else
+
+
                     {{-- Info Card --}}
                     <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <div class="flex">
@@ -132,6 +145,24 @@
                                                                 Habis Pakai
                                                             </span>
                                                         @endif
+                                                        
+                                                        {{-- Location Badges Summary --}}
+                                                        <div class="mt-1 flex flex-wrap gap-1">
+                                                            @if($sarpras->tipe == 'asset')
+                                                                @php
+                                                                    $locs = $availableUnits[$sarpras->id]->pluck('lokasi.nama_lokasi')->unique()->implode(', ');
+                                                                @endphp
+                                                                <span class="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                                                                    📍 {{ $locs }}
+                                                                </span>
+                                                            @else
+                                                                @foreach($sarpras->stock_details as $stock)
+                                                                     <span class="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                                                                        📍 {{ $stock->lokasi->nama_lokasi }}: {{ $stock->quantity }}
+                                                                    </span>
+                                                                @endforeach
+                                                            @endif
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div class="flex items-center gap-2">
@@ -148,23 +179,41 @@
                                             <div class="sarpras-content hidden bg-gray-50 p-3">
                                                 @if ($sarpras->tipe == 'bahan')
                                                     {{-- INPUT KHUSUS BAHAN (Quantity) --}}
-                                                    <div class="flex items-center space-x-4 p-2 bg-white border rounded">
-                                                        <div class="flex-1">
-                                                            <p class="text-sm text-gray-700">Masukkan jumlah yang ingin dipinjam:</p>
-                                                            <p class="text-xs text-gray-500">Maksimal: {{ $sarpras->stok_tersedia }}</p>
-                                                        </div>
-                                                        <div class="w-32">
-                                                            {{-- Hidden Input for Item ID --}}
-                                                            <input type="hidden" name="consumables[{{ $sarpras->id }}][item_id]" value="{{ $sarpras->id }}" disabled class="consumable-enable">
-                                                            
-                                                            <input type="number" 
-                                                                   name="consumables[{{ $sarpras->id }}][qty]" 
-                                                                   min="0" 
-                                                                   max="{{ $sarpras->stok_tersedia }}" 
-                                                                   placeholder="0"
-                                                                   class="w-full rounded border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 consumable-qty"
-                                                                   onchange="updateConsumableSelection(this, {{ $sarpras->id }})">
-                                                        </div>
+                                                    <div class="space-y-3">
+                                                        @foreach($sarpras->stock_details as $stock)
+                                                            <div class="flex items-center space-x-4 p-2 bg-white border rounded">
+                                                                <div class="flex-1">
+                                                                    <p class="text-sm font-medium text-gray-700">
+                                                                        Dari: <span class="text-indigo-600">{{ $stock->lokasi->nama_lokasi }}</span>
+                                                                    </p>
+                                                                    <p class="text-xs text-gray-500">Maksimal: {{ $stock->quantity }}</p>
+                                                                </div>
+                                                                <div class="w-32">
+                                                                    {{-- Hidden Input for Item ID & Location ID --}}
+                                                                    {{-- Need unique index to prevent override --}}
+                                                                    <input type="hidden" 
+                                                                           name="consumables[{{ $sarpras->id }}_{{ $stock->lokasi_id }}][item_id]" 
+                                                                           value="{{ $sarpras->id }}" 
+                                                                           disabled 
+                                                                           class="consumable-enable">
+                                                                    <input type="hidden" 
+                                                                           name="consumables[{{ $sarpras->id }}_{{ $stock->lokasi_id }}][lokasi_id]" 
+                                                                           value="{{ $stock->lokasi_id }}" 
+                                                                           disabled 
+                                                                           class="consumable-enable-loc">
+                                                                    
+                                                                    <input type="number" 
+                                                                           name="consumables[{{ $sarpras->id }}_{{ $stock->lokasi_id }}][qty]" 
+                                                                           min="0" 
+                                                                           max="{{ $stock->quantity }}"
+                                                                           step="1" 
+                                                                           placeholder="0"
+                                                                           class="w-full rounded border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 consumable-qty"
+                                                                           oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                                                           onchange="updateConsumableSelection(this, '{{ $sarpras->id }}_{{ $stock->lokasi_id }}')">
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
                                                     </div>
                                                 @else
                                                     {{-- INPUT KHUSUS ASET (Unit Checkboxes) --}}
@@ -179,6 +228,9 @@
                                                                            {{ in_array($unit->id, old('unit_ids', [])) ? 'checked' : '' }}>
                                                                     <span class="ml-2 text-sm">
                                                                         <span class="font-mono font-medium">{{ $unit->kode_unit }}</span>
+                                                                        <span class="text-xs text-indigo-600 bg-indigo-50 px-1 rounded ml-1 border border-indigo-100">
+                                                                            {{ $unit->lokasi->nama_lokasi }}
+                                                                        </span>
                                                                         <br>
                                                                         <span class="text-xs text-gray-500">
                                                                             @if ($unit->kondisi === 'baik')
@@ -233,7 +285,7 @@
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                            <div>
+                            <div id="container-tgl-kembali">
                                 <label for="tgl_kembali_rencana" class="block text-sm font-medium text-gray-700 mb-1">
                                     Rencana Tanggal Kembali <span class="text-red-500">*</span>
                                 </label>
@@ -241,6 +293,7 @@
                                        value="{{ old('tgl_kembali_rencana') }}"
                                        min="{{ date('Y-m-d', strtotime('+1 day')) }}"
                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('tgl_kembali_rencana') border-red-500 @enderror">
+                                <p class="text-xs text-gray-400 mt-1" id="hint-tgl-kembali">Hanya untuk peminjaman aset.</p>
                                 @error('tgl_kembali_rencana')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -286,6 +339,8 @@
                 </div>
             </div>
         </div>
+    </div>
+        @endif
     </div>
 
     <script>
@@ -360,6 +415,41 @@
                 .length;
             
             document.getElementById('selectedCount').textContent = unitCount + consumableCount;
+            
+            checkReturnDateVisibility(unitCount, consumableCount);
+        }
+
+        // Toggle visibility of Return Date based on selection AND filter
+        function checkReturnDateVisibility(unitCount, consumableCount) {
+            const container = document.getElementById('container-tgl-kembali');
+            const input = document.getElementById('tgl_kembali_rencana');
+            const filterTipe = document.getElementById('filterTipe');
+            
+            // Logic:
+            // 1. If Assets are selected (unitCount > 0) -> ALWAYS SHOW
+            // 2. If ONLY Consumables are selected (consumableCount > 0 AND unitCount == 0) -> HIDE
+            // 3. If Nothing selected (unitCount == 0 && consumableCount == 0):
+            //    - If Filter is 'bahan' -> HIDE (Anticipating consumable selection)
+            //    - Else -> SHOW (Default)
+            
+            if (unitCount > 0) {
+                // Must show if any asset is selected
+                container.style.display = 'block';
+                input.required = true;
+            } else if (consumableCount > 0) {
+                // Only consumables selected
+                container.style.display = 'none';
+                input.required = false;
+            } else {
+                // No selection yet
+                if (filterTipe && filterTipe.value === 'bahan') {
+                    container.style.display = 'none';
+                    input.required = false;
+                } else {
+                    container.style.display = 'block';
+                    input.required = true;
+                }
+            }
         }
 
         // Update badge on each group header
@@ -451,6 +541,9 @@
                     group.style.display = 'none';
                 }
             });
+            
+            // Update visibility of return date field based on filter changes
+            updateSelectedCount();
         }
 
         // Search functionality

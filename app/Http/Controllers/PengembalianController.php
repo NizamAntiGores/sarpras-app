@@ -38,29 +38,27 @@ class PengembalianController extends Controller
         }
 
         // Route based on current state
-        if ($peminjaman->status === 'disetujui') {
-            if ($peminjaman->isReadyForPickup()) {
-                // Belum diambil -> arahkan ke halaman serah terima (handover)
-                return redirect()->route('peminjaman.handover', $peminjaman);
-            } else {
-                // Sudah diambil -> arahkan ke halaman pengembalian
-                return redirect()->route('pengembalian.create', $peminjaman);
-            }
+        if (in_array($peminjaman->status, ['menunggu', 'ditolak', 'selesai'])) {
+             // Fallback redirects handled by lookup or just generic error
+             return redirect()->route('peminjaman.show', $peminjaman)->with('error', 'Status peminjaman tidak valid for pengembalian.');
         }
 
-        if ($peminjaman->status === 'selesai') {
-            return redirect()->route('peminjaman.show', $peminjaman)->with('info', 'Peminjaman ini sudah selesai dikembalikan.');
+        // Route based on current state
+        // If status is disetujui and not handed over yet, go to handover
+        if ($peminjaman->status === 'disetujui' && $peminjaman->isReadyForPickup()) {
+             return redirect()->route('peminjaman.handover', $peminjaman);
+        }
+        
+        // If status is dipinjam OR (disetujui but handled over logic mismatch?), go to create
+        // Note: isReadyForPickup returns true for dipinjam if partial items exist.
+        // But for lookup, if it's dipinjam, we might default to return? 
+        // Or if partial, maybe show show page?
+        // Let's default to show page if it's mixed, so user can choose.
+        if ($peminjaman->status === 'dipinjam') {
+             return redirect()->route('peminjaman.show', $peminjaman);
         }
 
-        if ($peminjaman->status === 'menunggu') {
-            return redirect()->route('peminjaman.show', $peminjaman)->with('error', 'Peminjaman ini masih menunggu persetujuan.');
-        }
-
-        if ($peminjaman->status === 'ditolak') {
-            return redirect()->route('peminjaman.show', $peminjaman)->with('error', 'Peminjaman ini sudah ditolak.');
-        }
-
-        return redirect()->route('peminjaman.show', $peminjaman);
+        return redirect()->route('pengembalian.create', $peminjaman);
     }
 
     /**
@@ -69,13 +67,14 @@ class PengembalianController extends Controller
      */
     public function create(Peminjaman $peminjaman): View
     {
-        // Hanya bisa mengembalikan peminjaman yang statusnya 'disetujui'
-        if ($peminjaman->status !== 'disetujui') {
+        // Hanya bisa mengembalikan peminjaman yang statusnya 'disetujui' atau 'dipinjam'
+        if (!in_array($peminjaman->status, ['disetujui', 'dipinjam'])) {
             abort(403, 'Peminjaman ini tidak dalam status aktif.');
         }
 
         // Cek apakah sudah di-handover (sudah diserahkan ke peminjam)
-        if ($peminjaman->isReadyForPickup()) {
+        // Jika status disetujui dan belum ada handover sama sekali, harus handover dulu.
+        if ($peminjaman->status === 'disetujui' && $peminjaman->isReadyForPickup()) {
             return redirect()->route('peminjaman.handover', $peminjaman)
                 ->with('error', 'Barang belum diserahkan. Lakukan serah terima terlebih dahulu.');
         }
@@ -101,7 +100,7 @@ class PengembalianController extends Controller
     public function store(Request $request, Peminjaman $peminjaman): RedirectResponse
     {
         // Validasi
-        if ($peminjaman->status !== 'disetujui') {
+        if (!in_array($peminjaman->status, ['disetujui', 'dipinjam'])) {
             return redirect()
                 ->route('peminjaman.index')
                 ->with('error', 'Peminjaman ini tidak dalam status aktif.');
@@ -124,6 +123,13 @@ class PengembalianController extends Controller
 
         foreach ($peminjaman->details as $detail) {
             $unitId = $detail->sarpras_unit_id;
+            
+            // Skip consumables (no unit id)
+            if (!$unitId) continue;
+            
+            // Skip validation rules for unpicked items
+            if (!$detail->handed_over_at) continue;
+
             $rules["kondisi_{$unitId}"] = 'required|in:baik,rusak_ringan,rusak_berat,hilang';
             $rules["catatan_{$unitId}"] = 'nullable|string|max:500';
             $rules["denda_{$unitId}"] = 'nullable|integer|min:0';
@@ -146,8 +152,22 @@ class PengembalianController extends Controller
 
             // Proses setiap unit
             foreach ($peminjaman->details as $detail) {
+                // Skip consumables
+                if (!$detail->sarpras_unit_id) continue;
+
                 $unitId = $detail->sarpras_unit_id;
                 $unit = $detail->sarprasUnit;
+
+                // SKIP if unit was never handed over (not picked up)
+                // We should reset its status to available
+                if (!$detail->handed_over_at) {
+                    $unit->update([
+                        'status' => SarprasUnit::STATUS_TERSEDIA
+                    ]);
+                    // No pengembalian detail created for this
+                    continue;
+                }
+
                 $kondisiAkhir = $validated["kondisi_{$unitId}"];
 
                 // Upload foto jika ada

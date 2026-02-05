@@ -54,13 +54,17 @@
                                 
                                 {{-- Stok Badge --}}
                                 <div class="absolute top-2 right-2 z-10">
-                                    @if ($item->available_count > 5)
+                                    @php
+                                        $qty = $item->tipe === 'bahan' ? ($item->available_stock ?? 0) : ($item->available_count ?? 0);
+                                    @endphp
+
+                                    @if ($qty > 5)
                                         <span class="px-2 py-1 text-xs font-semibold rounded-full text-white shadow-sm" style="background-color: #3b82f6;">
-                                            Tersedia: {{ $item->available_count }}
+                                            Tersedia: {{ $qty }}
                                         </span>
-                                    @elseif ($item->available_count > 0)
+                                    @elseif ($qty > 0)
                                         <span class="px-2 py-1 text-xs font-semibold rounded-full text-white shadow-sm" style="background-color: #fb923c;">
-                                            Sisa: {{ $item->available_count }}
+                                            Sisa: {{ $qty }}
                                         </span>
                                     @else
                                         <span class="px-2 py-1 text-xs font-semibold rounded-full text-white shadow-sm" style="background-color: #ef4444;">
@@ -70,7 +74,7 @@
                                 </div>
 
                                 {{-- Hover Overlay with Quick Action --}}
-                                @if ($item->available_count > 0)
+                                @if ($qty > 0)
                                     <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
                                         <a href="{{ route('peminjaman.create', ['sarpras_id' => $item->id, 'from' => 'katalog']) }}" 
                                            class="inline-flex items-center px-5 py-2.5 text-blue-600 rounded-full text-sm font-bold shadow-lg hover:bg-gray-50 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300"
@@ -90,7 +94,7 @@
                                 
                                 {{-- Tombol Pinjam (Always Visible) --}}
                                 <div class="mt-4">
-                                    @if ($item->available_count > 0)
+                                    @if ($qty > 0)
                                         <a href="{{ route('peminjaman.create', ['sarpras_id' => $item->id, 'from' => 'katalog']) }}" 
                                            class="block w-full text-center px-4 py-2.5 text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg"
                                            style="background-color: #2563eb;">

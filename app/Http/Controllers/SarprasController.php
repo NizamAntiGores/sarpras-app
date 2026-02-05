@@ -166,8 +166,9 @@ class SarprasController extends Controller
     public function create(): View
     {
         $kategori = Kategori::orderBy('nama_kategori')->get();
+        $lokasi = \App\Models\Lokasi::orderBy('nama_lokasi')->get();
 
-        return view('sarpras.create', compact('kategori'));
+        return view('sarpras.create', compact('kategori', 'lokasi'));
     }
 
     /**
@@ -193,24 +194,60 @@ class SarprasController extends Controller
             'kategori_id.required' => 'Kategori wajib dipilih.',
         ]);
 
+        // Validate Location & Stock for Bahan
+        if ($request->tipe === 'bahan') {
+            $request->validate([
+                'lokasi_id' => 'required|exists:lokasi,id',
+                'stok_awal' => 'required|integer|min:0',
+            ], [
+                'lokasi_id.required' => 'Lokasi wajib dipilih untuk bahan habis pakai.',
+                'stok_awal.required' => 'Stok awal wajib diisi.',
+            ]);
+        }
+
         // Handle foto upload
         $fotoPath = null;
         if ($request->hasFile('foto')) {
             $fotoPath = $request->file('foto')->store('sarpras', 'public');
         }
 
-        $sarpras = Sarpras::create([
-            'kode_barang' => $validated['kode_barang'],
-            'nama_barang' => $validated['nama_barang'],
-            'foto' => $fotoPath,
-            'kategori_id' => $validated['kategori_id'],
-            'deskripsi' => $validated['deskripsi'] ?? null,
-            'tipe' => $validated['tipe'],
-        ]);
+        DB::beginTransaction();
+        try {
+            $sarpras = Sarpras::create([
+                'kode_barang' => $validated['kode_barang'],
+                'nama_barang' => $validated['nama_barang'],
+                'foto' => $fotoPath,
+                'kategori_id' => $validated['kategori_id'],
+                'deskripsi' => $validated['deskripsi'] ?? null,
+                'tipe' => $validated['tipe'],
+            ]);
 
-        return redirect()
-            ->route('sarpras.units.create', $sarpras)
-            ->with('success', 'Master barang berhasil ditambahkan. Silakan tambahkan unit barang.');
+            // Create Stock for Consumables
+            if ($request->tipe === 'bahan') {
+                \App\Models\ItemStock::create([
+                    'sarpras_id' => $sarpras->id,
+                    'lokasi_id' => $request->lokasi_id,
+                    'quantity' => $request->stok_awal,
+                ]);
+            }
+
+            DB::commit();
+
+            if ($request->tipe === 'asset') {
+                return redirect()
+                    ->route('sarpras.units.create', $sarpras)
+                    ->with('success', 'Master barang berhasil ditambahkan. Silakan tambahkan unit barang.');
+            } else {
+                return redirect()
+                    ->route('sarpras.index')
+                    ->with('success', 'Bahan habis pakai berhasil ditambahkan beserta stok awal.');
+            }
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage())->withInput();
+        }
+
     }
 
     /**
@@ -244,8 +281,14 @@ class SarprasController extends Controller
     public function edit(Sarpras $sarpras): View
     {
         $kategori = Kategori::orderBy('nama_kategori')->get();
+        $lokasi = \App\Models\Lokasi::orderBy('nama_lokasi')->get();
+        
+        // Load stocks if consumable
+        if ($sarpras->tipe === 'bahan') {
+            $sarpras->load('stocks.lokasi');
+        }
 
-        return view('sarpras.edit', compact('sarpras', 'kategori'));
+        return view('sarpras.edit', compact('sarpras', 'kategori', 'lokasi'));
     }
 
     /**
@@ -300,6 +343,39 @@ class SarprasController extends Controller
         return redirect()
             ->route('sarpras.index')
             ->with('success', 'Data sarpras berhasil diperbarui.');
+    }
+
+    /**
+     * Add Stock directly from Edit Page (for Consumables)
+     */
+    public function addStock(Request $request, Sarpras $sarpras): RedirectResponse
+    {
+        if ($sarpras->tipe !== 'bahan') {
+            return back()->with('error', 'Fitur ini hanya untuk barang habis pakai.');
+        }
+
+        $request->validate([
+            'lokasi_id' => 'required|exists:lokasi,id',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        try {
+            // Find existing stock or create new one
+            $stock = \App\Models\ItemStock::firstOrCreate(
+                ['sarpras_id' => $sarpras->id, 'lokasi_id' => $request->lokasi_id],
+                ['quantity' => 0]
+            );
+
+            $stock->increment('quantity', $request->quantity);
+
+            // Log activity (optional but good practice)
+            \App\Helpers\LogHelper::record('update', "Menambah stok {$sarpras->nama_barang} (+{$request->quantity}) di {$stock->lokasi->nama_lokasi}");
+
+            return back()->with('success', "Berhasil menambah {$request->quantity} stok di {$stock->lokasi->nama_lokasi}.");
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal menambah stok: ' . $e->getMessage());
+        }
     }
 
     /**

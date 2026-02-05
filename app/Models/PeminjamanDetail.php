@@ -23,6 +23,15 @@ class PeminjamanDetail extends Model
         'sarpras_unit_id',
         'sarpras_id',
         'quantity',
+        'handed_over_at',
+        'handed_over_by',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     */
+    protected $casts = [
+        'handed_over_at' => 'datetime',
     ];
 
     /**
@@ -31,6 +40,14 @@ class PeminjamanDetail extends Model
     public function peminjaman(): BelongsTo
     {
         return $this->belongsTo(Peminjaman::class, 'peminjaman_id');
+    }
+
+    /**
+     * Get petugas yang menyerahkan barang
+     */
+    public function handedOverBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'handed_over_by')->withTrashed();
     }
 
     /**

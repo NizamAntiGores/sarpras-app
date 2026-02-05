@@ -55,17 +55,7 @@
                             </p>
                         </div>
 
-                        <div>
-                            <label class="flex items-center space-x-3">
-                                <input type="checkbox" name="is_storefront" value="1" {{ old('is_storefront') ? 'checked' : '' }}
-                                    class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 w-5 h-5">
-                                <span class="text-sm font-medium text-gray-700">Set sebagai Lokasi Peminjaman
-                                    (Storefront)</span>
-                            </label>
-                            <p class="mt-1 text-sm text-gray-500 ml-8">
-                                Jika diaktifkan, siswa dapat melihat dan meminjam barang dari lokasi ini.
-                            </p>
-                        </div>
+
 
                         <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
                             <a href="{{ route('lokasi.index') }}"

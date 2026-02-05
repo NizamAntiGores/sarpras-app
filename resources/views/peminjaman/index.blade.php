@@ -213,8 +213,13 @@
                                                     @endif
                                                     @break
                                                 @case('disetujui')
+                                                @case('dipinjam')
                                                     @if($pinjam->isReadyForPickup())
-                                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">📦 Siap Diambil</span>
+                                                        @if($pinjam->status === 'dipinjam')
+                                                            <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">📦 Ambil Sebagian</span>
+                                                        @else
+                                                            <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">📦 Siap Diambil</span>
+                                                        @endif
                                                     @else
                                                         <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Sedang Dipinjam</span>
                                                     @endif
@@ -267,7 +272,7 @@
                                                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                                             Verifikasi
                                                         </a>
-                                                    @elseif ($pinjam->status === 'disetujui')
+                                                    @elseif ($pinjam->status === 'disetujui' || $pinjam->status === 'dipinjam')
                                                         @if($pinjam->isReadyForPickup())
                                                             <a href="{{ route('peminjaman.handover', array_merge(['peminjaman' => $pinjam->id], request()->query())) }}" class="inline-flex items-center px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded hover:bg-amber-700 transition shadow-sm" title="Serah Terima Barang">
                                                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>

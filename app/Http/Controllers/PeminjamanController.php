@@ -570,8 +570,13 @@ class PeminjamanController extends Controller
 
             \App\Helpers\LogHelper::record('update', "Mengubah status peminjaman (ID: {$peminjaman->id}) menjadi: {$newStatus} oleh " . auth()->user()->name);
 
-            // Send notification to user
+            // Send notification/email to user
             if ($newStatus === 'disetujui') {
+                // Send Email with QR Code
+                \Illuminate\Support\Facades\Mail::to($peminjaman->user)->send(new \App\Mail\PeminjamanApproved($peminjaman));
+                
+                // Old Notification (Disabled)
+                /*
                 \App\Models\Notification::send(
                     $peminjaman->user_id,
                     \App\Models\Notification::TYPE_PEMINJAMAN_APPROVED,
@@ -579,7 +584,12 @@ class PeminjamanController extends Controller
                     'Peminjaman Anda telah disetujui oleh ' . auth()->user()->name . '. Silakan ambil barang sesuai jadwal.',
                     route('peminjaman.show', $peminjaman)
                 );
+                */
             } elseif ($newStatus === 'ditolak') {
+                // TODO: Create PeminjamanRejected Mail if needed
+                
+                // Old Notification (Disabled)
+                /*
                 \App\Models\Notification::send(
                     $peminjaman->user_id,
                     \App\Models\Notification::TYPE_PEMINJAMAN_REJECTED,
@@ -587,6 +597,7 @@ class PeminjamanController extends Controller
                     'Peminjaman Anda ditolak. Alasan: ' . ($validated['catatan_petugas'] ?? 'Tidak ada keterangan'),
                     route('peminjaman.show', $peminjaman)
                 );
+                */
             }
 
             DB::commit();

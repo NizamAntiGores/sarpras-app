@@ -188,7 +188,11 @@
                                                 </div>
                                                 <div class="text-xs text-gray-500">
                                                     @foreach ($pinjam->details->take(2) as $detail)
-                                                        <span class="inline-block bg-gray-100 rounded px-1 mr-1">{{ $detail->sarprasUnit->kode_unit ?? '-' }}</span>
+                                                        @if($detail->sarprasUnit)
+    <span class="inline-block bg-gray-100 rounded px-1 mr-1">{{ $detail->sarprasUnit->kode_unit }}</span>
+@else
+    <span class="inline-block bg-amber-100 text-amber-800 rounded px-1 mr-1">{{ $detail->quantity }}x</span>
+@endif
                                                     @endforeach
                                                     @if ($pinjam->details->count() > 2)
                                                         <span class="text-gray-400">+{{ $pinjam->details->count() - 2 }} lagi</span>

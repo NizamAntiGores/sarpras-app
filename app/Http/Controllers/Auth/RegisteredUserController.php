@@ -51,8 +51,17 @@ class RegisteredUserController extends Controller
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 
+        // Debugging LOG
+        \Illuminate\Support\Facades\Log::info('Register Attempt:', ['nisn' => $request->nomor_induk]);
+
         // Validasi whitelist
         $whitelist = StudentWhitelist::findByNomorInduk($request->nomor_induk);
+        
+        if ($whitelist) {
+             \Illuminate\Support\Facades\Log::info('Whitelist Found:', $whitelist->toArray());
+        } else {
+             \Illuminate\Support\Facades\Log::info('Whitelist NOT Found for: ' . $request->nomor_induk);
+        }
         
         if (!$whitelist) {
             return back()->withErrors([
@@ -66,23 +75,32 @@ class RegisteredUserController extends Controller
             ])->withInput();
         }
 
-        // Gunakan nama dari whitelist (bukan input user) untuk keamanan
-        $user = User::create([
-            'name' => $whitelist->nama, // Nama dari whitelist
-            'email' => $request->email,
-            'kontak' => $request->kontak,
-            'password' => $request->password,
-            'role' => $whitelist->role, // Role dari whitelist
-            'nomor_induk' => $request->nomor_induk,
-            'kelas' => $whitelist->kelas, // Kelas dari whitelist
-        ]);
+        // Mulai database transaction untuk memastikan atomicity
+        \Illuminate\Support\Facades\DB::transaction(function () use ($request, $whitelist) {
+            // Gunakan nama dari whitelist (bukan input user) untuk keamanan
+            $user = User::create([
+                'name' => $whitelist->nama, // Nama dari whitelist
+                'email' => $request->email,
+                'kontak' => $request->kontak,
+                'password' => $request->password,
+                'role' => $whitelist->role, // Role dari whitelist
+                'nomor_induk' => $request->nomor_induk,
+                'kelas' => $whitelist->kelas, // Kelas dari whitelist
+            ]);
 
-        // Tandai whitelist sebagai sudah terdaftar
-        $whitelist->markAsRegistered();
+            // Tandai whitelist sebagai sudah terdaftar
+            $whitelist->markAsRegistered();
 
-        event(new Registered($user));
+            event(new Registered($user));
 
-        Auth::login($user);
+            Auth::login($user);
+
+            \Illuminate\Support\Facades\Log::info('Registration Successful and Whitelist Updated', [
+                'user_id' => $user->id,
+                'nomor_induk' => $request->nomor_induk,
+                'whitelist_id' => $whitelist->id
+            ]);
+        });
 
         return redirect(RouteServiceProvider::HOME);
     }

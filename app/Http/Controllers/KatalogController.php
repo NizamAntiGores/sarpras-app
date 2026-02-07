@@ -25,10 +25,13 @@ class KatalogController extends Controller
         $query = Sarpras::with(['kategori'])
             ->withCount([
                 'units as available_count' => function ($query) {
-                    $query->bisaDipinjam();
+                    $query->bisaDipinjam()
+                        ->whereHas('lokasi', fn($q) => $q->where('is_storefront', true));
                 }
             ])
-            ->withSum('stocks as available_stock', 'quantity') // Sum stock quantity
+            ->withSum(['stocks as available_stock' => function($query) {
+                $query->whereHas('lokasi', fn($q) => $q->where('is_storefront', true));
+            }], 'quantity') // Sum stock quantity
             ->when(!auth()->user()->isGuru(), function ($query) {
                 // If NOT guru (e.g. Student?), maybe filter types?
                 // Existing logic: Students don't see consumables?

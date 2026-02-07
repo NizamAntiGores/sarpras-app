@@ -34,7 +34,11 @@ Peminjaman Anda telah disetujui! Berikut detailnya:
 
 ### Barang yang Dipinjam:
 @foreach($peminjaman->details as $detail)
+@if($detail->sarprasUnit)
 - {{ $detail->sarprasUnit->kode_unit }} - {{ $detail->sarprasUnit->sarpras->nama_barang }}
+@else
+- {{ $detail->quantity }}x {{ $detail->sarpras->nama_barang }}
+@endif
 @endforeach
 
 ---

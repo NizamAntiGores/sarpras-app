@@ -51,4 +51,3 @@ Aplikasi ini dibangun menggunakan teknologi modern untuk memastikan performa yan
 ### Library Pendukung
 - **`simplesoftwareio/simple-qrcode`**: Generator QR Code untuk aset dan transaksi.
 - **`barryvdh/laravel-dompdf`**: Pembuatan laporan PDF.
-- **`axios`**: HTTP Client untuk request AJAX.

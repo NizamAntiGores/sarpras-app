@@ -12,25 +12,59 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             
             {{-- Filter Section --}}
+            {{-- Filter Section --}}
             <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
-                <form method="GET" action="{{ route('katalog.index') }}" class="flex flex-wrap items-center gap-4">
-                    <div class="flex items-center gap-2">
-                        <label for="kategori" class="text-sm font-medium text-gray-700">Filter Kategori:</label>
-                        <select name="kategori" id="kategori" onchange="this.form.submit()"
-                                class="rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
-                            <option value="">Semua Kategori</option>
-                            @foreach ($kategori as $kat)
-                                <option value="{{ $kat->id }}" {{ $kategoriId == $kat->id ? 'selected' : '' }}>
-                                    {{ $kat->nama_kategori }}
-                                </option>
-                            @endforeach
-                        </select>
+                <form method="GET" action="{{ route('katalog.index') }}" class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    
+                    {{-- Left Side: Search --}}
+                    <div class="relative w-full md:w-1/3">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama barang..." 
+                               class="pl-10 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                               onchange="this.form.submit()">
                     </div>
-                    @if ($kategoriId)
-                        <a href="{{ route('katalog.index') }}" class="text-sm text-blue-600 hover:text-blue-800">
-                            &times; Reset Filter
-                        </a>
-                    @endif
+
+                    {{-- Right Side: Filters --}}
+                    <div class="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                        
+                        {{-- Filter Kategori --}}
+                        <div class="w-full md:w-48">
+                            <select name="kategori" id="kategori" onchange="this.form.submit()"
+                                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                <option value="">Semua Kategori</option>
+                                @foreach ($kategori as $kat)
+                                    <option value="{{ $kat->id }}" {{ $kategoriId == $kat->id ? 'selected' : '' }}>
+                                        {{ $kat->nama_kategori }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Filter Lokasi --}}
+                        <div class="w-full md:w-48">
+                            <select name="lokasi" id="lokasi" onchange="this.form.submit()"
+                                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                <option value="">Semua Lokasi</option>
+                                @foreach ($lokasiList as $lok)
+                                    <option value="{{ $lok->id }}" {{ $lokasiId == $lok->id ? 'selected' : '' }}>
+                                        {{ $lok->nama_lokasi }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        {{-- Reset Button --}}
+                        @if ($kategoriId || $lokasiId || $search)
+                            <a href="{{ route('katalog.index') }}" 
+                               class="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                Reset
+                            </a>
+                        @endif
+                    </div>
                 </form>
             </div>
 

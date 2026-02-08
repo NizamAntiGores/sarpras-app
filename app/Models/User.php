@@ -112,4 +112,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Pengembalian::class, 'petugas_id');
     }
+
+    /**
+     * Activity logs dari user ini
+     */
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class, 'user_id');
+    }
 }

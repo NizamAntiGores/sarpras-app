@@ -138,7 +138,8 @@
                 </p>
             </div>
             
-            {{-- Notifications --}}
+            {{-- Notifications Removed per Request --}}
+            {{-- 
             @php
                 $unreadCount = \App\Models\Notification::where('user_id', auth()->id())->unread()->count();
             @endphp
@@ -147,7 +148,8 @@
                 @if($unreadCount > 0)
                     <span class="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white animate-pulse"></span>
                 @endif
-            </a>
+            </a> 
+            --}}
         </div>
         
         <div class="space-y-1">

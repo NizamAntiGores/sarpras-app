@@ -60,6 +60,15 @@
                         </a>
                     @endif
                     
+                    {{-- Export PDF Button --}}
+                    <a href="{{ route('export.asset-health', request()->query()) }}" 
+                       class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 transition">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Export PDF
+                    </a>
+                    
                     {{-- Active Filters Badge --}}
                     @if(request('lokasi_id') || request('kategori_id'))
                         <div class="flex items-center gap-2 ml-auto">
@@ -498,6 +507,42 @@
                             @empty
                                 <tr>
                                     <td colspan="4" class="px-4 py-4 text-center text-sm text-gray-500">Tidak ada aset rusak saat ini.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {{-- Section 3: Top 10 Barang Sering Rusak --}}
+            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                    <svg class="w-5 h-5 text-orange-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    Top 10 Barang Sering Rusak
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">No</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nama Barang</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total Kerusakan</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @forelse ($seringRusak as $index => $item)
+                                <tr>
+                                    <td class="px-4 py-2 text-sm text-gray-500">{{ $index + 1 }}</td>
+                                    <td class="px-4 py-2 text-sm font-medium text-gray-900">{{ $item->nama_barang }}</td>
+                                    <td class="px-4 py-2 text-sm text-gray-900">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+                                            {{ $item->total_kerusakan }} kali
+                                        </span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="3" class="px-4 py-4 text-center text-sm text-gray-500">Belum ada data kerusakan yang tercatat.</td>
                                 </tr>
                             @endforelse
                         </tbody>

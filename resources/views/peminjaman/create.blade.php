@@ -43,6 +43,19 @@
                         </div>
                     @endif
 
+
+
+
+                    @if(!isset($sarprasList) || $sarprasList->isEmpty())
+                        <div class="text-center py-12 text-gray-500">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                            </svg>
+                            <p class="text-lg">Tidak ada barang yang tersedia untuk dipinjam saat ini.</p>
+                        </div>
+                    @else
+
+
                     {{-- Info Card --}}
                     <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <div class="flex">
@@ -110,66 +123,132 @@
                                 {{-- Unit Selection with Accordion Style --}}
                                 <div class="border border-gray-200 rounded-lg max-h-96 overflow-y-auto" id="unitList">
                                     @foreach ($sarprasList as $sarpras)
-                                        @if (isset($availableUnits[$sarpras->id]) && $availableUnits[$sarpras->id]->count() > 0)
-                                            <div class="sarpras-group border-b border-gray-100 last:border-b-0" 
-                                                 data-id="{{ $sarpras->id }}" 
-                                                 data-nama="{{ strtolower($sarpras->nama_barang) }}"
-                                                 data-kategori="{{ $sarpras->kategori_id }}"
-                                                 data-tipe="{{ $sarpras->tipe }}">
-                                                {{-- Collapsible Header --}}
-                                                <button type="button" 
-                                                        class="w-full flex items-center justify-between p-3 bg-white hover:bg-gray-50 transition sarpras-header"
-                                                        onclick="toggleGroup(this)">
-                                                    <div class="flex items-center gap-3">
-                                                        <svg class="w-5 h-5 text-gray-400 transform transition-transform chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                                        </svg>
-                                                        <div class="text-left">
-                                                            <span class="font-medium text-gray-800">{{ $sarpras->nama_barang }}</span>
-                                                            <span class="text-gray-500 text-sm ml-2">({{ $sarpras->kode_barang }})</span>
-                                                            @if($sarpras->tipe == 'bahan')
-                                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
-                                                                    Habis Pakai
+                                        <div class="sarpras-group border-b border-gray-100 last:border-b-0" 
+                                             data-id="{{ $sarpras->id }}" 
+                                             data-nama="{{ strtolower($sarpras->nama_barang) }}"
+                                             data-kategori="{{ $sarpras->kategori_id }}"
+                                             data-tipe="{{ $sarpras->tipe }}">
+                                            
+                                            {{-- Collapsible Header --}}
+                                            <button type="button" 
+                                                    class="w-full flex items-center justify-between p-3 bg-white hover:bg-gray-50 transition sarpras-header"
+                                                    onclick="toggleGroup(this)">
+                                                <div class="flex items-center gap-3">
+                                                    <svg class="w-5 h-5 text-gray-400 transform transition-transform chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                                    </svg>
+                                                    <div class="text-left">
+                                                        <span class="font-medium text-gray-800">{{ $sarpras->nama_barang }}</span>
+                                                        <span class="text-gray-500 text-sm ml-2">({{ $sarpras->kode_barang }})</span>
+                                                        @if($sarpras->tipe == 'bahan')
+                                                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                                                                Habis Pakai
+                                                            </span>
+                                                        @endif
+                                                        
+                                                        {{-- Location Badges Summary --}}
+                                                        <div class="mt-1 flex flex-wrap gap-1">
+                                                            @if($sarpras->tipe == 'asset')
+                                                                @php
+                                                                    $locs = $availableUnits[$sarpras->id]->pluck('lokasi.nama_lokasi')->unique()->implode(', ');
+                                                                @endphp
+                                                                <span class="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                                                                    📍 {{ $locs }}
                                                                 </span>
+                                                            @else
+                                                                @foreach($sarpras->stock_details as $stock)
+                                                                     <span class="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                                                                        📍 {{ $stock->lokasi->nama_lokasi }}: {{ $stock->quantity }}
+                                                                    </span>
+                                                                @endforeach
                                                             @endif
                                                         </div>
                                                     </div>
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                                                            {{ $availableUnits[$sarpras->id]->count() }} tersedia
-                                                        </span>
-                                                        <span class="selected-badge text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hidden">
-                                                            0 dipilih
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                                {{-- Collapsible Content --}}
-                                                <div class="sarpras-content hidden bg-gray-50 p-3">
-                                                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                                                        @foreach ($availableUnits[$sarpras->id] as $unit)
-                                                            <label class="unit-item flex items-center p-2 bg-white border rounded hover:border-blue-300 cursor-pointer transition {{ in_array($unit->id, old('unit_ids', [])) ? 'border-blue-500 bg-blue-50' : 'border-gray-200' }}"
-                                                                   data-kode="{{ strtolower($unit->kode_unit) }}"
-                                                                   data-sarpras="{{ $sarpras->id }}">
-                                                                <input type="checkbox" name="unit_ids[]" value="{{ $unit->id }}" 
-                                                                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                                       {{ in_array($unit->id, old('unit_ids', [])) ? 'checked' : '' }}>
-                                                                <span class="ml-2 text-sm">
-                                                                    <span class="font-mono font-medium">{{ $unit->kode_unit }}</span>
-                                                                    <br>
-                                                                    <span class="text-xs text-gray-500">
-                                                                        @if ($unit->kondisi === 'baik')
-                                                                            <span class="text-green-600">●</span> Baik
-                                                                        @elseif ($unit->kondisi === 'rusak_ringan')
-                                                                            <span class="text-yellow-600">●</span> Rusak Ringan
-                                                                        @endif
-                                                                    </span>
-                                                                </span>
-                                                            </label>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                                                        {{ $sarpras->total_stok_tersedia }} tersedia
+                                                    </span>
+                                                    <span class="selected-badge text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hidden">
+                                                        0 dipilih
+                                                    </span>
+                                                </div>
+                                            </button>
+
+                                            {{-- Collapsible Content --}}
+                                            <div class="sarpras-content hidden bg-gray-50 p-3">
+                                                @if ($sarpras->tipe == 'bahan')
+                                                    {{-- INPUT KHUSUS BAHAN (Quantity) --}}
+                                                    <div class="space-y-3">
+                                                        @foreach($sarpras->stock_details as $stock)
+                                                            <div class="flex items-center space-x-4 p-2 bg-white border rounded">
+                                                                <div class="flex-1">
+                                                                    <p class="text-sm font-medium text-gray-700">
+                                                                        Dari: <span class="text-indigo-600">{{ $stock->lokasi->nama_lokasi }}</span>
+                                                                    </p>
+                                                                    <p class="text-xs text-gray-500">Maksimal: {{ $stock->quantity }}</p>
+                                                                </div>
+                                                                <div class="w-32">
+                                                                    {{-- Hidden Input for Item ID & Location ID --}}
+                                                                    {{-- Need unique index to prevent override --}}
+                                                                    <input type="hidden" 
+                                                                           name="consumables[{{ $sarpras->id }}_{{ $stock->lokasi_id }}][item_id]" 
+                                                                           value="{{ $sarpras->id }}" 
+                                                                           disabled 
+                                                                           class="consumable-enable">
+                                                                    <input type="hidden" 
+                                                                           name="consumables[{{ $sarpras->id }}_{{ $stock->lokasi_id }}][lokasi_id]" 
+                                                                           value="{{ $stock->lokasi_id }}" 
+                                                                           disabled 
+                                                                           class="consumable-enable-loc">
+                                                                    
+                                                                    <input type="number" 
+                                                                           name="consumables[{{ $sarpras->id }}_{{ $stock->lokasi_id }}][qty]" 
+                                                                           min="0" 
+                                                                           max="{{ $stock->quantity }}"
+                                                                           step="1" 
+                                                                           placeholder="0"
+                                                                           class="w-full rounded border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 consumable-qty"
+                                                                           oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                                                           onchange="updateConsumableSelection(this, '{{ $sarpras->id }}_{{ $stock->lokasi_id }}')">
+                                                                </div>
+                                                            </div>
                                                         @endforeach
                                                     </div>
-                                                </div>
+                                                @else
+                                                    {{-- INPUT KHUSUS ASET (Unit Checkboxes) --}}
+                                                    @if (isset($availableUnits[$sarpras->id]) && $availableUnits[$sarpras->id]->count() > 0)
+                                                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                                                            @foreach ($availableUnits[$sarpras->id] as $unit)
+                                                                <label class="unit-item flex items-center p-2 bg-white border rounded hover:border-blue-300 cursor-pointer transition {{ in_array($unit->id, old('unit_ids', [])) ? 'border-blue-500 bg-blue-50' : 'border-gray-200' }}"
+                                                                       data-kode="{{ strtolower($unit->kode_unit) }}"
+                                                                       data-sarpras="{{ $sarpras->id }}">
+                                                                    <input type="checkbox" name="unit_ids[]" value="{{ $unit->id }}" 
+                                                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                                           {{ in_array($unit->id, old('unit_ids', [])) ? 'checked' : '' }}>
+                                                                    <span class="ml-2 text-sm">
+                                                                        <span class="font-mono font-medium">{{ $unit->kode_unit }}</span>
+                                                                        <span class="text-xs text-indigo-600 bg-indigo-50 px-1 rounded ml-1 border border-indigo-100">
+                                                                            {{ $unit->lokasi->nama_lokasi }}
+                                                                        </span>
+                                                                        <br>
+                                                                        <span class="text-xs text-gray-500">
+                                                                            @if ($unit->kondisi === 'baik')
+                                                                                <span class="text-green-600">●</span> Baik
+                                                                            @elseif ($unit->kondisi === 'rusak_ringan')
+                                                                                <span class="text-yellow-600">●</span> Rusak Ringan
+                                                                            @endif
+                                                                        </span>
+                                                                    </span>
+                                                                </label>
+                                                            @endforeach
+                                                        </div>
+                                                    @else
+                                                        <p class="text-sm text-red-500 p-2">Tidak ada unit tersedia untuk aset ini.</p>
+                                                    @endif
+                                                @endif
                                             </div>
-                                        @endif
+                                        </div>
                                     @endforeach
                                 </div>
                                 
@@ -206,7 +285,7 @@
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                            <div>
+                            <div id="container-tgl-kembali">
                                 <label for="tgl_kembali_rencana" class="block text-sm font-medium text-gray-700 mb-1">
                                     Rencana Tanggal Kembali <span class="text-red-500">*</span>
                                 </label>
@@ -214,6 +293,7 @@
                                        value="{{ old('tgl_kembali_rencana') }}"
                                        min="{{ date('Y-m-d', strtotime('+1 day')) }}"
                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('tgl_kembali_rencana') border-red-500 @enderror">
+                                <p class="text-xs text-gray-400 mt-1" id="hint-tgl-kembali">Hanya untuk peminjaman aset.</p>
                                 @error('tgl_kembali_rencana')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -223,10 +303,10 @@
                         {{-- Keterangan/Alasan --}}
                         <div>
                             <label for="keterangan" class="block text-sm font-medium text-gray-700 mb-1">
-                                Alasan/Keperluan Peminjaman
+                                Alasan/Keperluan Peminjaman <span class="text-red-500">*</span>
                             </label>
-                            <textarea name="keterangan" id="keterangan" rows="3"
-                                      placeholder="Jelaskan keperluan peminjaman barang..."
+                            <textarea name="keterangan" id="keterangan" rows="3" required
+                                      placeholder="Jelaskan keperluan peminjaman barang, misalnya: untuk praktikum, acara sekolah, dll."
                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('keterangan') border-red-500 @enderror">{{ old('keterangan') }}</textarea>
                             @error('keterangan')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -260,6 +340,8 @@
             </div>
         </div>
     </div>
+        @endif
+    </div>
 
     <script>
         // Toggle accordion group
@@ -272,32 +354,123 @@
             chevron.classList.toggle('rotate-90');
         }
 
+        // Handle Consumable Selection (Enable/Disable inputs)
+        function updateConsumableSelection(input, id) {
+            const container = input.closest('div');
+            const idInput = container.querySelector('.consumable-enable');
+            const val = parseInt(input.value) || 0;
+            
+            if (val > 0) {
+                // Set names to valid submission format
+                idInput.name = `consumables[${id}][item_id]`;
+                input.name = `consumables[${id}][qty]`;
+                idInput.disabled = false;
+                
+                input.classList.add('border-blue-500', 'bg-blue-50');
+            } else {
+                // Remove names to prevent submission
+                idInput.removeAttribute('name');
+                input.removeAttribute('name');
+                idInput.disabled = true;
+                
+                input.classList.remove('border-blue-500', 'bg-blue-50');
+            }
+            updateSelectedCount(); // Also update count
+            updateGroupBadges();
+        }
+
         // Clear all selections
         function clearAllSelections() {
+            // Clear Units
             document.querySelectorAll('input[name="unit_ids[]"]').forEach(checkbox => {
                 checkbox.checked = false;
                 const label = checkbox.closest('label');
                 label.classList.remove('border-blue-500', 'bg-blue-50');
                 label.classList.add('border-gray-200');
             });
+
+            // Clear Consumables
+            document.querySelectorAll('.consumable-qty').forEach(input => {
+                input.value = '';
+                // Since value is empty, trigger update to remove names
+                // We need the ID from the data attribute or closure. 
+                // Let's rely on the structure: parent div -> hidden input with class 'consumable-enable'
+                const container = input.closest('div');
+                const idInput = container.querySelector('.consumable-enable');
+                // We stored ID in value of idInput
+                const id = idInput.value; 
+                
+                updateConsumableSelection(input, id);
+            });
+            
             updateSelectedCount();
             updateGroupBadges();
         }
 
         // Update selected count
         function updateSelectedCount() {
-            const checkboxes = document.querySelectorAll('input[name="unit_ids[]"]:checked');
-            document.getElementById('selectedCount').textContent = checkboxes.length;
+            const unitCount = document.querySelectorAll('input[name="unit_ids[]"]:checked').length;
+            const consumableCount = Array.from(document.querySelectorAll('.consumable-qty'))
+                .filter(input => (parseInt(input.value) || 0) > 0)
+                .length;
+            
+            document.getElementById('selectedCount').textContent = unitCount + consumableCount;
+            
+            checkReturnDateVisibility(unitCount, consumableCount);
+        }
+
+        // Toggle visibility of Return Date based on selection AND filter
+        function checkReturnDateVisibility(unitCount, consumableCount) {
+            const container = document.getElementById('container-tgl-kembali');
+            const input = document.getElementById('tgl_kembali_rencana');
+            const filterTipe = document.getElementById('filterTipe');
+            
+            // Logic:
+            // 1. If Assets are selected (unitCount > 0) -> ALWAYS SHOW
+            // 2. If ONLY Consumables are selected (consumableCount > 0 AND unitCount == 0) -> HIDE
+            // 3. If Nothing selected (unitCount == 0 && consumableCount == 0):
+            //    - If Filter is 'bahan' -> HIDE (Anticipating consumable selection)
+            //    - Else -> SHOW (Default)
+            
+            if (unitCount > 0) {
+                // Must show if any asset is selected
+                container.style.display = 'block';
+                input.required = true;
+            } else if (consumableCount > 0) {
+                // Only consumables selected
+                container.style.display = 'none';
+                input.required = false;
+            } else {
+                // No selection yet
+                if (filterTipe && filterTipe.value === 'bahan') {
+                    container.style.display = 'none';
+                    input.required = false;
+                } else {
+                    container.style.display = 'block';
+                    input.required = true;
+                }
+            }
         }
 
         // Update badge on each group header
         function updateGroupBadges() {
             document.querySelectorAll('.sarpras-group').forEach(group => {
-                const checkedCount = group.querySelectorAll('input[name="unit_ids[]"]:checked').length;
+                let count = 0;
+                
+                // Count Units
+                const units = group.querySelectorAll('input[name="unit_ids[]"]:checked');
+                count += units.length;
+
+                // Count Consumables
+                const consumables = group.querySelectorAll('.consumable-qty');
+                consumables.forEach(input => {
+                    if ((parseInt(input.value) || 0) > 0) count++;
+                });
+
                 const badge = group.querySelector('.selected-badge');
                 
-                if (checkedCount > 0) {
-                    badge.textContent = checkedCount + ' dipilih';
+                if (count > 0) {
+                    badge.textContent = count + ' dipilih';
                     badge.classList.remove('hidden');
                 } else {
                     badge.classList.add('hidden');
@@ -368,6 +541,9 @@
                     group.style.display = 'none';
                 }
             });
+            
+            // Update visibility of return date field based on filter changes
+            updateSelectedCount();
         }
 
         // Search functionality

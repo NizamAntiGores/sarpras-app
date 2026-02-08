@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Kategori;
+use App\Models\Lokasi; // Added
 use App\Models\Sarpras;
 use App\Models\SarprasUnit;
 use Illuminate\Http\RedirectResponse;
@@ -52,10 +53,10 @@ class SarprasController extends Controller
         // Search logic
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
-                $q->where('nama_barang', 'like', '%'.$request->search.'%')
-                    ->orWhere('kode_barang', 'like', '%'.$request->search.'%')
+                $q->where('nama_barang', 'like', '%' . $request->search . '%')
+                    ->orWhere('kode_barang', 'like', '%' . $request->search . '%')
                     ->orWhereHas('units', function ($u) use ($request) {
-                        $u->where('kode_unit', 'like', '%'.$request->search.'%');
+                        $u->where('kode_unit', 'like', '%' . $request->search . '%');
                     });
             });
         }
@@ -63,6 +64,11 @@ class SarprasController extends Controller
         // Filter by Kategori
         if ($request->filled('kategori_id')) {
             $query->where('kategori_id', $request->kategori_id);
+        }
+
+        // Filter by Tipe (aset / bahan)
+        if ($request->filled('tipe')) {
+            $query->where('tipe', $request->tipe);
         }
 
         // Filter by Lokasi (only show Sarpras that have units in this location)
@@ -99,8 +105,59 @@ class SarprasController extends Controller
             ->withQueryString();
 
         $kategoriList = Kategori::orderBy('nama_kategori')->get();
+        $lokasiList = Lokasi::orderBy('nama_lokasi')->get(); // Added for filter
 
-        return view('sarpras.index', compact('sarpras', 'stats', 'kategoriList'));
+        // --- NEW LOGIC: Unit View if Location Selected ---
+        if ($lokasiId) {
+            $unitQuery = SarprasUnit::query()
+                ->with(['sarpras.kategori', 'lokasi'])
+                ->where('lokasi_id', $lokasiId)
+                ->where('status', '!=', SarprasUnit::STATUS_DIHAPUSBUKUKAN); // Standard filter
+
+            // Apply Filters to Unit Query
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $unitQuery->where(function ($q) use ($search) {
+                    $q->where('kode_unit', 'like', "%{$search}%")
+                        ->orWhereHas('sarpras', function ($s) use ($search) {
+                            $s->where('nama_barang', 'like', "%{$search}%")
+                                ->orWhere('kode_barang', 'like', "%{$search}%");
+                        });
+                });
+            }
+
+            if ($request->filled('kategori_id')) {
+                $unitQuery->whereHas('sarpras', function ($q) use ($request) {
+                    $q->where('kategori_id', $request->kategori_id);
+                });
+            }
+
+            if ($request->filled('tipe')) {
+                $unitQuery->whereHas('sarpras', function ($q) use ($request) {
+                    $q->where('tipe', $request->tipe);
+                });
+            }
+
+            // Special filters mapping for units
+            if ($request->filled('filter')) {
+                if ($request->filter === 'stok_habis') {
+                    // Logic: Not really applicable to single unit lists unless we check status?
+                    // Let's ignore or map 'stok_habis' -> maybe 'maintenance'? No, inconsistent.
+                    // Let's just ignore inventory-level filters in unit view for now.
+                }
+            }
+
+            $units = $unitQuery->orderBy('kode_unit')->paginate(15)->withQueryString();
+
+            // Recalculate stats SPECIFIC to this location? Or keep global?
+            // User likely wants global stats OR location stats. Let's keep global for now to avoid confusion unless requested.
+
+            return view('sarpras.index', compact('units', 'stats', 'kategoriList', 'lokasiList'));
+        }
+
+        // --- END NEW LOGIC ---
+
+        return view('sarpras.index', compact('sarpras', 'stats', 'kategoriList', 'lokasiList'));
     }
 
     /**
@@ -109,8 +166,9 @@ class SarprasController extends Controller
     public function create(): View
     {
         $kategori = Kategori::orderBy('nama_kategori')->get();
+        $lokasi = \App\Models\Lokasi::orderBy('nama_lokasi')->get();
 
-        return view('sarpras.create', compact('kategori'));
+        return view('sarpras.create', compact('kategori', 'lokasi'));
     }
 
     /**
@@ -136,24 +194,60 @@ class SarprasController extends Controller
             'kategori_id.required' => 'Kategori wajib dipilih.',
         ]);
 
+        // Validate Location & Stock for Bahan
+        if ($request->tipe === 'bahan') {
+            $request->validate([
+                'lokasi_id' => 'required|exists:lokasi,id',
+                'stok_awal' => 'required|integer|min:0',
+            ], [
+                'lokasi_id.required' => 'Lokasi wajib dipilih untuk bahan habis pakai.',
+                'stok_awal.required' => 'Stok awal wajib diisi.',
+            ]);
+        }
+
         // Handle foto upload
         $fotoPath = null;
         if ($request->hasFile('foto')) {
             $fotoPath = $request->file('foto')->store('sarpras', 'public');
         }
 
-        $sarpras = Sarpras::create([
-            'kode_barang' => $validated['kode_barang'],
-            'nama_barang' => $validated['nama_barang'],
-            'foto' => $fotoPath,
-            'kategori_id' => $validated['kategori_id'],
-            'deskripsi' => $validated['deskripsi'] ?? null,
-            'tipe' => $validated['tipe'],
-        ]);
+        DB::beginTransaction();
+        try {
+            $sarpras = Sarpras::create([
+                'kode_barang' => $validated['kode_barang'],
+                'nama_barang' => $validated['nama_barang'],
+                'foto' => $fotoPath,
+                'kategori_id' => $validated['kategori_id'],
+                'deskripsi' => $validated['deskripsi'] ?? null,
+                'tipe' => $validated['tipe'],
+            ]);
 
-        return redirect()
-            ->route('sarpras.units.create', $sarpras)
-            ->with('success', 'Master barang berhasil ditambahkan. Silakan tambahkan unit barang.');
+            // Create Stock for Consumables
+            if ($request->tipe === 'bahan') {
+                \App\Models\ItemStock::create([
+                    'sarpras_id' => $sarpras->id,
+                    'lokasi_id' => $request->lokasi_id,
+                    'quantity' => $request->stok_awal,
+                ]);
+            }
+
+            DB::commit();
+
+            if ($request->tipe === 'asset') {
+                return redirect()
+                    ->route('sarpras.units.create', $sarpras)
+                    ->with('success', 'Master barang berhasil ditambahkan. Silakan tambahkan unit barang.');
+            } else {
+                return redirect()
+                    ->route('sarpras.index')
+                    ->with('success', 'Bahan habis pakai berhasil ditambahkan beserta stok awal.');
+            }
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage())->withInput();
+        }
+
     }
 
     /**
@@ -187,8 +281,14 @@ class SarprasController extends Controller
     public function edit(Sarpras $sarpras): View
     {
         $kategori = Kategori::orderBy('nama_kategori')->get();
+        $lokasi = \App\Models\Lokasi::orderBy('nama_lokasi')->get();
+        
+        // Load stocks if consumable
+        if ($sarpras->tipe === 'bahan') {
+            $sarpras->load('stocks.lokasi');
+        }
 
-        return view('sarpras.edit', compact('sarpras', 'kategori'));
+        return view('sarpras.edit', compact('sarpras', 'kategori', 'lokasi'));
     }
 
     /**
@@ -197,7 +297,7 @@ class SarprasController extends Controller
     public function update(Request $request, Sarpras $sarpras): RedirectResponse
     {
         $validated = $request->validate([
-            'kode_barang' => 'required|string|max:50|unique:sarpras,kode_barang,'.$sarpras->id,
+            'kode_barang' => 'required|string|max:50|unique:sarpras,kode_barang,' . $sarpras->id,
             'nama_barang' => 'required|string|max:255',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'kategori_id' => 'required|exists:kategori,id',
@@ -243,6 +343,39 @@ class SarprasController extends Controller
         return redirect()
             ->route('sarpras.index')
             ->with('success', 'Data sarpras berhasil diperbarui.');
+    }
+
+    /**
+     * Add Stock directly from Edit Page (for Consumables)
+     */
+    public function addStock(Request $request, Sarpras $sarpras): RedirectResponse
+    {
+        if ($sarpras->tipe !== 'bahan') {
+            return back()->with('error', 'Fitur ini hanya untuk barang habis pakai.');
+        }
+
+        $request->validate([
+            'lokasi_id' => 'required|exists:lokasi,id',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        try {
+            // Find existing stock or create new one
+            $stock = \App\Models\ItemStock::firstOrCreate(
+                ['sarpras_id' => $sarpras->id, 'lokasi_id' => $request->lokasi_id],
+                ['quantity' => 0]
+            );
+
+            $stock->increment('quantity', $request->quantity);
+
+            // Log activity (optional but good practice)
+            \App\Helpers\LogHelper::record('update', "Menambah stok {$sarpras->nama_barang} (+{$request->quantity}) di {$stock->lokasi->nama_lokasi}");
+
+            return back()->with('success', "Berhasil menambah {$request->quantity} stok di {$stock->lokasi->nama_lokasi}.");
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal menambah stok: ' . $e->getMessage());
+        }
     }
 
     /**

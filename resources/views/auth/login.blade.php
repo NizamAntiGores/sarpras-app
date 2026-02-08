@@ -8,22 +8,22 @@
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
     <!-- Error Alert for Invalid Credentials -->
-    @if ($errors->has('email') || $errors->has('password'))
+    @if ($errors->has('nomor_induk') || $errors->has('password'))
         <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
             <strong class="font-bold">Login Gagal!</strong>
-            <span class="block sm:inline">Email atau password yang Anda masukkan salah.</span>
+            <span class="block sm:inline">{{ $errors->first('nomor_induk') ?: 'NISN/NIP atau password salah.' }}</span>
         </div>
     @endif
 
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
-        <!-- Email Address -->
+        <!-- NISN/NIP -->
         <div>
-            <x-input-label for="email" value="Email" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required
-                autofocus autocomplete="username" placeholder="email@example.com" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+            <x-input-label for="nomor_induk" value="NISN / NIP" />
+            <x-text-input id="nomor_induk" class="block mt-1 w-full" type="text" name="nomor_induk" :value="old('nomor_induk')" required
+                autofocus autocomplete="username" placeholder="Masukkan NISN atau NIP" />
+            <x-input-error :messages="$errors->get('nomor_induk')" class="mt-2" />
         </div>
 
         <!-- Password -->

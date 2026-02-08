@@ -28,9 +28,29 @@
                                 <p class="text-sm text-gray-500 mt-2">Kode QR akan muncul setelah pengajuan disetujui oleh petugas.</p>
                                 @break
                             @case('disetujui')
-                                <span class="px-4 py-2 bg-green-100 text-green-800 rounded-full text-lg font-medium print:hidden">✅ Disetujui</span>
-                                <span class="hidden print:block text-lg font-bold border border-black px-4 py-1 inline-block">STATUS: DISETUJUI</span>
-                                @if ($peminjaman->tgl_kembali_rencana && now()->gt($peminjaman->tgl_kembali_rencana))
+                            @case('dipinjam')
+                                @if($peminjaman->isReadyForPickup())
+                                    @if($peminjaman->status === 'dipinjam')
+                                        <span class="px-4 py-2 bg-orange-100 text-orange-800 rounded-full text-lg font-medium print:hidden">📦 Ambil Sebagian</span>
+                                        <span class="hidden print:block text-lg font-bold border border-black px-4 py-1 inline-block">STATUS: DIPINJAM SEBAGIAN</span>
+                                    @else
+                                        <span class="px-4 py-2 bg-amber-100 text-amber-800 rounded-full text-lg font-medium print:hidden">📦 Siap Diambil</span>
+                                        <span class="hidden print:block text-lg font-bold border border-black px-4 py-1 inline-block">STATUS: SIAP DIAMBIL</span>
+                                    @endif
+
+                                    @if($peminjaman->status === 'disetujui')
+                                        <p class="text-sm text-gray-500 mt-2">Barang telah disetujui dan siap untuk diambil. Tunjukkan QR Code kepada petugas.</p>
+                                    @else
+                                        <p class="text-sm text-gray-500 mt-2">Sebagian barang telah diambil. Silakan ambil sisa barang di lokasi terkait.</p>
+                                    @endif
+                                @else
+                                    <span class="px-4 py-2 bg-green-100 text-green-800 rounded-full text-lg font-medium print:hidden">✅ Sedang Dipinjam</span>
+                                    <span class="hidden print:block text-lg font-bold border border-black px-4 py-1 inline-block">STATUS: SEDANG DIPINJAM</span>
+                                    @if($peminjaman->handover_at)
+                                        <p class="text-sm text-gray-500 mt-2">Diserahkan pada {{ $peminjaman->handover_at->format('d M Y, H:i') }}</p>
+                                    @endif
+                                @endif
+                                @if ($peminjaman->tgl_kembali_rencana && now()->gt($peminjaman->tgl_kembali_rencana) && $peminjaman->isOngoing())
                                     <div class="mt-2">
                                         <span class="px-3 py-1 rounded-full text-sm font-bold bg-red-600 text-white shadow">
                                             ⚠️ Terlambat {{ now()->diffInDays($peminjaman->tgl_kembali_rencana) }} Hari
@@ -88,13 +108,36 @@
                                 <div class="mt-2 space-y-1">
                                     @foreach ($peminjaman->details as $detail)
                                         <div class="flex items-center justify-between bg-white p-2 rounded border text-sm">
-                                            <div>
-                                                <span class="font-mono font-medium">{{ $detail->sarprasUnit->kode_unit ?? '-' }}</span>
-                                                <span class="text-gray-500 ml-2">{{ $detail->sarprasUnit?->sarpras?->nama_barang ?? '-' }}</span>
+                                            <div class="flex-1">
+                                                <div class="flex items-center gap-2">
+                                                    @if($detail->sarprasUnit)
+                                                        <span class="font-mono font-medium">{{ $detail->sarprasUnit->kode_unit }}</span>
+                                                    @else
+                                                        <span class="font-mono font-medium bg-amber-100 text-amber-800 px-1 rounded">{{ $detail->quantity }}x</span>
+                                                    @endif
+                                                    <span class="text-gray-500">{{ $detail->sarpras->nama_barang ?? '-' }}</span>
+                                                </div>
+                                                @if($detail->handed_over_at)
+                                                    <div class="text-xs text-green-600 mt-1 flex items-center gap-1">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                        Diserahkan oleh {{ $detail->handedOverBy->name ?? 'Petugas' }} 
+                                                        <span class="text-gray-400">({{ $detail->handed_over_at->format('d M H:i') }})</span>
+                                                    </div>
+                                                @else
+                                                    <div class="text-xs text-amber-600 mt-1 italic">
+                                                        Belum diambil
+                                                    </div>
+                                                @endif
                                             </div>
-                                            <span class="text-xs px-2 py-0.5 rounded-full {{ $detail->sarprasUnit->kondisi === 'baik' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">
-                                                {{ ucfirst(str_replace('_', ' ', $detail->sarprasUnit->kondisi ?? '-')) }}
-                                            </span>
+                                            @if($detail->sarprasUnit)
+                                                <span class="text-xs px-2 py-0.5 rounded-full {{ $detail->sarprasUnit->kondisi === 'baik' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">
+                                                    {{ ucfirst(str_replace('_', ' ', $detail->sarprasUnit->kondisi ?? '-')) }}
+                                                </span>
+                                            @else
+                                                <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                                                    Habis Pakai
+                                                </span>
+                                            @endif
                                         </div>
                                     @endforeach
                                 </div>
@@ -174,6 +217,62 @@
                                 </button>
                             </div>
                         </div>
+
+                        {{-- Instruksi Pengambilan --}}
+                        <div class="mt-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-6 border border-green-200 print:bg-white print:border print:border-black">
+                            <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                <span class="text-2xl">📋</span> Instruksi Pengambilan Barang
+                            </h3>
+                            
+                            {{-- Lokasi Pengambilan Grouped by Location --}}
+                            @php
+                                $unitsByLocation = $peminjaman->details->groupBy(function($detail) {
+                                    return $detail->sarprasUnit?->lokasi?->nama_lokasi ?? 'Lokasi Tidak Diketahui';
+                                });
+                            @endphp
+                            
+                            <div class="space-y-3 mb-4">
+                                <p class="text-sm text-gray-600 font-medium">📍 Barang tersedia di lokasi berikut:</p>
+                                @foreach($unitsByLocation as $lokasi => $units)
+                                    <div class="bg-white rounded-lg p-3 border border-green-100">
+                                        <p class="font-semibold text-green-800 mb-2">{{ $lokasi }}</p>
+                                        <div class="flex flex-wrap gap-2">
+                                            @foreach($units as $detail)
+                                                <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-sm font-mono">
+                                                    {{ $detail->sarprasUnit->kode_unit ?? '-' }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="bg-white rounded-lg p-4 border border-green-100 space-y-2">
+                                <p class="flex items-start gap-2 text-sm">
+                                    <span class="text-green-600 font-bold">1.</span>
+                                    <span>Datang ke lokasi pada <strong>jam operasional (07:00 - 15:00 WIB)</strong></span>
+                                </p>
+                                <p class="flex items-start gap-2 text-sm">
+                                    <span class="text-green-600 font-bold">2.</span>
+                                    <span>Tunjukkan <strong>QR Code atau Kode Peminjaman</strong> kepada petugas</span>
+                                </p>
+                                <p class="flex items-start gap-2 text-sm">
+                                    <span class="text-green-600 font-bold">3.</span>
+                                    <span>Petugas akan memverifikasi dan menyerahkan barang</span>
+                                </p>
+                                <p class="flex items-start gap-2 text-sm">
+                                    <span class="text-green-600 font-bold">4.</span>
+                                    <span>Pastikan barang dalam kondisi baik sebelum dibawa</span>
+                                </p>
+                            </div>
+
+                            @if($peminjaman->catatan_petugas)
+                                <div class="mt-3 bg-yellow-50 rounded-lg p-3 border border-yellow-200">
+                                    <p class="text-sm font-semibold text-yellow-800">💬 Catatan dari Petugas:</p>
+                                    <p class="text-sm text-yellow-700 mt-1">{{ $peminjaman->catatan_petugas }}</p>
+                                </div>
+                            @endif
+                        </div>
                     @endif
 
                     {{-- Kode QR untuk Admin/Petugas (hanya menampilkan kode, tidak visual QR) --}}
@@ -201,7 +300,7 @@
                                     <p class="font-medium">{{ $peminjaman->pengembalian->tgl_kembali_aktual?->format('d M Y') ?? $peminjaman->pengembalian->created_at?->format('d M Y') }}</p>
                                 </div>
                                 <div>
-                                    <p class="text-gray-500 text-sm">Diterima Oleh</p>
+                                    <p class="text-gray-500 text-sm">Diterima Kembali Oleh</p>
                                     <p class="font-medium">{{ $peminjaman->pengembalian->petugas->name ?? '-' }}</p>
                                 </div>
                             </div>
@@ -209,18 +308,41 @@
                             @if ($peminjaman->pengembalian->details && $peminjaman->pengembalian->details->count() > 0)
                                 <div class="mt-4">
                                     <p class="text-gray-500 text-sm mb-2">Kondisi Unit Saat Dikembalikan:</p>
-                                    <div class="space-y-1">
+                                    <div class="space-y-3">
                                         @foreach ($peminjaman->pengembalian->details as $detail)
-                                            <div class="flex items-center justify-between bg-white p-2 rounded border text-sm">
-                                                <span class="font-mono">{{ $detail->sarprasUnit->kode_unit ?? '-' }}</span>
-                                                <span class="px-2 py-0.5 rounded-full text-xs 
-                                                    {{ $detail->kondisi_akhir === 'baik' ? 'bg-green-100 text-green-700' : '' }}
-                                                    {{ $detail->kondisi_akhir === 'rusak_ringan' ? 'bg-yellow-100 text-yellow-700' : '' }}
-                                                    {{ $detail->kondisi_akhir === 'rusak_berat' ? 'bg-orange-100 text-orange-700' : '' }}
-                                                    {{ $detail->kondisi_akhir === 'hilang' ? 'bg-red-100 text-red-700' : '' }}
-                                                ">
-                                                    {{ ucfirst(str_replace('_', ' ', $detail->kondisi_akhir)) }}
-                                                </span>
+                                            <div class="bg-white p-3 rounded border text-sm">
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="font-mono font-bold">{{ $detail->sarprasUnit->kode_unit ?? '-' }}</span>
+                                                        <span class="text-gray-600">{{ $detail->sarprasUnit->sarpras->nama_barang ?? '' }}</span>
+                                                    </div>
+                                                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold
+                                                        {{ $detail->kondisi_akhir === 'baik' ? 'bg-green-100 text-green-700' : '' }}
+                                                        {{ $detail->kondisi_akhir === 'rusak_ringan' ? 'bg-yellow-100 text-yellow-700' : '' }}
+                                                        {{ $detail->kondisi_akhir === 'rusak_berat' ? 'bg-orange-100 text-orange-700' : '' }}
+                                                        {{ $detail->kondisi_akhir === 'hilang' ? 'bg-red-100 text-red-700' : '' }}
+                                                    ">
+                                                        {{ ucfirst(str_replace('_', ' ', $detail->kondisi_akhir)) }}
+                                                    </span>
+                                                </div>
+
+                                                {{-- Damage Report / Notes --}}
+                                                @if($detail->kondisi_akhir !== 'baik' || $detail->catatan)
+                                                    <div class="bg-gray-50 p-2 rounded border border-gray-200 mt-2">
+                                                        @if($detail->catatan)
+                                                            <p class="text-gray-700 mb-1"><span class="font-semibold">Keterangan:</span> {{ $detail->catatan }}</p>
+                                                        @endif
+                                                        
+                                                        @if($detail->foto_kondisi)
+                                                            <div class="mt-2">
+                                                                <p class="text-xs text-gray-500 mb-1">Bukti Foto:</p>
+                                                                <img src="{{ Storage::url($detail->foto_kondisi) }}" alt="Bukti Kerusakan" 
+                                                                     class="h-32 rounded border border-gray-300 shadow-sm cursor-pointer hover:opacity-90 transition"
+                                                                     onclick="window.open(this.src, '_blank')">
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @endif
                                             </div>
                                         @endforeach
                                     </div>
@@ -228,6 +350,60 @@
                             @endif
                         </div>
                     @endif
+
+                    {{-- Log Aktivitas Ringkas --}}
+                    <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-gray-800 mb-3">Log Petugas</h3>
+                        <div class="space-y-4">
+                            {{-- Approved By --}}
+                            <div class="flex items-start gap-3">
+                                <div class="mt-1 bg-blue-100 text-blue-600 rounded-full p-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                </div>
+                                <div class="text-sm">
+                                    <p class="font-semibold text-gray-900">Disetujui Oleh</p>
+                                    <p class="text-gray-600">{{ $peminjaman->petugas->name ?? 'Menunggu Persetujuan' }}</p>
+                                </div>
+                            </div>
+
+                            {{-- Handed Over By --}}
+                            @if($peminjaman->details->whereNotNull('handed_over_at')->count() > 0)
+                                @foreach($peminjaman->details->whereNotNull('handed_over_at')->groupBy('handed_over_by') as $petugasId => $details)
+                                    <div class="flex items-start gap-3">
+                                        <div class="mt-1 bg-amber-100 text-amber-600 rounded-full p-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                                        </div>
+                                        <div class="text-sm">
+                                            <p class="font-semibold text-gray-900">Diserahkan Oleh</p>
+                                            <p class="text-gray-600">
+                                                {{ $details->first()->handedOverBy->name ?? 'Petugas' }} 
+                                                <span class="text-xs text-gray-500">({{ $details->first()->handed_over_at->format('d M H:i') }})</span>
+                                            </p>
+                                            <p class="text-xs text-gray-500 mt-0.5">
+                                                Mengeluarkan {{ $details->count() }} item
+                                            </p>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @endif
+
+                            {{-- Received By --}}
+                            @if($peminjaman->status === 'selesai' && $peminjaman->pengembalian)
+                                <div class="flex items-start gap-3">
+                                    <div class="mt-1 bg-green-100 text-green-600 rounded-full p-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                                    </div>
+                                    <div class="text-sm">
+                                        <p class="font-semibold text-gray-900">Diterima Kembali Oleh</p>
+                                        <p class="text-gray-600">
+                                            {{ $peminjaman->pengembalian->petugas->name ?? '-' }}
+                                            <span class="text-xs text-gray-500">({{ $peminjaman->pengembalian->created_at->format('d M H:i') }})</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
 
                     {{-- Signature Section (Print Only) --}}
                     <div class="hidden print:flex mt-12 justify-between text-center break-inside-avoid">
@@ -254,13 +430,22 @@
                                         </svg>
                                         Proses Peminjaman
                                     </a>
-                                @elseif ($peminjaman->status === 'disetujui')
-                                    <a href="{{ route('pengembalian.create', ['peminjaman' => $peminjaman->id]) }}" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 flex items-center gap-2">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                        Proses Pengembalian
-                                    </a>
+                                @elseif ($peminjaman->status === 'disetujui' || $peminjaman->status === 'dipinjam')
+                                    @if ($peminjaman->isReadyForPickup())
+                                        <a href="{{ route('peminjaman.handover', $peminjaman) }}" class="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm hover:bg-amber-700 flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                            </svg>
+                                            Serah Terima
+                                        </a>
+                                    @else
+                                        <a href="{{ route('pengembalian.create', ['peminjaman' => $peminjaman->id]) }}" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            Proses Pengembalian
+                                        </a>
+                                    @endif
                                 @endif
                             @endif
                         </div>

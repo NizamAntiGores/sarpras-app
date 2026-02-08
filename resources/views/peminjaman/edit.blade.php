@@ -40,9 +40,15 @@
                                 <p><span class="text-gray-500">Jumlah Unit:</span> <span class="text-xl font-bold text-blue-600">{{ $peminjaman->details->count() }}</span></p>
                                 <div class="flex flex-wrap gap-1 mt-2">
                                     @foreach ($peminjaman->details as $detail)
-                                        <span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                            {{ $detail->sarprasUnit->kode_unit ?? '-' }}
-                                        </span>
+                                        @if($detail->sarprasUnit)
+                                            <span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                                {{ $detail->sarprasUnit->kode_unit }}
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-full border border-amber-200">
+                                                {{ $detail->sarpras->nama_barang ?? 'Item' }} ({{ $detail->quantity }}x)
+                                            </span>
+                                        @endif
                                     @endforeach
                                 </div>
                             </div>

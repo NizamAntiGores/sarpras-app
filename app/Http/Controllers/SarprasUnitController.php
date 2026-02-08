@@ -46,7 +46,8 @@ class SarprasUnitController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('sarpras-unit.index', compact('sarpras', 'units', 'stats'));
+        $lokasis = Lokasi::orderBy('nama_lokasi')->get();
+        return view('sarpras-unit.index', compact('sarpras', 'units', 'stats', 'lokasis'));
     }
 
     /**
@@ -213,22 +214,72 @@ class SarprasUnitController extends Controller
     }
 
     /**
-     * Bulk update kondisi untuk multiple units.
+     * Handle Bulk Actions (Mass Update/Delete)
+     * Supports:
+     * - update_lokasi: Pindah lokasi massal
+     * - update_kondisi: Ubah kondisi massal
+     * - delete: Hapus (dihapusbukukan) massal
      */
-    public function bulkUpdateKondisi(Request $request, Sarpras $sarpras): RedirectResponse
+    public function bulkAction(Request $request, Sarpras $sarpras): RedirectResponse
     {
         $validated = $request->validate([
             'unit_ids' => 'required|array|min:1',
             'unit_ids.*' => 'exists:sarpras_units,id',
-            'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat',
+            'action_type' => 'required|in:update_lokasi,update_kondisi,delete',
+            'lokasi_id' => 'required_if:action_type,update_lokasi|nullable|exists:lokasi,id',
+            'kondisi' => 'required_if:action_type,update_kondisi|nullable|in:baik,rusak_ringan,rusak_berat',
         ]);
 
-        $updated = SarprasUnit::whereIn('id', $validated['unit_ids'])
-            ->where('sarpras_id', $sarpras->id)
-            ->update(['kondisi' => $validated['kondisi']]);
+        $unitIds = $validated['unit_ids'];
+        $count = count($unitIds);
+        $action = $validated['action_type'];
 
-        return redirect()
-            ->route('sarpras.units.index', $sarpras)
-            ->with('success', "{$updated} unit berhasil diperbarui kondisinya.");
+        DB::beginTransaction();
+
+        try {
+            switch ($action) {
+                case 'update_lokasi':
+                    // Jangan update unit yang sedang dipinjam
+                    $updated = SarprasUnit::whereIn('id', $unitIds)
+                        ->where('sarpras_id', $sarpras->id)
+                        ->where('status', '!=', SarprasUnit::STATUS_DIPINJAM)
+                        ->update(['lokasi_id' => $validated['lokasi_id']]);
+
+                     \App\Helpers\LogHelper::record('update', "Bulk update location for {$updated} units of {$sarpras->nama_barang}");
+                    break;
+
+                case 'update_kondisi':
+                    $updated = SarprasUnit::whereIn('id', $unitIds)
+                        ->where('sarpras_id', $sarpras->id)
+                        ->update(['kondisi' => $validated['kondisi']]);
+
+                    \App\Helpers\LogHelper::record('update', "Bulk update condition for {$updated} units of {$sarpras->nama_barang}");
+                    break;
+
+                case 'delete':
+                    // Jangan hapus unit yang sedang dipinjam
+                     $updated = SarprasUnit::whereIn('id', $unitIds)
+                        ->where('sarpras_id', $sarpras->id)
+                        ->where('status', '!=', SarprasUnit::STATUS_DIPINJAM)
+                        ->update(['status' => SarprasUnit::STATUS_DIHAPUSBUKUKAN]);
+                    
+                    \App\Helpers\LogHelper::record('delete', "Bulk delete (dihapusbukukan) {$updated} units of {$sarpras->nama_barang}");
+                    break;
+            }
+
+            DB::commit();
+
+            if ($updated < $count && $action !== 'update_kondisi') {
+                return redirect()->route('sarpras.units.index', $sarpras)
+                    ->with('success', "{$updated} unit berhasil diproses. Beberapa unit dilewati karena sedang dipinjam.");
+            }
+
+            return redirect()->route('sarpras.units.index', $sarpras)
+                ->with('success', "{$updated} unit berhasil diproses.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi kesalahan bulk action: ' . $e->getMessage());
+        }
     }
 }

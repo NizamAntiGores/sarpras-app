@@ -31,6 +31,8 @@ class Peminjaman extends Model
         'qr_code',
         'keterangan',
         'catatan_petugas',
+        'handover_at',
+        'handover_by',
     ];
 
     /**
@@ -39,6 +41,7 @@ class Peminjaman extends Model
     protected $casts = [
         'tgl_pinjam' => 'date',
         'tgl_kembali_rencana' => 'date',
+        'handover_at' => 'datetime',
     ];
 
     /**
@@ -51,6 +54,8 @@ class Peminjaman extends Model
     const STATUS_SELESAI = 'selesai';
 
     const STATUS_DITOLAK = 'ditolak';
+
+    const STATUS_DIPINJAM = 'dipinjam';
 
     /**
      * Get user peminjam
@@ -108,11 +113,66 @@ class Peminjaman extends Model
     }
 
     /**
-     * Scope untuk peminjaman yang aktif (disetujui tapi belum selesai)
+     * Get petugas yang menyerahkan barang (handover)
+     */
+    public function handoverPetugas(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'handover_by')->withTrashed();
+    }
+
+    /**
+     * Cek apakah barang sudah diserahkan (pickup sudah dilakukan - minimal 1 item)
+     */
+    public function isHandedOver(): bool
+    {
+        return $this->handover_at !== null;
+    }
+
+    /**
+     * Check if there are any items that haven't been handed over yet.
+     */
+    public function hasPendingHandoverItems(): bool
+    {
+        // We need to load details to check this.
+        // Using exists() on the relation is more efficient if details not loaded,
+        // but if loaded, allow using collection.
+        if ($this->relationLoaded('details')) {
+            return $this->details->whereNull('handed_over_at')->isNotEmpty();
+        }
+        return $this->details()->whereNull('handed_over_at')->exists();
+    }
+
+    /**
+     * Cek apakah peminjaman siap untuk pickup.
+     * True jika Disetujui (belum diambil sama sekali)
+     * OR Dipinjam tapi masih ada item sisa (partial pickup).
+     */
+    public function isReadyForPickup(): bool
+    {
+        if ($this->status === self::STATUS_DISETUJUI && !$this->isHandedOver()) {
+            return true;
+        }
+        if ($this->status === self::STATUS_DIPINJAM && $this->hasPendingHandoverItems()) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Cek apakah peminjaman sedang berjalan (Status Dipinjam).
+     */
+    public function isOngoing(): bool
+    {
+        return $this->status === self::STATUS_DIPINJAM || 
+               ($this->status === self::STATUS_DISETUJUI && $this->isHandedOver());
+    }
+
+    /**
+     * Scope untuk peminjaman yang aktif (disetujui atau dipinjam)
      */
     public function scopeAktif($query)
     {
-        return $query->where('status', self::STATUS_DISETUJUI);
+        return $query->whereIn('status', [self::STATUS_DISETUJUI, self::STATUS_DIPINJAM]);
     }
 
     /**
@@ -121,6 +181,27 @@ class Peminjaman extends Model
     public function scopeMenunggu($query)
     {
         return $query->where('status', self::STATUS_MENUNGGU);
+    }
+
+    /**
+     * Scope untuk peminjaman yang sudah disetujui tapi belum diambil
+     */
+    public function scopeReadyForPickup($query)
+    {
+        return $query->where('status', self::STATUS_DISETUJUI)
+            ->whereNull('handover_at');
+    }
+
+    /**
+     * Scope untuk peminjaman yang sedang berjalan (sudah diambil)
+     */
+    public function scopeOngoing($query)
+    {
+        return $query->where('status', self::STATUS_DIPINJAM)
+            ->orWhere(function($q) {
+                $q->where('status', self::STATUS_DISETUJUI)
+                  ->whereNotNull('handover_at');
+            });
     }
 
     /**

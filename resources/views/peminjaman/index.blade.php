@@ -101,6 +101,15 @@
                                         Reset
                                     </a>
                                 @endif
+                                @if(in_array(auth()->user()->role, ['admin', 'petugas']))
+                                    <a href="{{ route('export.peminjaman', request()->query()) }}" 
+                                       class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 inline-flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                        PDF
+                                    </a>
+                                @endif
                             </div>
                         </form>
                     </div>
@@ -179,7 +188,11 @@
                                                 </div>
                                                 <div class="text-xs text-gray-500">
                                                     @foreach ($pinjam->details->take(2) as $detail)
-                                                        <span class="inline-block bg-gray-100 rounded px-1 mr-1">{{ $detail->sarprasUnit->kode_unit ?? '-' }}</span>
+                                                        @if($detail->sarprasUnit)
+    <span class="inline-block bg-gray-100 rounded px-1 mr-1">{{ $detail->sarprasUnit->kode_unit }}</span>
+@else
+    <span class="inline-block bg-amber-100 text-amber-800 rounded px-1 mr-1">{{ $detail->quantity }}x</span>
+@endif
                                                     @endforeach
                                                     @if ($pinjam->details->count() > 2)
                                                         <span class="text-gray-400">+{{ $pinjam->details->count() - 2 }} lagi</span>
@@ -204,8 +217,18 @@
                                                     @endif
                                                     @break
                                                 @case('disetujui')
-                                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Disetujui</span>
-                                                    @if ($pinjam->tgl_kembali_rencana)
+                                                @case('dipinjam')
+                                                    @if($pinjam->isReadyForPickup())
+                                                        @if($pinjam->status === 'dipinjam')
+                                                            <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">📦 Ambil Sebagian</span>
+                                                        @else
+                                                            <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">📦 Siap Diambil</span>
+                                                        @endif
+                                                    @else
+                                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Sedang Dipinjam</span>
+                                                    @endif
+
+                                                    @if ($pinjam->tgl_kembali_rencana && $pinjam->isOngoing())
                                                         @php
                                                             $daysLeft = now()->diffInDays($pinjam->tgl_kembali_rencana, false);
                                                         @endphp
@@ -214,18 +237,17 @@
                                                             @if ($daysLeft < 0)
                                                                 {{-- Terlambat --}}
                                                                 <span class="px-2 py-0.5 rounded text-xs font-bold bg-red-600 text-white">
-                                                                    ⚠️ Terlambat {{ abs(intval($daysLeft)) }} Hari
+                                                                    ⚠️ Telat {{ abs(intval($daysLeft)) }} Hari
                                                                 </span>
                                                             @elseif ($daysLeft < 1)
-                                                                {{-- Hari Ini Terakhir (hitung jam jika perlu, tapi '0' days diff usually means < 24h same day or close) --}}
+                                                                {{-- Hari Ini Terakhir --}}
                                                                 @if(now()->isSameDay($pinjam->tgl_kembali_rencana))
                                                                     <span class="px-2 py-0.5 rounded text-xs font-bold bg-orange-500 text-white">
-                                                                        📅 Tenggat Hari Ini!
+                                                                        📅 Hari Ini
                                                                     </span>
                                                                 @else
-                                                                     {{-- Besok (diffInDays rounds down, so 0.9 is 0) --}}
                                                                     <span class="px-2 py-0.5 rounded text-xs font-bold bg-yellow-500 text-white">
-                                                                        ⏳ Besok Terakhir
+                                                                        ⏳ Besok
                                                                     </span>
                                                                 @endif
                                                             @elseif ($daysLeft <= 3)
@@ -233,45 +255,12 @@
                                                                 <span class="px-2 py-0.5 rounded text-xs font-bold bg-yellow-400 text-yellow-900">
                                                                     ⏳ Sisa {{ intval($daysLeft) }} Hari
                                                                 </span>
-                                                            @else
-                                                                {{-- Masih lama (Aman) --}}
-                                                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
-                                                                    Sisa {{ intval($daysLeft) }} Hari
-                                                                </span>
                                                             @endif
                                                         </div>
                                                     @endif
                                                     @break
                                                 @case('selesai')
                                                     <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Selesai</span>
-                                                    @if ($pinjam->pengembalian && $pinjam->tgl_kembali_rencana)
-                                                        @php
-                                                            // Hitung keterlambatan berdasarkan tanggal kembali AKTUAL vs Rencana
-                                                            $tglAktual = \Carbon\Carbon::parse($pinjam->pengembalian->tgl_kembali_aktual);
-                                                            $tglRencana = \Carbon\Carbon::parse($pinjam->tgl_kembali_rencana);
-                                                            
-                                                            // Kita hitung selisih hari (ignore hours)
-                                                            // Jika Aktual > Rencana => Terlambat
-                                                            $isLate = $tglAktual->gt($tglRencana);
-                                                            $daysLate = $tglAktual->diffInDays($tglRencana);
-                                                        @endphp
-
-                                                        @if ($isLate && $daysLate > 0)
-                                                            <div class="mt-1">
-                                                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200" title="Dikembalikan terlambat {{ $daysLate }} hari">
-                                                                    ⚠️ Telat {{ $daysLate }} Hari
-                                                                </span>
-                                                            </div>
-                                                        @elseif ($daysLate == 0 && $isLate)
-                                                            {{-- Kembali di hari yang sama tapi mungkin beda jam (opsional, biasanya dianggap tepat waktu kalau hari sama) --}}
-                                                        @else
-                                                            <div class="mt-1">
-                                                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-green-50 text-green-600 border border-green-200">
-                                                                    ✅ Tepat Waktu
-                                                                </span>
-                                                            </div>
-                                                        @endif
-                                                    @endif
                                                     @break
                                                 @case('ditolak')
                                                     <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Ditolak</span>
@@ -287,11 +276,18 @@
                                                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                                             Verifikasi
                                                         </a>
-                                                    @elseif ($pinjam->status === 'disetujui')
-                                                        <a href="{{ route('pengembalian.create', array_merge(['peminjaman' => $pinjam->id], request()->query())) }}" class="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700 transition shadow-sm" title="Proses Pengembalian">
-                                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                                                            Terima Unit
-                                                        </a>
+                                                    @elseif ($pinjam->status === 'disetujui' || $pinjam->status === 'dipinjam')
+                                                        @if($pinjam->isReadyForPickup())
+                                                            <a href="{{ route('peminjaman.handover', array_merge(['peminjaman' => $pinjam->id], request()->query())) }}" class="inline-flex items-center px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded hover:bg-amber-700 transition shadow-sm" title="Serah Terima Barang">
+                                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                                                Serah Terima
+                                                            </a>
+                                                        @else
+                                                            <a href="{{ route('pengembalian.create', array_merge(['peminjaman' => $pinjam->id], request()->query())) }}" class="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700 transition shadow-sm" title="Proses Pengembalian">
+                                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                                                Kembalikan
+                                                            </a>
+                                                        @endif
                                                     @endif
                                                 @endif
 

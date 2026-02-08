@@ -82,18 +82,6 @@
                         </svg>
                         <h3 class="mt-2 text-sm font-medium text-gray-900">Tidak ada pengaduan</h3>
                         <p class="mt-1 text-sm text-gray-500">Belum ada data pengaduan yang ditemukan.</p>
-                        @if(in_array(auth()->user()->role, ['peminjam', 'guru', 'siswa']))
-                            <div class="mt-6">
-                                <a href="{{ route('pengaduan.create') }}"
-                                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 4v16m8-8H4"></path>
-                                    </svg>
-                                    Buat Pengaduan Baru
-                                </a>
-                            </div>
-                        @endif
                     </div>
                 @else
                     <ul class="divide-y divide-gray-200">
@@ -104,7 +92,11 @@
                                         <div class="flex-1 min-w-0 pr-4">
                                             <div class="flex items-center justify-between mb-2">
                                                 <p class="text-sm font-medium text-blue-600 truncate">
-                                                    {{ $item->lokasi->nama_lokasi ?? 'Lokasi Tidak Diketahui' }}
+                                                    @if($item->jenis === 'tempat')
+                                                        🏫 {{ $item->lokasi?->nama_lokasi ?? $item->lokasi_lainnya ?? 'Lokasi Tidak Diketahui' }}
+                                                    @else
+                                                        📦 {{ $item->sarpras?->nama_barang ?? $item->barang_lainnya ?? 'Barang Tidak Diketahui' }}
+                                                    @endif
                                                 </p>
                                                 <div class="ml-2 flex-shrink-0 flex">
                                                     @php
@@ -144,7 +136,7 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                             d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                     </svg>
-                                                    {{ $item->user->name }}
+                                                    {{ $item->user?->name ?? 'User Dihapus' }}
                                                 </div>
                                                 <div class="flex items-center">
                                                     <svg class="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" fill="none"

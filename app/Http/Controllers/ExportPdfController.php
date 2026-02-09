@@ -326,4 +326,38 @@ class ExportPdfController extends Controller
 
         return $pdf->download('laporan-asset-health-' . date('Y-m-d-His') . '.pdf');
     }
+
+    /**
+     * Export Pengaduan ke PDF
+     */
+    public function pengaduan(Request $request)
+    {
+        $query = \App\Models\Pengaduan::with(['user', 'sarpras', 'lokasi']);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('judul', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($u) use ($search) {
+                        $u->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $pengaduan = $query->latest()->limit(500)->get();
+
+        $pdf = Pdf::loadView('exports.pengaduan', [
+            'pengaduan' => $pengaduan,
+            'filters' => $request->only(['status', 'search']),
+            'generatedAt' => Carbon::now()->format('d M Y H:i'),
+        ]);
+
+        $pdf->setPaper('a4', 'landscape');
+
+        return $pdf->download('laporan-pengaduan-' . date('Y-m-d-His') . '.pdf');
+    }
 }

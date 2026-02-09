@@ -199,8 +199,8 @@
                         </div>
                     @endif
 
-                    {{-- QR Code Bukti Peminjaman (hanya jika disetujui DAN hanya untuk peminjam yang bersangkutan) --}}
-                    @if ($peminjaman->status === 'disetujui' && $peminjaman->qr_code && auth()->id() === $peminjaman->user_id)
+                    {{-- QR Code Bukti Peminjaman (hanya jika disetujui/dipinjam DAN hanya untuk peminjam yang bersangkutan) --}}
+                    @if (in_array($peminjaman->status, ['disetujui', 'dipinjam']) && $peminjaman->qr_code && auth()->id() === $peminjaman->user_id)
                         <div class="mt-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200 print:bg-white print:border-none print:shadow-none print:p-0 print:mt-4">
                             <h3 class="font-semibold text-gray-800 mb-4 text-center">📱 QR Code Bukti Peminjaman</h3>
                             <div class="flex flex-col items-center">
@@ -276,7 +276,7 @@
                     @endif
 
                     {{-- Kode QR untuk Admin/Petugas (hanya menampilkan kode, tidak visual QR) --}}
-                    @if ($peminjaman->status === 'disetujui' && $peminjaman->qr_code && in_array(auth()->user()->role, ['admin', 'petugas']))
+                    @if (in_array($peminjaman->status, ['disetujui', 'dipinjam']) && $peminjaman->qr_code && in_array(auth()->user()->role, ['admin', 'petugas']))
                         <div class="mt-6 bg-gray-50 rounded-lg p-4 border border-gray-200">
                             <div class="flex items-center justify-between">
                                 <div>

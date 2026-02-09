@@ -163,7 +163,7 @@ class MaintenanceController extends Controller
             'deskripsi' => 'nullable|string|max:1000',
             'tanggal_selesai' => 'nullable|date|after_or_equal:' . $maintenance->tanggal_mulai->format('Y-m-d'),
             'biaya' => 'nullable|integer|min:0',
-            'status' => 'required|in:sedang_berlangsung,selesai,dibatalkan',
+            'status' => 'required|in:sedang_berlangsung,selesai',
             'kondisi_setelah' => 'required_if:status,selesai|in:baik,rusak_ringan,rusak_berat',
         ], [
             'tanggal_selesai.after_or_equal' => 'Tanggal selesai harus setelah atau sama dengan tanggal mulai.',
@@ -177,7 +177,11 @@ class MaintenanceController extends Controller
 
             // Jika status berubah menjadi selesai
             if ($validated['status'] === Maintenance::STATUS_SELESAI) {
-                $validated['tanggal_selesai'] = $validated['tanggal_selesai'] ?? now();
+                // Pastikan tanggal selesai diisi. Jika tidak, pakai now().
+                // validasi sudah handle required_if, tapi untuk safety:
+                if (empty($validated['tanggal_selesai'])) {
+                    $validated['tanggal_selesai'] = now();
+                }
 
                 // Update kondisi unit
                 $unit->update([
@@ -185,11 +189,12 @@ class MaintenanceController extends Controller
                     'status' => SarprasUnit::STATUS_TERSEDIA,
                 ]);
             }
-
-            // Jika status berubah menjadi dibatalkan
-            if ($validated['status'] === Maintenance::STATUS_DIBATALKAN) {
-                // Kembalikan status unit ke tersedia
-                $unit->update(['status' => SarprasUnit::STATUS_TERSEDIA]);
+            
+            // Jika status sedang berlangsung (kembali dari selesai/edit), 
+            // pastikan tanggal_selesai null dan unit status kembali ke maintenance
+            if ($validated['status'] === Maintenance::STATUS_SEDANG_BERLANGSUNG) {
+                $validated['tanggal_selesai'] = null;
+                $unit->update(['status' => SarprasUnit::STATUS_MAINTENANCE]);
             }
 
             // Hapus kondisi_setelah dari validated karena bukan kolom maintenance
@@ -218,11 +223,11 @@ class MaintenanceController extends Controller
      */
     public function destroy(Maintenance $maintenance): RedirectResponse
     {
-        // Hanya bisa hapus maintenance yang sudah selesai atau dibatalkan
+        // Hanya bisa hapus maintenance yang sudah selesai
         if ($maintenance->status === Maintenance::STATUS_SEDANG_BERLANGSUNG) {
             return redirect()
                 ->route('maintenance.index')
-                ->with('error', 'Tidak dapat menghapus maintenance yang sedang berlangsung. Selesaikan atau batalkan terlebih dahulu.');
+                ->with('error', 'Tidak dapat menghapus maintenance yang sedang berlangsung. Selesaikan terlebih dahulu.');
         }
 
         $kodeUnit = $maintenance->sarprasUnit->kode_unit;

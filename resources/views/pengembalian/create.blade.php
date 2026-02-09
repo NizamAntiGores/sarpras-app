@@ -57,7 +57,7 @@
                     </div>
 
                     {{-- Form Inspeksi --}}
-                    <form action="{{ route('pengembalian.store', $peminjaman) }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ route('pengembalian.store', $peminjaman) }}" method="POST" enctype="multipart/form-data" onsubmit="return confirm('Apakah Anda yakin ingin memproses pengembalian ini? Pastikan kondisi barang sudah sesuai.');">
                         @csrf
 
                         <div class="space-y-8">

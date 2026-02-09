@@ -24,7 +24,7 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('lokasi.update', $lokasi) }}" method="POST" class="space-y-6">
+                    <form action="{{ route('lokasi.update', $lokasi) }}" method="POST" class="space-y-6" onsubmit="return confirm('Simpan perubahan data lokasi ini?');">
                         @csrf
                         @method('PUT')
 

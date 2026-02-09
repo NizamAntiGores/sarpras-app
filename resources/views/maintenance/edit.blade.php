@@ -21,7 +21,7 @@
 
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6">
-                    <form method="POST" action="{{ route('maintenance.update', $maintenance) }}">
+                    <form method="POST" action="{{ route('maintenance.update', $maintenance) }}" onsubmit="return confirm('Simpan perubahan maintenance ini?');">
                         @csrf
                         @method('PUT')
 
@@ -45,16 +45,14 @@
                             @error('jenis') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
-                        {{-- Deskripsi --}}
-                        <div class="mb-6">
-                            <label for="deskripsi" class="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label>
-                            <textarea name="deskripsi" id="deskripsi" rows="3"
-                                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('deskripsi', $maintenance->deskripsi) }}</textarea>
-                            @error('deskripsi') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        {{-- Deskripsi Awal (Read-only) --}}
+                        <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Deskripsi Kerusakan / Permintaan</label>
+                            <p class="text-gray-900 text-sm whitespace-pre-wrap">{{ $maintenance->deskripsi }}</p>
                         </div>
 
-                        {{-- Tanggal Selesai --}}
-                        <div class="mb-6">
+                        {{-- Tanggal Selesai (only show if status = selesai) --}}
+                        <div class="mb-6" id="tanggal_selesai_wrapper" style="display: none;">
                             <label for="tanggal_selesai" class="block text-sm font-medium text-gray-700 mb-2">Tanggal Selesai</label>
                             <input type="date" name="tanggal_selesai" id="tanggal_selesai" 
                                    value="{{ old('tanggal_selesai', $maintenance->tanggal_selesai?->format('Y-m-d')) }}"
@@ -63,12 +61,22 @@
                             @error('tanggal_selesai') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
-                        {{-- Biaya --}}
-                        <div class="mb-6">
+                        {{-- Biaya (only show if status = selesai) --}}
+                        <div class="mb-6" id="biaya_wrapper" style="display: none;">
                             <label for="biaya" class="block text-sm font-medium text-gray-700 mb-2">Biaya Aktual (Rp)</label>
                             <input type="number" name="biaya" id="biaya" value="{{ old('biaya', $maintenance->biaya) }}" min="0"
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             @error('biaya') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
+                        {{-- Laporan Pengerjaan (only show if status = selesai) --}}
+                        <div class="mb-6" id="deskripsi_wrapper" style="display: none;">
+                            <label for="deskripsi" class="block text-sm font-medium text-gray-700 mb-2">Laporan Pengerjaan / Solusi</label>
+                            <textarea name="deskripsi" id="deskripsi" rows="3"
+                                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                      placeholder="Jelaskan tindakan perbaikan yang dilakukan...">{{ old('deskripsi', $maintenance->status == 'selesai' ? $maintenance->deskripsi : '') }}</textarea>
+                            <p class="mt-1 text-xs text-gray-500">Deskripsi ini akan menggantikan deskripsi awal sebagai laporan akhir.</p>
+                            @error('deskripsi') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
                         {{-- Status --}}
@@ -78,7 +86,6 @@
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option value="sedang_berlangsung" {{ old('status', $maintenance->status) == 'sedang_berlangsung' ? 'selected' : '' }}>Sedang Berlangsung</option>
                                 <option value="selesai" {{ old('status', $maintenance->status) == 'selesai' ? 'selected' : '' }}>Selesai</option>
-                                <option value="dibatalkan" {{ old('status', $maintenance->status) == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                             </select>
                             @error('status') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
@@ -111,16 +118,29 @@
     <script>
         document.getElementById('status').addEventListener('change', function() {
             const kondisiWrapper = document.getElementById('kondisi_setelah_wrapper');
+            const tanggalSelesaiWrapper = document.getElementById('tanggal_selesai_wrapper');
+            const biayaWrapper = document.getElementById('biaya_wrapper');
+            const deskripsiWrapper = document.getElementById('deskripsi_wrapper');
+            
             if (this.value === 'selesai') {
                 kondisiWrapper.style.display = 'block';
+                tanggalSelesaiWrapper.style.display = 'block';
+                biayaWrapper.style.display = 'block';
+                deskripsiWrapper.style.display = 'block';
             } else {
                 kondisiWrapper.style.display = 'none';
+                tanggalSelesaiWrapper.style.display = 'none';
+                biayaWrapper.style.display = 'none';
+                deskripsiWrapper.style.display = 'none';
             }
         });
 
         // Initial check
         if (document.getElementById('status').value === 'selesai') {
             document.getElementById('kondisi_setelah_wrapper').style.display = 'block';
+            document.getElementById('tanggal_selesai_wrapper').style.display = 'block';
+            document.getElementById('biaya_wrapper').style.display = 'block';
+            document.getElementById('deskripsi_wrapper').style.display = 'block';
         }
     </script>
 </x-app-layout>

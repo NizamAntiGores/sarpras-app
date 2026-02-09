@@ -169,6 +169,7 @@ class SarprasUnitController extends Controller
             'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat',
             'status' => 'required|in:tersedia,dipinjam,maintenance,dihapusbukukan',
             'tanggal_perolehan' => 'nullable|date',
+            'keterangan' => 'nullable|string|max:500', // Added for logging reason
         ]);
 
         // Validasi: unit yang sedang dipinjam tidak bisa diubah statusnya secara manual
@@ -176,6 +177,16 @@ class SarprasUnitController extends Controller
             return redirect()
                 ->back()
                 ->with('error', 'Unit yang sedang dipinjam tidak bisa diubah statusnya. Selesaikan peminjaman terlebih dahulu.');
+        }
+
+        if ($unit->kondisi !== $validated['kondisi']) {
+            \App\Models\UnitConditionLog::create([
+                'sarpras_unit_id' => $unit->id,
+                'kondisi_lama' => $unit->kondisi,
+                'kondisi_baru' => $validated['kondisi'],
+                'keterangan' => $request->keterangan ?? 'Update manual oleh admin/petugas',
+                'user_id' => auth()->id(),
+            ]);
         }
 
         $unit->update($validated);
@@ -228,6 +239,7 @@ class SarprasUnitController extends Controller
             'action_type' => 'required|in:update_lokasi,update_kondisi,delete',
             'lokasi_id' => 'required_if:action_type,update_lokasi|nullable|exists:lokasi,id',
             'kondisi' => 'required_if:action_type,update_kondisi|nullable|in:baik,rusak_ringan,rusak_berat',
+            'keterangan' => 'nullable|string|max:500', // Alasan perubahan (untuk log)
         ]);
 
         $unitIds = $validated['unit_ids'];
@@ -249,9 +261,30 @@ class SarprasUnitController extends Controller
                     break;
 
                 case 'update_kondisi':
-                    $updated = SarprasUnit::whereIn('id', $unitIds)
+                    $unitsToUpdate = SarprasUnit::whereIn('id', $unitIds)
                         ->where('sarpras_id', $sarpras->id)
-                        ->update(['kondisi' => $validated['kondisi']]);
+                        ->get();
+                    
+                    $updated = 0;
+                    foreach ($unitsToUpdate as $unit) {
+                        // Skip jika kondisi sama
+                        if ($unit->kondisi === $validated['kondisi']) {
+                            continue;
+                        }
+
+                        // Catat log kondisi
+                        \App\Models\UnitConditionLog::create([
+                            'sarpras_unit_id' => $unit->id,
+                            'kondisi_lama' => $unit->kondisi,
+                            'kondisi_baru' => $validated['kondisi'],
+                            'keterangan' => $request->keterangan ?? 'Bulk update by admin',
+                            'user_id' => auth()->id(),
+                        ]);
+
+                        // Update unit
+                        $unit->update(['kondisi' => $validated['kondisi']]);
+                        $updated++;
+                    }
 
                     \App\Helpers\LogHelper::record('update', "Bulk update condition for {$updated} units of {$sarpras->nama_barang}");
                     break;

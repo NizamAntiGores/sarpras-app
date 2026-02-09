@@ -119,7 +119,7 @@
 
                             <div class="space-y-2">
                                 @if($pengaduan->status == 'belum_ditindaklanjuti')
-                                    <button type="submit" name="status" value="sedang_diproses" 
+                                    <button type="submit" name="status" value="sedang_diproses" onclick="return confirm('Proses pengaduan ini? Status akan berubah menjadi Sedang Diproses.')"
                                         class="w-full justify-center inline-flex items-center px-4 py-2 bg-yellow-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition ease-in-out duration-150">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
@@ -129,7 +129,7 @@
                                 @endif
 
                                 @if(in_array($pengaduan->status, ['belum_ditindaklanjuti', 'sedang_diproses']))
-                                    <button type="submit" name="status" value="selesai" 
+                                    <button type="submit" name="status" value="selesai" onclick="return confirm('Tandai pengaduan sebagai Selesai? Pastikan tindakan perbaikan telah dilakukan.')"
                                         class="w-full justify-center inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition ease-in-out duration-150">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -139,7 +139,7 @@
                                 @endif
                                 
                                 @if($pengaduan->status != 'ditutup')
-                                    <button type="submit" name="status" value="ditutup" 
+                                    <button type="submit" name="status" value="ditutup" onclick="return confirm('Tutup pengaduan ini (Ditolak/Tidak Valid)?')"
                                         class="w-full justify-center inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition ease-in-out duration-150">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>

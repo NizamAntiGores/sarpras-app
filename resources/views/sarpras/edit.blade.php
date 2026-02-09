@@ -29,7 +29,7 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('sarpras.update', $sarpras) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                    <form action="{{ route('sarpras.update', $sarpras) }}" method="POST" enctype="multipart/form-data" class="space-y-6" onsubmit="return confirm('Simpan perubahan data barang ini?');">
                         @csrf
                         @method('PUT')
 
@@ -159,7 +159,7 @@
                                 {{-- Quick Add Stock Form --}}
                                 <div class="mt-4 pt-4 border-t border-indigo-200">
                                     <h5 class="text-sm font-semibold text-indigo-900 mb-3">Tambah Stok Cepat</h5>
-                                    <form action="{{ route('sarpras.add-stock', $sarpras) }}" method="POST" class="bg-white p-3 rounded-lg border border-indigo-100 shadow-sm">
+                                    <form action="{{ route('sarpras.add-stock', $sarpras) }}" method="POST" class="bg-white p-3 rounded-lg border border-indigo-100 shadow-sm" onsubmit="return confirm('Tambahkan stok ini? Pastikan jumlah dan lokasi benar.');">
                                         @csrf
                                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
                                             <div>

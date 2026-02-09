@@ -15,7 +15,7 @@
                         <p class="text-sm text-gray-600 mt-1">{{ $pengaduan->deskripsi }}</p>
                     </div>
 
-                    <form action="{{ route('pengaduan.update', $pengaduan) }}" method="POST" class="space-y-6">
+                    <form action="{{ route('pengaduan.update', $pengaduan) }}" method="POST" class="space-y-6" onsubmit="return confirm('Simpan perubahan status pengaduan?');">
                         @csrf
                         @method('PUT')
 

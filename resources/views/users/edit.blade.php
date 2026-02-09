@@ -23,7 +23,7 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('users.update', $user) }}" method="POST" class="space-y-6">
+                    <form action="{{ route('users.update', $user) }}" method="POST" class="space-y-6" onsubmit="return confirm('Simpan perubahan data user ini?');">
                         @csrf @method('PUT')
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>

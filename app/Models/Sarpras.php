@@ -88,7 +88,7 @@ class Sarpras extends Model
                     $physicallyAvailable = $this->units()
                         ->whereHas('lokasi', fn($q) => $q->where('is_storefront', true))
                         ->where('status', SarprasUnit::STATUS_TERSEDIA)
-                        ->where('kondisi', '!=', SarprasUnit::KONDISI_RUSAK_BERAT);
+                        ->where('kondisi', SarprasUnit::KONDISI_BAIK);
 
                     // Exclude yang sedang di-booking (Pending Peminjaman)
                     $availableUnitIds = $physicallyAvailable->pluck('id');

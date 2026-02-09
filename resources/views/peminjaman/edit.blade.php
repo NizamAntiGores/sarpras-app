@@ -77,7 +77,7 @@
                     @endif
 
                     {{-- Form Update Status --}}
-                    <form action="{{ route('peminjaman.update', $peminjaman) }}" method="POST" class="space-y-6">
+                    <form action="{{ route('peminjaman.update', $peminjaman) }}" method="POST" class="space-y-6" onsubmit="return confirm('Apakah Anda yakin ingin menyimpan perubahan status peminjaman ini?');">
                         @csrf
                         @method('PUT')
                         

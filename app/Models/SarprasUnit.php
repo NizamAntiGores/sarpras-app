@@ -136,7 +136,7 @@ class SarprasUnit extends Model
     public function scopeBisaDipinjam($query)
     {
         return $query->where('status', self::STATUS_TERSEDIA)
-            ->where('kondisi', '!=', self::KONDISI_RUSAK_BERAT)
+            ->where('kondisi', self::KONDISI_BAIK)
             ->whereDoesntHave('peminjamanDetails', function ($q) {
                 $q->whereHas('peminjaman', function ($subQ) {
                     $subQ->where('status', 'menunggu');
@@ -150,7 +150,7 @@ class SarprasUnit extends Model
     public function canBeBorrowed(): bool
     {
         return $this->status === self::STATUS_TERSEDIA
-            && $this->kondisi !== self::KONDISI_RUSAK_BERAT;
+            && $this->kondisi === self::KONDISI_BAIK;
     }
 
     /**
@@ -183,5 +183,12 @@ class SarprasUnit extends Model
         }
 
         return $kodeBarang.'-'.str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+    }
+    /**
+     * Get condition logs for this unit
+     */
+    public function conditionLogs(): HasMany
+    {
+        return $this->hasMany(UnitConditionLog::class, 'sarpras_unit_id')->orderBy('created_at', 'desc');
     }
 }

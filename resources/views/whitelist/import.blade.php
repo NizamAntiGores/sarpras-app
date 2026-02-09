@@ -56,7 +56,7 @@
                     </div>
 
                     {{-- Form Upload --}}
-                    <form method="POST" action="{{ route('whitelist.import.process') }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ route('whitelist.import.process') }}" enctype="multipart/form-data" onsubmit="return confirm('Apakah Anda yakin ingin mengimport data ini? Data yang sudah ada akan dilewati.');">
                         @csrf
 
                         {{-- Role Selection --}}

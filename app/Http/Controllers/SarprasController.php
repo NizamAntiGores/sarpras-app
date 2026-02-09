@@ -48,6 +48,10 @@ class SarprasController extends Controller
                     $query->where('kondisi', SarprasUnit::KONDISI_RUSAK_BERAT);
                     $lokasiFilter($query);
                 },
+                'units as rusak_ringan_count' => function ($query) use ($lokasiFilter) {
+                    $query->where('kondisi', SarprasUnit::KONDISI_RUSAK_RINGAN);
+                    $lokasiFilter($query);
+                },
             ]);
 
         // Search logic
@@ -98,6 +102,7 @@ class SarprasController extends Controller
             'total_tersedia' => SarprasUnit::bisaDipinjam()->count(),
             'total_dipinjam' => SarprasUnit::where('status', SarprasUnit::STATUS_DIPINJAM)->count(),
             'total_maintenance' => SarprasUnit::where('status', SarprasUnit::STATUS_MAINTENANCE)->count(),
+            'total_rusak' => SarprasUnit::whereIn('kondisi', [SarprasUnit::KONDISI_RUSAK_RINGAN, SarprasUnit::KONDISI_RUSAK_BERAT])->count(),
         ];
 
         $sarpras = $query->orderBy('created_at', 'desc')
@@ -107,12 +112,38 @@ class SarprasController extends Controller
         $kategoriList = Kategori::orderBy('nama_kategori')->get();
         $lokasiList = Lokasi::orderBy('nama_lokasi')->get(); // Added for filter
 
-        // --- NEW LOGIC: Unit View if Location Selected ---
-        if ($lokasiId) {
+        // --- NEW LOGIC: Unit View if Location Selected OR Status Filter Active ---
+        $statusUnit = $request->status_unit;
+
+        if ($lokasiId || $statusUnit) {
             $unitQuery = SarprasUnit::query()
                 ->with(['sarpras.kategori', 'lokasi'])
-                ->where('lokasi_id', $lokasiId)
                 ->where('status', '!=', SarprasUnit::STATUS_DIHAPUSBUKUKAN); // Standard filter
+            
+            // Apply Location Filter if present
+            if ($lokasiId) {
+                $unitQuery->where('lokasi_id', $lokasiId);
+            }
+
+            // Apply Status Unit Filter if present
+            if ($statusUnit) {
+                switch ($statusUnit) {
+                    case 'tersedia':
+                        // Tersedia = Status Tersedia AND Kondisi Baik (or not Rusak Berat)
+                        // Using scope bisaDipinjam() for consistency with stats
+                        $unitQuery->bisaDipinjam();
+                        break;
+                    case 'dipinjam':
+                        $unitQuery->where('status', SarprasUnit::STATUS_DIPINJAM);
+                        break;
+                    case 'maintenance':
+                        $unitQuery->where('status', SarprasUnit::STATUS_MAINTENANCE);
+                        break;
+                    case 'rusak':
+                        $unitQuery->whereIn('kondisi', [SarprasUnit::KONDISI_RUSAK_RINGAN, SarprasUnit::KONDISI_RUSAK_BERAT]);
+                        break;
+                }
+            }
 
             // Apply Filters to Unit Query
             if ($request->filled('search')) {

@@ -15,6 +15,16 @@
                         Buat Pengaduan
                     </a>
                 @endif
+                
+                @if(in_array(auth()->user()->role, ['admin', 'petugas']))
+                    <a href="{{ route('export.pengaduan', request()->query()) }}" target="_blank"
+                       class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                        </svg>
+                        Export PDF
+                    </a>
+                @endif
             </div>
         </div>
     </x-slot>

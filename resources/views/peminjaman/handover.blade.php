@@ -89,7 +89,7 @@
                     </div>
 
                     {{-- Form Serah Terima --}}
-                    <form action="{{ route('peminjaman.handover.process', $peminjaman) }}" method="POST">
+                    <form action="{{ route('peminjaman.handover.process', $peminjaman) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menyerahkan barang-barang terpilih? Pastikan barang sudah fisik diserahkan.');">
                         @csrf
                         
                         {{-- Daftar Barang yang Akan Diserahkan --}}

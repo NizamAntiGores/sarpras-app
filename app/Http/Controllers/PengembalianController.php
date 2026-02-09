@@ -190,6 +190,17 @@ class PengembalianController extends Controller
                 // Update status dan kondisi unit berdasarkan hasil inspeksi
                 switch ($kondisiAkhir) {
                     case 'baik':
+                        if ($unit->kondisi !== SarprasUnit::KONDISI_BAIK) {
+                            \App\Models\UnitConditionLog::create([
+                                'sarpras_unit_id' => $unit->id,
+                                'kondisi_lama' => $unit->kondisi,
+                                'kondisi_baru' => SarprasUnit::KONDISI_BAIK,
+                                'keterangan' => 'Pengembalian: Barang kembali dalam kondisi baik. ' . ($validated["catatan_{$unitId}"] ?? ''),
+                                'user_id' => $peminjaman->user_id, // Gunakan ID Peminjam, bukan Admin
+                                'related_model_type' => get_class($pengembalian),
+                                'related_model_id' => $pengembalian->id,
+                            ]);
+                        }
                         $unit->update([
                             'kondisi' => SarprasUnit::KONDISI_BAIK,
                             'status' => SarprasUnit::STATUS_TERSEDIA,
@@ -197,6 +208,17 @@ class PengembalianController extends Controller
                         break;
 
                     case 'rusak_ringan':
+                        if ($unit->kondisi !== SarprasUnit::KONDISI_RUSAK_RINGAN) {
+                            \App\Models\UnitConditionLog::create([
+                                'sarpras_unit_id' => $unit->id,
+                                'kondisi_lama' => $unit->kondisi,
+                                'kondisi_baru' => SarprasUnit::KONDISI_RUSAK_RINGAN,
+                                'keterangan' => 'Pengembalian: ' . ($validated["catatan_{$unitId}"] ?? 'Rusak Ringan saat dikembalikan'),
+                                'user_id' => $peminjaman->user_id, // Gunakan ID Peminjam, bukan Admin
+                                'related_model_type' => get_class($pengembalian),
+                                'related_model_id' => $pengembalian->id,
+                            ]);
+                        }
                         $unit->update([
                             'kondisi' => SarprasUnit::KONDISI_RUSAK_RINGAN,
                             'status' => SarprasUnit::STATUS_TERSEDIA, // Masih bisa dipakai
@@ -204,6 +226,17 @@ class PengembalianController extends Controller
                         break;
 
                     case 'rusak_berat':
+                        if ($unit->kondisi !== SarprasUnit::KONDISI_RUSAK_BERAT) {
+                            \App\Models\UnitConditionLog::create([
+                                'sarpras_unit_id' => $unit->id,
+                                'kondisi_lama' => $unit->kondisi,
+                                'kondisi_baru' => SarprasUnit::KONDISI_RUSAK_BERAT,
+                                'keterangan' => 'Pengembalian: ' . ($validated["catatan_{$unitId}"] ?? 'Rusak Berat saat dikembalikan'),
+                                'user_id' => $peminjaman->user_id, // Gunakan ID Peminjam, bukan Admin
+                                'related_model_type' => get_class($pengembalian),
+                                'related_model_id' => $pengembalian->id,
+                            ]);
+                        }
                         $unit->update([
                             'kondisi' => SarprasUnit::KONDISI_RUSAK_BERAT,
                             'status' => SarprasUnit::STATUS_MAINTENANCE,

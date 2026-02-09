@@ -23,7 +23,7 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('kategori.update', $kategori) }}" method="POST" class="space-y-6">
+                    <form action="{{ route('kategori.update', $kategori) }}" method="POST" class="space-y-6" onsubmit="return confirm('Simpan perubahan nama kategori?');">
                         @csrf
                         @method('PUT')
 

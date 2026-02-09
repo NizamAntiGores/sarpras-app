@@ -28,29 +28,38 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6">
                     {{-- Global Stats Cards --}}
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white shadow">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                        <a href="{{ route('sarpras.index') }}" class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white shadow hover:shadow-lg transition">
                             <p class="text-blue-100 text-sm">Jenis Barang</p>
                             <p class="text-2xl font-bold">{{ $stats['total_jenis'] }}</p>
-                        </div>
-                        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-4 text-white shadow">
+                        </a>
+                        <a href="{{ route('sarpras.index', array_merge(request()->query(), ['status_unit' => 'tersedia'])) }}" class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-4 text-white shadow hover:shadow-lg transition">
                             <p class="text-green-100 text-sm">Total Unit Siap Pakai</p>
                             <p class="text-2xl font-bold">{{ $stats['total_tersedia'] }}</p>
-                        </div>
-                        <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-4 text-white shadow">
+                        </a>
+                        <a href="{{ route('sarpras.index', array_merge(request()->query(), ['status_unit' => 'dipinjam'])) }}" class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-4 text-white shadow hover:shadow-lg transition">
                             <p class="text-orange-100 text-sm">Total Unit Dipinjam</p>
                             <p class="text-2xl font-bold">{{ $stats['total_dipinjam'] }}</p>
-                        </div>
-                        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-4 text-white shadow">
+                        </a>
+                        <a href="{{ route('sarpras.index', array_merge(request()->query(), ['status_unit' => 'maintenance'])) }}" class="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-4 text-white shadow hover:shadow-lg transition">
                             <p class="text-red-100 text-sm">Total Unit Maintenance</p>
                             <p class="text-2xl font-bold">{{ $stats['total_maintenance'] }}</p>
-                        </div>
+                        </a>
+                        <a href="{{ route('sarpras.index', array_merge(request()->query(), ['status_unit' => 'rusak'])) }}" class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-lg p-4 text-white shadow hover:shadow-lg transition">
+                            <p class="text-purple-100 text-sm">Total Unit Rusak</p>
+                            <p class="text-2xl font-bold">{{ $stats['total_rusak'] }}</p>
+                        </a>
                     </div>
 
                     {{-- Search Bar --}}
                     <div class="mb-6">
                         <form action="{{ route('sarpras.index') }}" method="GET"
                             class="flex flex-col md:flex-row gap-4">
+                            {{-- Keep existing hidden inputs for status_unit if not changing it --}}
+                            @if(request('status_unit'))
+                                <input type="hidden" name="status_unit" value="{{ request('status_unit') }}">
+                            @endif
+
                             <div class="min-w-[180px]">
                                 <select name="kategori_id"
                                     class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm"
@@ -123,7 +132,7 @@
                                 class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
                                 Cari
                             </button>
-                            @if(request('search') || request('kategori_id') || request('tipe'))
+                            @if(request('search') || request('kategori_id') || request('tipe') || request('status_unit'))
                                 <a href="{{ route('sarpras.index') }}"
                                     class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:ring ring-blue-200 active:text-gray-800 active:bg-gray-50 disabled:opacity-25 transition ease-in-out duration-150">
                                     Reset
@@ -144,10 +153,14 @@
                     {{-- Table Content Switching --}}
                     <div class="overflow-x-auto">
                         @if(isset($units))
-                            {{-- UNIT VIEW (When Location is Selected) --}}
+                            {{-- UNIT VIEW (When Location is Selected OR Status Filter Active) --}}
                             <div class="mb-2 p-2 bg-blue-50 text-blue-700 text-sm rounded border border-blue-200 flex items-center">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                Menampilkan data <strong>&nbsp;Satuan Unit&nbsp;</strong> pada lokasi terpilih.
+                                <span>
+                                    Menampilkan data <strong>&nbsp;Satuan Unit&nbsp;</strong>
+                                    @if(request('lokasi_id')) pada lokasi terpilih @endif
+                                    @if(request('status_unit')) dengan status <strong>{{ ucfirst(request('status_unit')) }}</strong> @endif.
+                                </span>
                             </div>
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
@@ -282,7 +295,8 @@
                                                         @php
                                                             $total = $item->total_unit > 0 ? $item->total_unit : 1;
                                                             $dipinjamCnt = $item->dipinjam_count ?? 0;
-                                                            $rusakCnt = ($item->maintenance_count ?? 0) + ($item->rusak_berat_count ?? 0);
+                                                            // Rusak = Maintenance + Rusak Berat + Rusak Ringan (karena Rusak Ringan tidak bisa dipinjam)
+                                                            $rusakCnt = ($item->maintenance_count ?? 0) + ($item->rusak_berat_count ?? 0) + ($item->rusak_ringan_count ?? 0);
                                                             
                                                             // Global Available = Total - (Borrowed + Broken/Maintenance)
                                                             // This ensures visual bar sums to 100%
@@ -313,7 +327,7 @@
                                                         </div>
                                                         <div class="flex items-center gap-1" title="Rusak/Maintenance">
                                                             <div class="w-2 h-2 rounded-full bg-red-500"></div>
-                                                            <span class="text-red-700">{{ ($item->maintenance_count ?? 0) + ($item->rusak_berat_count ?? 0) }}</span>
+                                                            <span class="text-red-700">{{ ($item->maintenance_count ?? 0) + ($item->rusak_berat_count ?? 0) + ($item->rusak_ringan_count ?? 0) }}</span>
                                                         </div>
                                                     </div>
                                                 </div>

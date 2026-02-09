@@ -121,6 +121,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/sarpras/{sarpras}/units', [ExportPdfController::class, 'sarprasUnits'])->name('sarpras.units');
             Route::get('/activity-logs', [ExportPdfController::class, 'activityLogs'])->name('activity-logs');
             Route::get('/asset-health', [ExportPdfController::class, 'assetHealth'])->name('asset-health');
+            Route::get('/pengaduan', [ExportPdfController::class, 'pengaduan'])->name('pengaduan');
         });
     });
 

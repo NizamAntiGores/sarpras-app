@@ -231,6 +231,10 @@
                 <option value="rusak_berat">Rusak Berat</option>
             </select>
 
+            <input type="text" id="keteranganInput"
+                class="hidden rounded-lg border-gray-300 text-sm py-2 pl-4 pr-4 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                placeholder="Alasan perubahan..." style="min-width: 200px;">
+
             <button type="button" id="submitBulkBtn"
                 class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed">
                 Terapkan
@@ -254,6 +258,7 @@
             const actionType = document.getElementById('actionType');
             const lokasiInput = document.getElementById('lokasiInput');
             const kondisiInput = document.getElementById('kondisiInput');
+            const keteranganInput = document.getElementById('keteranganInput');
             const cancelBtn = document.getElementById('cancelBulkBtn');
             const submitBtn = document.getElementById('submitBulkBtn');
 
@@ -289,18 +294,30 @@
                 actionType.selectedIndex = 0;
                 lokasiInput.classList.add('hidden');
                 kondisiInput.classList.add('hidden');
+                keteranganInput.classList.add('hidden');
+                keteranganInput.value = '';
             });
 
             actionType.addEventListener('change', function () {
                 // Reset specific inputs
                 lokasiInput.classList.add('hidden');
                 kondisiInput.classList.add('hidden');
+                keteranganInput.classList.add('hidden');
 
                 // Show relevant input based on selected action
                 if (this.value === 'update_lokasi') {
                     lokasiInput.classList.remove('hidden');
                 } else if (this.value === 'update_kondisi') {
                     kondisiInput.classList.remove('hidden');
+                    // Keterangan remains hidden until condition is selected
+                }
+            });
+
+            kondisiInput.addEventListener('change', function() {
+                if (this.value) {
+                    keteranganInput.classList.remove('hidden');
+                } else {
+                    keteranganInput.classList.add('hidden');
                 }
             });
 
@@ -324,17 +341,36 @@
                     return;
                 }
 
-                // Confirmation for delete
-                if (action === 'delete') {
-                    if (!confirm('Apakah Anda yakin ingin menghapus (menghapusbukukan) item yang dipilih? Tindakan ini tidak dapat dibatalkan.')) {
-                        return;
-                    }
+                // Confirmation based on action
+                let confirmMessage = 'Apakah Anda yakin ingin melakukan aksi ini?';
+                
+                if (action === 'update_lokasi') {
+                    confirmMessage = 'Apakah Anda yakin ingin memindahkan item yang dipilih ke lokasi baru?';
+                } else if (action === 'update_kondisi') {
+                    confirmMessage = 'Apakah Anda yakin ingin mengubah kondisi item yang dipilih?';
+                } else if (action === 'delete') {
+                    confirmMessage = 'Apakah Anda yakin ingin menghapus (menghapusbukukan) item yang dipilih? Tindakan ini tidak dapat dibatalkan.';
+                }
+
+                if (!confirm(confirmMessage)) {
+                    return;
                 }
 
                 // Copy values to hidden inputs in the form
                 document.getElementById('hiddenActionType').value = action;
                 document.getElementById('hiddenLokasiId').value = lokasiInput.value || '';
                 document.getElementById('hiddenKondisi').value = kondisiInput.value || '';
+                
+                 // Create hidden input for keterangan if not exists
+                 let hiddenKeterangan = document.getElementById('hiddenKeterangan');
+                 if (!hiddenKeterangan) {
+                     hiddenKeterangan = document.createElement('input');
+                     hiddenKeterangan.type = 'hidden';
+                     hiddenKeterangan.name = 'keterangan';
+                     hiddenKeterangan.id = 'hiddenKeterangan';
+                     document.getElementById('bulkActionForm').appendChild(hiddenKeterangan);
+                 }
+                 hiddenKeterangan.value = keteranganInput.value || '';
 
                 // Submit the form
                 document.getElementById('bulkActionForm').submit();

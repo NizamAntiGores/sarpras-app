@@ -194,7 +194,8 @@ class PeminjamanController extends Controller
                     $cleaned[] = $item;
                 }
             }
-            $request->merge(['consumables' => $cleaned]);
+            // Explicitly re-index array to prevent "Undefined array key" errors if there are gaps
+            $request->merge(['consumables' => array_values($cleaned)]);
         }
 
         // Check if this is a consumable-only request
@@ -572,8 +573,12 @@ class PeminjamanController extends Controller
 
             // Send notification/email to user
             if ($newStatus === 'disetujui') {
-                // Send Email with QR Code
-                \Illuminate\Support\Facades\Mail::to($peminjaman->user)->send(new \App\Mail\PeminjamanApproved($peminjaman));
+                try {
+                    // Send Email with QR Code
+                    \Illuminate\Support\Facades\Mail::to($peminjaman->user)->send(new \App\Mail\PeminjamanApproved($peminjaman));
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Gagal mengirim email persetujuan: " . $e->getMessage());
+                }
                 
                 // Old Notification (Disabled)
                 /*

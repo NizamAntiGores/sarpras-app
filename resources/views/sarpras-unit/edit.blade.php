@@ -21,7 +21,7 @@
 
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6">
-                    <form method="POST" action="{{ route('sarpras.units.update', [$sarpras, $unit]) }}">
+                    <form method="POST" action="{{ route('sarpras.units.update', [$sarpras, $unit]) }}" onsubmit="return confirm('Simpan perubahan pada unit ini?');">
                         @csrf
                         @method('PUT')
 
@@ -50,13 +50,25 @@
                         {{-- Kondisi --}}
                         <div class="mb-6">
                             <label for="kondisi" class="block text-sm font-medium text-gray-700 mb-2">Kondisi</label>
-                            <select name="kondisi" id="kondisi" required
+                            <select name="kondisi" id="kondisi" required data-initial="{{ $unit->kondisi }}"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option value="baik" {{ old('kondisi', $unit->kondisi) == 'baik' ? 'selected' : '' }}>Baik</option>
                                 <option value="rusak_ringan" {{ old('kondisi', $unit->kondisi) == 'rusak_ringan' ? 'selected' : '' }}>Rusak Ringan</option>
                                 <option value="rusak_berat" {{ old('kondisi', $unit->kondisi) == 'rusak_berat' ? 'selected' : '' }}>Rusak Berat</option>
                             </select>
                             @error('kondisi') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
+                        {{-- Keterangan Perubahan --}}
+                        <div class="mb-6" id="keterangan_wrapper" style="display: none;">
+                            <label for="keterangan" class="block text-sm font-medium text-gray-700 mb-2">
+                                Keterangan / Penyebab (Opsional)
+                            </label>
+                            <textarea name="keterangan" id="keterangan" rows="2"
+                                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                      placeholder="Contoh: Terjatuh saat pemakaian, atau perbaikan rutin.">{{ old('keterangan') }}</textarea>
+                            <p class="mt-1 text-xs text-gray-500">Isi jika Anda mengubah kondisi unit agar tercatat di riwayat.</p>
+                             @error('keterangan') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
                         {{-- Status --}}
@@ -87,7 +99,6 @@
                         </div>
 
 
-
                         {{-- Submit Button --}}
                         <div class="flex justify-end">
                             <button type="submit" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg text-sm font-semibold uppercase hover:bg-blue-700">
@@ -100,4 +111,27 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const kondisiSelect = document.getElementById('kondisi');
+            const keteranganWrapper = document.getElementById('keterangan_wrapper');
+            const initialKondisi = kondisiSelect.getAttribute('data-initial');
+
+            function toggleKeterangan() {
+                if (kondisiSelect.value !== initialKondisi) {
+                    keteranganWrapper.style.display = 'block';
+                } else {
+                    keteranganWrapper.style.display = 'none';
+                    // Optional: clear the textarea when hidden if desired
+                    // document.getElementById('keterangan').value = ''; 
+                }
+            }
+
+            kondisiSelect.addEventListener('change', toggleKeterangan);
+            
+            // Initial check
+            toggleKeterangan();
+        });
+    </script>
 </x-app-layout>

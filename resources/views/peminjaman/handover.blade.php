@@ -152,6 +152,22 @@
                                                             @if($detail->sarpras_unit_id)
                                                                 <span class="font-mono font-bold text-gray-800">{{ $detail->sarprasUnit->kode_unit }}</span>
                                                                 <span class="text-gray-600 ml-2">{{ $detail->sarprasUnit->sarpras->nama_barang }}</span>
+                                                                
+                                                                {{-- CHECKLIST SERAH TERIMA --}}
+                                                                @if($detail->sarprasUnit->sarpras->checklistTemplates->isNotEmpty() && !$isHandedOver)
+                                                                    <div class="mt-2 pl-4 border-l-2 border-green-200">
+                                                                        <p class="text-xs font-semibold text-green-700 mb-1">Cek Kondisi Awal:</p>
+                                                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+                                                                            @foreach($detail->sarprasUnit->sarpras->checklistTemplates as $template)
+                                                                                <label class="flex items-start items-center gap-2 cursor-pointer hover:bg-green-50 rounded px-1 py-0.5 transition">
+                                                                                    <input type="checkbox" name="checklist_{{ $detail->id }}_{{ $template->id }}" value="1" checked
+                                                                                           class="rounded border-gray-300 text-green-600 focus:ring-green-500 w-4 h-4 mt-0.5">
+                                                                                    <span class="text-xs text-gray-600">{{ $template->item_label }}</span>
+                                                                                </label>
+                                                                            @endforeach
+                                                                        </div>
+                                                                    </div>
+                                                                @endif
                                                             @else
                                                                 <span class="font-bold text-gray-800">{{ $detail->sarpras->nama_barang }}</span>
                                                                 <span class="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded ml-2">{{ $detail->quantity }} Unit</span>

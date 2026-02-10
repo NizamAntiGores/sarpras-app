@@ -65,4 +65,20 @@ class PeminjamanDetail extends Model
     {
         return $this->belongsTo(Sarpras::class, 'sarpras_id');
     }
+
+    /**
+     * Get checklist hasil serah terima (handover) untuk detail ini
+     */
+    public function checklistHandover(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ChecklistHandover::class, 'peminjaman_detail_id');
+    }
+
+    /**
+     * Get checklist hasil pengembalian untuk detail ini
+     */
+    public function checklistPengembalian(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ChecklistPengembalian::class, 'peminjaman_detail_id');
+    }
 }

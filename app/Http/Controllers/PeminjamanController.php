@@ -721,6 +721,7 @@ class PeminjamanController extends Controller
         $peminjaman->load([
             'user',
             'details.sarprasUnit.sarpras.kategori',
+            'details.sarprasUnit.sarpras.checklistTemplates',
             'details.sarprasUnit.lokasi',
             'petugas',
         ]);
@@ -761,6 +762,24 @@ class PeminjamanController extends Controller
                         'handed_over_at' => $now,
                         'handed_over_by' => $user->id
                     ]);
+
+                    // Save checklist handover data if exists
+                    if ($detail->sarpras_unit_id && $detail->sarprasUnit) {
+                        $sarpras = $detail->sarprasUnit->sarpras;
+                        $templates = $sarpras->checklistTemplates;
+                        
+                        foreach ($templates as $template) {
+                            $checkKey = "checklist_{$detailId}_{$template->id}";
+                            $noteKey = "checklist_note_{$detailId}_{$template->id}";
+                            
+                            \App\Models\ChecklistHandover::create([
+                                'peminjaman_detail_id' => $detail->id,
+                                'checklist_template_id' => $template->id,
+                                'is_checked' => $request->has($checkKey) ? true : false,
+                                'catatan' => $request->input($noteKey),
+                            ]);
+                        }
+                    }
                 }
             }
 

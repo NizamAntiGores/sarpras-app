@@ -86,7 +86,8 @@ class PengembalianController extends Controller
 
         $peminjaman->load([
             'user',
-            'details.sarprasUnit.sarpras',
+            'details.sarprasUnit.sarpras.checklistTemplates',
+            'details.checklistHandover', // Load hasil checklist awal
             'details.sarprasUnit.lokasi',
         ]);
 
@@ -186,6 +187,21 @@ class PengembalianController extends Controller
                     'catatan' => $validated["catatan_{$unitId}"] ?? null,
                     'denda' => $validated["denda_{$unitId}"] ?? null,
                 ]);
+
+                // Save checklist pengembalian data if exists
+                if ($unit->sarpras && $unit->sarpras->checklistTemplates->isNotEmpty()) {
+                    foreach ($unit->sarpras->checklistTemplates as $template) {
+                        $checkKey = "checklist_{$detail->id}_{$template->id}";
+                        $noteKey = "checklist_note_{$detail->id}_{$template->id}";
+                        
+                        \App\Models\ChecklistPengembalian::create([
+                            'peminjaman_detail_id' => $detail->id,
+                            'checklist_template_id' => $template->id,
+                            'is_checked' => $request->has($checkKey) ? true : false,
+                            'catatan' => $request->input($noteKey),
+                        ]);
+                    }
+                }
 
                 // Update status dan kondisi unit berdasarkan hasil inspeksi
                 switch ($kondisiAkhir) {

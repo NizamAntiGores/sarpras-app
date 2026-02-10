@@ -173,6 +173,78 @@
                                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                                 @enderror
                                             </div>
+                                            
+                                            {{-- CHECKLIST INSPEKSI --}}
+                                            @if($detail->sarprasUnit->sarpras->checklistTemplates->isNotEmpty())
+                                                <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                                    <h4 class="font-semibold text-gray-800 mb-3 text-sm flex items-center">
+                                                        <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                                                        Cek Kelengkapan & Kondisi Fisik
+                                                    </h4>
+                                                    
+                                                    <div class="overflow-x-auto">
+                                                        <table class="min-w-full text-sm">
+                                                            <thead>
+                                                                <tr class="text-left text-gray-500 border-b">
+                                                                    <th class="pb-2 font-medium w-1/2">Item Cek</th>
+                                                                    <th class="pb-2 font-medium text-center">Kondisi Awal</th>
+                                                                    <th class="pb-2 font-medium text-center">Kondisi Akhir</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody class="divide-y divide-gray-100">
+                                                                @foreach($detail->sarprasUnit->sarpras->checklistTemplates as $template)
+                                                                    @php
+                                                                        // Cari hasil checklist handover untuk template ini
+                                                                        $handoverCheck = $detail->checklistHandover->where('checklist_template_id', $template->id)->first();
+                                                                        $isInitiallyGood = $handoverCheck ? $handoverCheck->is_checked : true; // Default true if no record
+                                                                    @endphp
+                                                                    <tr class="group hover:bg-white">
+                                                                        <td class="py-2 pr-4 align-top">
+                                                                            <span class="text-gray-700 block">{{ $template->item_label }}</span>
+                                                                            @if($handoverCheck && $handoverCheck->catatan)
+                                                                                <span class="text-xs text-amber-600 italic">"{{ $handoverCheck->catatan }}"</span>
+                                                                            @endif
+                                                                        </td>
+                                                                        <td class="py-2 text-center align-top bg-gray-50">
+                                                                            @if($isInitiallyGood)
+                                                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                                                                    ✅ Baik
+                                                                                </span>
+                                                                            @else
+                                                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                                                                    ⚠️ Masalah
+                                                                                </span>
+                                                                            @endif
+                                                                        </td>
+                                                                        <td class="py-2 text-center align-top relative">
+                                                                            <div x-data="{ checked: {{ $isInitiallyGood ? 'true' : 'false' }} }">
+                                                                                <label class="inline-flex items-center cursor-pointer">
+                                                                                    <input type="checkbox" name="checklist_{{ $detail->id }}_{{ $template->id }}" value="1" 
+                                                                                           x-model="checked"
+                                                                                           class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 w-5 h-5">
+                                                                                    <span class="ml-2 text-xs font-medium" :class="checked ? 'text-green-600' : 'text-red-500'" x-text="checked ? 'OK' : 'Masalah'"></span>
+                                                                                </label>
+                                                                                
+                                                                                {{-- Bandingkan: Awal Baik -> Akhir Buruk = MERAH --}}
+                                                                                @if($isInitiallyGood)
+                                                                                    <div x-show="!checked" x-cloak class="mt-1 text-[10px] text-red-600 font-bold animate-pulse">
+                                                                                        PERUBAHAN KONDISI!
+                                                                                    </div>
+                                                                                @endif
+                                                                            </div>
+                                                                            {{-- Catatan Per Item Checklist --}}
+                                                                            <input type="text" name="checklist_note_{{ $detail->id }}_{{ $template->id }}" 
+                                                                                   placeholder="Ket. (opsional)" class="mt-1 w-full text-xs border-gray-200 rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500">
+                                                                        </td>
+                                                                    </tr>
+                                                                @endforeach
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                            
+                                            <div class="p-1"> {{-- Spacer --}}
 
                                             {{-- Catatan & Foto - HANYA muncul jika ada masalah --}}
                                             <div x-show="kondisi && kondisi !== 'baik'" x-transition x-cloak>

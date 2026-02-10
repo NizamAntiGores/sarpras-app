@@ -39,6 +39,14 @@ class Sarpras extends Model
     }
 
     /**
+     * Get checklist templates untuk jenis barang ini
+     */
+    public function checklistTemplates(): HasMany
+    {
+        return $this->hasMany(ChecklistTemplate::class, 'sarpras_id')->orderBy('urutan');
+    }
+
+    /**
      * Get semua unit untuk sarpras ini
      */
     public function units(): HasMany

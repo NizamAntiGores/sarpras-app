@@ -186,6 +186,8 @@
                             </div>
                         @endif
 
+
+
                         <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
                             <a href="{{ route('sarpras.index') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 uppercase hover:bg-gray-50">Batal</a>
                             <button type="submit" class="px-4 py-2 bg-blue-600 rounded-lg text-xs font-semibold text-white uppercase hover:bg-blue-700">
@@ -194,6 +196,98 @@
                             </button>
                         </div>
                     </form>
+
+                    {{-- CHECKLIST KONDISI BARANG (MOVED OUTSIDE MAIN FORM) --}}
+                    @if($sarpras->tipe === 'asset')
+                    <div class="mt-8 pt-8 border-t-4 border-gray-100">
+                        <div class="border border-purple-200 rounded-lg p-6 bg-purple-50">
+                            <h4 class="font-semibold text-purple-900 mb-3 flex items-center text-lg">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                                </svg>
+                                Checklist Kondisi (Serah Terima & Pengembalian)
+                            </h4>
+                            <p class="text-sm text-purple-600 mb-6">
+                                Daftar item di bawah ini akan digunakan oleh Petugas untuk memeriksa kondisi barang saat:
+                                <br>1. <strong>Serah Terima</strong> (Barang keluar)
+                                <br>2. <strong>Pengembalian</strong> (Barang masuk)
+                            </p>
+
+                            {{-- Current Checklist Items --}}
+                            @if($sarpras->checklistTemplates->isNotEmpty())
+                                <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-6 border border-purple-100">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-purple-50">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">No</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">Item Checklist</th>
+                                                <th class="px-6 py-3 text-center text-xs font-medium text-purple-800 uppercase tracking-wider">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            @foreach($sarpras->checklistTemplates as $index => $template)
+                                                <tr class="hover:bg-purple-50 transition">
+                                                    <td class="px-6 py-3 text-sm text-gray-500 font-mono">{{ $index + 1 }}</td>
+                                                    <td class="px-6 py-3 text-sm text-gray-900 font-medium">
+                                                        <span class="inline-flex items-center gap-2">
+                                                            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
+                                                            </svg>
+                                                            {{ $template->item_label }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="px-6 py-3 text-center">
+                                                        <form action="{{ route('sarpras.checklist.destroy', [$sarpras, $template]) }}" method="POST" class="inline" 
+                                                              onsubmit="return confirm('Hapus item checklist ini?');">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="text-red-500 hover:text-red-700 text-sm font-medium transition tooltip p-2 hover:bg-red-50 rounded-full" title="Hapus">
+                                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                                </svg>
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @else
+                                <div class="bg-white rounded-lg p-8 border-2 border-dashed border-purple-200 text-center mb-6">
+                                    <svg class="w-12 h-12 text-purple-200 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    <p class="text-gray-500 font-medium">Belum ada item checklist.</p>
+                                    <p class="text-gray-400 text-sm mt-1">Tambahkan item untuk mempermudah pengecekan kondisi barang.</p>
+                                </div>
+                            @endif
+
+                            {{-- Add New Checklist Item --}}
+                            <div class="mt-4 pt-4 border-t border-purple-200">
+                                <h5 class="text-sm font-bold text-purple-900 mb-3">Tambah Item Checklist Baru</h5>
+                                <form action="{{ route('sarpras.checklist.store', $sarpras) }}" method="POST" class="bg-white p-4 rounded-lg border border-purple-200 shadow-sm flex flex-col md:flex-row gap-3 items-end">
+                                    @csrf
+                                    <div class="flex-1 w-full">
+                                        <label for="item_label" class="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">Nama Item</label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                            </div>
+                                            <input type="text" name="item_label" id="item_label" required
+                                                   placeholder="Contoh: Lampu indikator menyala, Kabel power tidak terkelupas..."
+                                                   class="pl-10 w-full rounded-lg border-gray-300 text-sm focus:border-purple-500 focus:ring-purple-500 py-2">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="w-full md:w-auto px-6 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 transition shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                                        Tambah Item
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>

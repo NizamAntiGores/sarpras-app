@@ -117,15 +117,26 @@
                     {{-- QR CODE QUICK LOOKUP - Hanya untuk Admin/Petugas --}}
                     @if(in_array(auth()->user()->role, ['admin', 'petugas']))
                     <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mb-6 border border-blue-200">
-                        <form method="POST" action="{{ route('pengembalian.lookup-qr') }}" class="flex flex-wrap items-end gap-4">
+                        <form method="POST" action="{{ route('pengembalian.lookup-qr') }}" id="qrLookupForm" class="flex flex-wrap items-end gap-4">
                             @csrf
                             <div class="flex-1">
                                 <label for="qr_code" class="block text-xs font-medium text-gray-700 mb-1">
                                     📱 Cari Peminjaman dengan Kode QR
                                 </label>
-                                <input type="text" name="qr_code" id="qr_code" 
-                                       class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                       placeholder="Masukkan atau scan kode QR peminjaman..." autofocus>
+                                <div class="flex gap-2">
+                                    <input type="text" name="qr_code" id="qr_code" 
+                                           class="flex-1 rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                           placeholder="Masukkan atau scan kode QR peminjaman..." autofocus>
+                                    <button type="button" id="btnOpenScanner" onclick="openQrScanner()" 
+                                            class="px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-purple-700 hover:to-indigo-700 flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
+                                            title="Scan QR dengan Kamera">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9V6a3 3 0 013-3h3M3 15v3a3 3 0 003 3h3M15 3h3a3 3 0 013 3v3M15 21h3a3 3 0 003-3v-3"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h2v2H7zM15 7h2v2h-2zM7 15h2v2H7zM12 12h0"/>
+                                        </svg>
+                                        <span class="hidden sm:inline">Scan QR</span>
+                                    </button>
+                                </div>
                             </div>
                             <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 flex items-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,6 +146,286 @@
                             </button>
                         </form>
                     </div>
+
+                    {{-- MODAL QR SCANNER (Tanpa Library External) --}}
+                    <div id="qrScannerModal" class="fixed inset-0 z-50 hidden">
+                        {{-- Backdrop --}}
+                        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeQrScanner()"></div>
+                        
+                        {{-- Modal Content --}}
+                        <div class="fixed inset-0 flex items-center justify-center p-4">
+                            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto overflow-hidden transform transition-all">
+                                {{-- Modal Header --}}
+                                <div class="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-4 flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-white/20 p-2 rounded-lg">
+                                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9V6a3 3 0 013-3h3M3 15v3a3 3 0 003 3h3M15 3h3a3 3 0 013 3v3M15 21h3a3 3 0 003-3v-3"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-white font-bold text-lg">Scan QR Code</h3>
+                                            <p class="text-purple-100 text-xs">Arahkan kamera ke QR Code peminjaman</p>
+                                        </div>
+                                    </div>
+                                    <button onclick="closeQrScanner()" class="text-white/80 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                {{-- Scanner Area --}}
+                                <div class="p-6">
+                                    <div class="relative rounded-xl overflow-hidden border-2 border-gray-200 bg-black" style="aspect-ratio: 1/1;">
+                                        <video id="qr-video" class="w-full h-full object-cover" playsinline autoplay muted></video>
+                                        {{-- Scan Overlay --}}
+                                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                            <div class="w-56 h-56 relative">
+                                                {{-- Corner markers --}}
+                                                <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-lg"></div>
+                                                <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-lg"></div>
+                                                <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-lg"></div>
+                                                <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-lg"></div>
+                                                {{-- Scanning line animation --}}
+                                                <div class="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent animate-scan-line"></div>
+                                            </div>
+                                        </div>
+                                        {{-- Semi-transparent overlay outside scan area --}}
+                                        <div class="absolute inset-0 pointer-events-none" style="box-shadow: 0 0 0 9999px rgba(0,0,0,0.4);"></div>
+                                    </div>
+                                    
+                                    {{-- Hidden canvas for frame capture --}}
+                                    <canvas id="qr-canvas" class="hidden"></canvas>
+
+                                    {{-- Status Area --}}
+                                    <div id="qr-reader-status" class="mt-4 text-center">
+                                        <div class="flex items-center justify-center gap-2 text-gray-500 text-sm">
+                                            <svg class="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                            </svg>
+                                            <span>Menunggu kamera aktif...</span>
+                                        </div>
+                                    </div>
+
+                                    {{-- Success Indicator (hidden by default) --}}
+                                    <div id="qr-scan-success" class="mt-4 hidden">
+                                        <div class="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
+                                            <div class="bg-green-500 rounded-full p-2 flex-shrink-0">
+                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-green-800 font-semibold text-sm">QR Code Terdeteksi!</p>
+                                                <p id="qr-scan-result" class="text-green-600 font-mono text-xs mt-0.5"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Modal Footer --}}
+                                <div class="bg-gray-50 px-6 py-3 flex items-center justify-between border-t">
+                                    <p class="text-xs text-gray-400">Pastikan pencahayaan cukup</p>
+                                    <button onclick="closeQrScanner()" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition-colors">
+                                        Tutup
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Scan Line Animation CSS --}}
+                    <style>
+                        @keyframes scanLine {
+                            0% { top: 0.5rem; }
+                            50% { top: calc(100% - 0.5rem); }
+                            100% { top: 0.5rem; }
+                        }
+                        .animate-scan-line {
+                            animation: scanLine 2.5s ease-in-out infinite;
+                        }
+                    </style>
+
+                    {{-- QR Scanner - Native API (Tanpa Library) --}}
+                    <script>
+                        let videoStream = null;
+                        let scanInterval = null;
+                        let scannerActive = false;
+
+                        function openQrScanner() {
+                            const modal = document.getElementById('qrScannerModal');
+                            modal.classList.remove('hidden');
+                            document.body.style.overflow = 'hidden';
+
+                            // Reset status
+                            document.getElementById('qr-scan-success').classList.add('hidden');
+                            document.getElementById('qr-reader-status').classList.remove('hidden');
+                            document.getElementById('qr-reader-status').innerHTML = `
+                                <div class="flex items-center justify-center gap-2 text-gray-500 text-sm">
+                                    <svg class="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                    <span>Menunggu kamera aktif...</span>
+                                </div>
+                            `;
+
+                            startNativeScanner();
+                        }
+
+                        function closeQrScanner() {
+                            const modal = document.getElementById('qrScannerModal');
+                            modal.classList.add('hidden');
+                            document.body.style.overflow = '';
+                            stopNativeScanner();
+                        }
+
+                        async function startNativeScanner() {
+                            if (scannerActive) return;
+
+                            const video = document.getElementById('qr-video');
+                            const canvas = document.getElementById('qr-canvas');
+                            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+                            // Check if BarcodeDetector is supported (Chrome Android ✅)
+                            const hasBarcodeDetector = ('BarcodeDetector' in window);
+                            let barcodeDetector = null;
+
+                            if (hasBarcodeDetector) {
+                                try {
+                                    barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+                                } catch(e) {
+                                    console.warn('BarcodeDetector init failed:', e);
+                                }
+                            }
+
+                            if (!barcodeDetector) {
+                                // Fallback: show error with instructions
+                                document.getElementById('qr-reader-status').innerHTML = `
+                                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
+                                        <p class="text-yellow-800 text-sm font-medium">⚠️ Browser tidak mendukung QR scanner</p>
+                                        <p class="text-yellow-600 text-xs mt-1">Gunakan <strong>Chrome</strong> di HP Android untuk fitur scan QR.</p>
+                                        <p class="text-yellow-600 text-xs mt-1">Atau ketik kode QR secara manual di kolom input.</p>
+                                    </div>
+                                `;
+                                return;
+                            }
+
+                            try {
+                                // Request camera — prefer back camera for phone
+                                videoStream = await navigator.mediaDevices.getUserMedia({
+                                    video: {
+                                        facingMode: { ideal: 'environment' },
+                                        width: { ideal: 640 },
+                                        height: { ideal: 640 }
+                                    },
+                                    audio: false
+                                });
+
+                                video.srcObject = videoStream;
+                                await video.play();
+                                scannerActive = true;
+
+                                // Update status
+                                document.getElementById('qr-reader-status').innerHTML = `
+                                    <div class="flex items-center justify-center gap-2 text-blue-600 text-sm">
+                                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span>Kamera aktif — Arahkan ke QR Code...</span>
+                                    </div>
+                                `;
+
+                                // Start scanning loop using BarcodeDetector
+                                scanInterval = setInterval(async () => {
+                                    if (!scannerActive || video.readyState !== video.HAVE_ENOUGH_DATA) return;
+
+                                    try {
+                                        const barcodes = await barcodeDetector.detect(video);
+                                        if (barcodes.length > 0) {
+                                            const qrValue = barcodes[0].rawValue;
+                                            if (qrValue) {
+                                                onQrDetected(qrValue);
+                                            }
+                                        }
+                                    } catch(e) {
+                                        // Detection error, just continue scanning
+                                    }
+                                }, 250); // Scan every 250ms
+
+                            } catch (err) {
+                                console.error('Camera access error:', err);
+                                let errorMsg = 'Gagal mengakses kamera.';
+                                if (err.name === 'NotAllowedError') {
+                                    errorMsg = 'Izin kamera ditolak. Izinkan akses kamera di pengaturan browser.';
+                                } else if (err.name === 'NotFoundError') {
+                                    errorMsg = 'Tidak ada kamera yang ditemukan di perangkat ini.';
+                                } else if (err.name === 'NotReadableError') {
+                                    errorMsg = 'Kamera sedang digunakan oleh aplikasi lain.';
+                                }
+                                
+                                document.getElementById('qr-reader-status').innerHTML = `
+                                    <div class="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                                        <p class="text-red-700 text-sm font-medium">❌ ${errorMsg}</p>
+                                        <p class="text-red-500 text-xs mt-1">Pastikan Anda mengakses via HTTPS (ngrok) dan izinkan akses kamera.</p>
+                                    </div>
+                                `;
+                            }
+                        }
+
+                        function stopNativeScanner() {
+                            scannerActive = false;
+
+                            if (scanInterval) {
+                                clearInterval(scanInterval);
+                                scanInterval = null;
+                            }
+
+                            if (videoStream) {
+                                videoStream.getTracks().forEach(track => track.stop());
+                                videoStream = null;
+                            }
+
+                            const video = document.getElementById('qr-video');
+                            if (video) {
+                                video.srcObject = null;
+                            }
+                        }
+
+                        function onQrDetected(decodedText) {
+                            // Prevent double scanning
+                            if (!scannerActive) return;
+                            scannerActive = false;
+
+                            // Vibrate if supported (nice feedback on phone)
+                            if (navigator.vibrate) navigator.vibrate(200);
+
+                            // Show success
+                            document.getElementById('qr-reader-status').classList.add('hidden');
+                            document.getElementById('qr-scan-success').classList.remove('hidden');
+                            document.getElementById('qr-scan-result').textContent = decodedText;
+
+                            // Fill the input
+                            document.getElementById('qr_code').value = decodedText;
+
+                            // Stop scanner
+                            stopNativeScanner();
+
+                            // Auto-submit after short delay so user sees the success feedback
+                            setTimeout(() => {
+                                closeQrScanner();
+                                document.getElementById('qrLookupForm').submit();
+                            }, 800);
+                        }
+
+                        // Close on Escape key
+                        document.addEventListener('keydown', function(e) {
+                            if (e.key === 'Escape') {
+                                closeQrScanner();
+                            }
+                        });
+                    </script>
                     @endif
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ChecklistTemplate;
 use App\Models\Kategori;
-use App\Models\Lokasi; // Added
+use App\Models\Lokasi;
 use App\Models\Sarpras;
 use App\Models\SarprasUnit;
 use Illuminate\Http\RedirectResponse;
@@ -320,6 +321,9 @@ class SarprasController extends Controller
             $sarpras->load('stocks.lokasi');
         }
 
+        // Load checklist templates
+        $sarpras->load('checklistTemplates');
+
         return view('sarpras.edit', compact('sarpras', 'kategori', 'lokasi'));
     }
 
@@ -408,6 +412,43 @@ class SarprasController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal menambah stok: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Store a new checklist template item for a sarpras.
+     */
+    public function storeChecklist(Request $request, Sarpras $sarpras): RedirectResponse
+    {
+        $validated = $request->validate([
+            'item_label' => 'required|string|max:255',
+        ], [
+            'item_label.required' => 'Nama item checklist wajib diisi.',
+        ]);
+
+        // Determine next order
+        $maxUrutan = $sarpras->checklistTemplates()->max('urutan') ?? 0;
+
+        ChecklistTemplate::create([
+            'sarpras_id' => $sarpras->id,
+            'item_label' => $validated['item_label'],
+            'urutan' => $maxUrutan + 1,
+        ]);
+
+        return back()->with('success', 'Item checklist berhasil ditambahkan.');
+    }
+
+    /**
+     * Delete a checklist template item.
+     */
+    public function destroyChecklist(Sarpras $sarpras, ChecklistTemplate $template): RedirectResponse
+    {
+        if ($template->sarpras_id !== $sarpras->id) {
+            abort(403);
+        }
+
+        $template->delete();
+
+        return back()->with('success', 'Item checklist berhasil dihapus.');
     }
 
     /**

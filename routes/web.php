@@ -81,6 +81,10 @@ Route::middleware('auth')->group(function () {
         Route::patch('/sarpras/{sarpras}', [SarprasController::class, 'update']);
         Route::post('/sarpras/{sarpras}/add-stock', [SarprasController::class, 'addStock'])->name('sarpras.add-stock'); // Quick Add Location Stock
 
+        // Checklist Template Routes
+        Route::post('/sarpras/{sarpras}/checklist', [SarprasController::class, 'storeChecklist'])->name('sarpras.checklist.store');
+        Route::delete('/sarpras/{sarpras}/checklist/{template}', [SarprasController::class, 'destroyChecklist'])->name('sarpras.checklist.destroy');
+
         // =============================================
 // SARPRAS UNIT ROUTES (Nested under Sarpras)
 // =============================================

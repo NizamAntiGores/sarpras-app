@@ -27,7 +27,7 @@
                         {{-- Jumlah Unit --}}
                         <div class="mb-6">
                             <label for="jumlah_unit" class="block text-sm font-medium text-gray-700 mb-2">Jumlah Unit yang Ditambahkan</label>
-                            <input type="number" name="jumlah_unit" id="jumlah_unit" value="{{ old('jumlah_unit', 1) }}" min="1" max="100"
+                            <input type="number" name="jumlah_unit" id="jumlah_unit" value="{{ old('jumlah_unit', 1) }}" min="1"
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <p class="mt-1 text-xs text-gray-500">Kode unit akan digenerate otomatis: {{ $sarpras->kode_barang }}-001, {{ $sarpras->kode_barang }}-002, dst.</p>
                             @error('jumlah_unit') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror

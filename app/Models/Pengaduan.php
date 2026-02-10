@@ -63,6 +63,14 @@ class Pengaduan extends Model
     }
 
     /**
+     * Riwayat respon (history)
+     */
+    public function responses()
+    {
+        return $this->hasMany(PengaduanResponse::class)->orderBy('created_at', 'asc');
+    }
+
+    /**
      * Petugas yang menangani
      */
     public function petugas(): BelongsTo

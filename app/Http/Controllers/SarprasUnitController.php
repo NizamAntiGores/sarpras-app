@@ -67,14 +67,14 @@ class SarprasUnitController extends Controller
     public function store(Request $request, Sarpras $sarpras): RedirectResponse
     {
         $validated = $request->validate([
-            'jumlah_unit' => 'required|integer|min:1|max:100',
+            'jumlah_unit' => 'required|integer|min:1|max:10000',
             'lokasi_id' => 'required|exists:lokasi,id',
             'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat',
             'tanggal_perolehan' => 'nullable|date',
         ], [
             'jumlah_unit.required' => 'Jumlah unit wajib diisi.',
             'jumlah_unit.min' => 'Minimal 1 unit.',
-            'jumlah_unit.max' => 'Maksimal 100 unit per pengadaan.',
+            'jumlah_unit.max' => 'Maksimal 10000 unit per pengadaan.',
             'lokasi_id.required' => 'Lokasi wajib dipilih.',
             'kondisi.required' => 'Kondisi wajib dipilih.',
         ]);
@@ -169,7 +169,7 @@ class SarprasUnitController extends Controller
             'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat',
             'status' => 'required|in:tersedia,dipinjam,maintenance,dihapusbukukan',
             'tanggal_perolehan' => 'nullable|date',
-            'keterangan' => 'nullable|string|max:500', // Added for logging reason
+            'keterangan' => 'nullable|string|min:20|max:500', // Added for logging reason
         ]);
 
         // Validasi: unit yang sedang dipinjam tidak bisa diubah statusnya secara manual
@@ -189,9 +189,19 @@ class SarprasUnitController extends Controller
             ]);
         }
 
+        // Prepare Log Data
+        $oldData = $unit->only(['lokasi_id', 'kondisi', 'status', 'tanggal_perolehan', 'keterangan']);
+
         $unit->update($validated);
 
-        \App\Helpers\LogHelper::record('update', "Memperbarui unit {$unit->kode_unit} ({$sarpras->nama_barang})");
+        $newData = $unit->only(['lokasi_id', 'kondisi', 'status', 'tanggal_perolehan', 'keterangan']);
+
+        \App\Helpers\LogHelper::record(
+            'update', 
+            "Memperbarui unit {$unit->kode_unit} ({$sarpras->nama_barang})",
+            $oldData,
+            $newData
+        );
 
         return redirect()
             ->route('sarpras.units.index', $sarpras)
@@ -239,7 +249,7 @@ class SarprasUnitController extends Controller
             'action_type' => 'required|in:update_lokasi,update_kondisi,delete',
             'lokasi_id' => 'required_if:action_type,update_lokasi|nullable|exists:lokasi,id',
             'kondisi' => 'required_if:action_type,update_kondisi|nullable|in:baik,rusak_ringan,rusak_berat',
-            'keterangan' => 'nullable|string|max:500', // Alasan perubahan (untuk log)
+            'keterangan' => 'nullable|string|min:20|max:500', // Alasan perubahan (untuk log)
         ]);
 
         $unitIds = $validated['unit_ids'];

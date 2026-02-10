@@ -203,7 +203,10 @@ class DashboardController extends Controller
             $katalogBarang = Sarpras::with(['kategori'])
                 ->withCount([
                     'units as available_count' => function ($query) {
-                        $query->bisaDipinjam();
+                        $query->bisaDipinjam()
+                            ->whereHas('lokasi', function ($q) {
+                                $q->where('is_storefront', true);
+                            });
                     }
                 ])
                 ->when(!$user->isGuru(), function ($query) {
@@ -234,7 +237,10 @@ class DashboardController extends Controller
                 'katalogBarang' => $katalogBarang,
                 'totalKatalog' => Sarpras::withCount([
                     'units as available_count' => function ($query) {
-                        $query->bisaDipinjam();
+                        $query->bisaDipinjam()
+                            ->whereHas('lokasi', function ($q) {
+                                $q->where('is_storefront', true);
+                            });
                     }
                 ])
                     ->when(!$user->isGuru(), function ($query) {

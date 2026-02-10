@@ -12,6 +12,72 @@ use Illuminate\View\View;
 class LaporanController extends Controller
 {
     /**
+     * Display the Executive Dashboard.
+     */
+    public function executive(): View
+    {
+        // 1. High-Level Metrics
+        $totalAssets = SarprasUnit::count();
+        $totalValue = 0; // Placeholder if no price field
+        
+        $activeLoans = \App\Models\Peminjaman::where('status', 'dipinjam')->count();
+        $pendingIssues = \App\Models\Pengaduan::whereIn('status', ['belum_ditindaklanjuti', 'sedang_diproses'])->count();
+        $criticalAssets = SarprasUnit::where('kondisi', 'rusak_berat')->count();
+
+        // 2. Asset Condition Summary (Pie Chart Data)
+        $conditionStats = SarprasUnit::select('kondisi', DB::raw('count(*) as count'))
+            ->groupBy('kondisi')
+            ->pluck('count', 'kondisi')
+            ->toArray();
+
+        // 3. Category Distribution
+        $categoryStats = \App\Models\Kategori::withCount('sarpras')
+            ->get()
+            ->map(function ($cat) {
+                // Approximate unit count via sarpras relation logic if needed, 
+                // or just use the direct relationship if it existed.
+                // Here we count units per category:
+                $unitCount = SarprasUnit::whereHas('sarpras', function($q) use ($cat) {
+                    $q->where('kategori_id', $cat->id);
+                })->count();
+                return [
+                    'name' => $cat->nama_kategori,
+                    'count' => $unitCount
+                ];
+            });
+
+        // 4. Recent Critical Activities (Lost, Damaged)
+        $recentCriticalLogs = \App\Models\ActivityLog::where(function($q) {
+                $q->where('description', 'like', '%rusak%')
+                  ->orWhere('description', 'like', '%hilang%');
+            })
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        // 5. Monthly Borrowing Trend (Last 6 Months)
+        $monthlyTrend = \App\Models\Peminjaman::select(
+                DB::raw('count(id) as count'), 
+                DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month_year")
+            )
+            ->where('created_at', '>=', now()->subMonths(6))
+            ->groupBy('month_year')
+            ->orderBy('month_year')
+            ->get();
+
+        return view('laporan.executive', compact(
+            'totalAssets', 
+            'activeLoans', 
+            'pendingIssues', 
+            'criticalAssets',
+            'conditionStats',
+            'categoryStats',
+            'recentCriticalLogs',
+            'monthlyTrend'
+        ));
+    }
+
+    /**
      * Display the Asset Health Report.
      */
     public function assetHealth(Request $request): View

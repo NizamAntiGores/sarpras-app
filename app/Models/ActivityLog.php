@@ -16,6 +16,18 @@ class ActivityLog extends Model
         'description',
         'ip_address',
         'user_agent',
+        'old_values',
+        'new_values',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'old_values' => 'array',
+        'new_values' => 'array',
     ];
 
     public function user(): BelongsTo

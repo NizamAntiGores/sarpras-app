@@ -131,7 +131,7 @@ class PengembalianController extends Controller
             if (!$detail->handed_over_at) continue;
 
             $rules["kondisi_{$unitId}"] = 'required|in:baik,rusak_ringan,rusak_berat,hilang';
-            $rules["catatan_{$unitId}"] = 'nullable|string|max:500';
+            $rules["catatan_{$unitId}"] = 'nullable|string|min:20|max:500';
             $rules["denda_{$unitId}"] = 'nullable|integer|min:0';
             $rules["foto_{$unitId}"] = 'nullable|image|max:2048';
 

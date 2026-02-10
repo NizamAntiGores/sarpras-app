@@ -26,6 +26,31 @@ class LokasiController extends Controller
     }
 
     /**
+     * Bulk update locations.
+     */
+    public function bulkUpdate(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:lokasi,id',
+            'action' => 'required|in:set_storefront,remove_storefront',
+        ]);
+
+        $ids = $validated['ids'];
+        $action = $validated['action'];
+        $isStorefront = ($action === 'set_storefront');
+
+        Lokasi::whereIn('id', $ids)->update(['is_storefront' => $isStorefront]);
+
+        $actionText = $isStorefront ? 'diaktifkan sebagai Storefront' : 'dinonaktifkan dari Storefront';
+        $count = count($ids);
+
+        \App\Helpers\LogHelper::record('bulk_update', "Bulk update {$count} lokasi: {$actionText}");
+
+        return redirect()->route('lokasi.index')->with('success', "{$count} lokasi berhasil {$actionText}.");
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create(): View

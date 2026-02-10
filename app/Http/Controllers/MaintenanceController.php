@@ -81,7 +81,7 @@ class MaintenanceController extends Controller
         $validated = $request->validate([
             'sarpras_unit_id' => 'required|exists:sarpras_units,id',
             'jenis' => 'required|in:perbaikan,servis_rutin,kalibrasi,penggantian_komponen',
-            'deskripsi' => 'nullable|string|max:1000',
+            'deskripsi' => 'nullable|string|min:20|max:1000',
             'tanggal_mulai' => 'required|date',
             'biaya' => 'nullable|integer|min:0',
         ], [
@@ -160,7 +160,7 @@ class MaintenanceController extends Controller
     {
         $validated = $request->validate([
             'jenis' => 'required|in:perbaikan,servis_rutin,kalibrasi,penggantian_komponen',
-            'deskripsi' => 'nullable|string|max:1000',
+            'deskripsi' => 'nullable|string|min:20|max:1000',
             'tanggal_selesai' => 'nullable|date|after_or_equal:' . $maintenance->tanggal_mulai->format('Y-m-d'),
             'biaya' => 'nullable|integer|min:0',
             'status' => 'required|in:sedang_berlangsung,selesai',
@@ -198,9 +198,23 @@ class MaintenanceController extends Controller
             }
 
             // Hapus kondisi_setelah dari validated karena bukan kolom maintenance
-            unset($validated['kondisi_setelah']);
+            if (isset($validated['kondisi_setelah'])) {
+                unset($validated['kondisi_setelah']);
+            }
+
+            // Prepare Log Data
+            $oldData = $maintenance->toArray();
 
             $maintenance->update($validated);
+
+            $newData = $maintenance->fresh()->toArray();
+
+            \App\Helpers\LogHelper::record(
+                'update', 
+                "Memperbarui maintenance unit {$unit->kode_unit} ({$maintenance->jenis})",
+                $oldData,
+                $newData
+            );
 
             DB::commit();
 

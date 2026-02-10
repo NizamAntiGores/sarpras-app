@@ -293,7 +293,12 @@
                                        value="{{ old('tgl_kembali_rencana') }}"
                                        min="{{ date('Y-m-d', strtotime('+1 day')) }}"
                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('tgl_kembali_rencana') border-red-500 @enderror">
-                                <p class="text-xs text-gray-400 mt-1" id="hint-tgl-kembali">Hanya untuk peminjaman aset.</p>
+                                <div class="mt-2 text-sm">
+                                    <span class="text-gray-600">Total Lama Pinjam: </span>
+                                    <span id="calculated-duration" class="font-bold text-blue-600">-</span>
+                                    <span class="text-gray-600"> Hari Kerja</span>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1" id="hint-tgl-kembali">Sabtu & Minggu tidak dihitung.</p>
                                 @error('tgl_kembali_rencana')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -425,23 +430,14 @@
             const input = document.getElementById('tgl_kembali_rencana');
             const filterTipe = document.getElementById('filterTipe');
             
-            // Logic:
-            // 1. If Assets are selected (unitCount > 0) -> ALWAYS SHOW
-            // 2. If ONLY Consumables are selected (consumableCount > 0 AND unitCount == 0) -> HIDE
-            // 3. If Nothing selected (unitCount == 0 && consumableCount == 0):
-            //    - If Filter is 'bahan' -> HIDE (Anticipating consumable selection)
-            //    - Else -> SHOW (Default)
-            
+            // Logic similar to before
             if (unitCount > 0) {
-                // Must show if any asset is selected
                 container.style.display = 'block';
                 input.required = true;
             } else if (consumableCount > 0) {
-                // Only consumables selected
                 container.style.display = 'none';
                 input.required = false;
             } else {
-                // No selection yet
                 if (filterTipe && filterTipe.value === 'bahan') {
                     container.style.display = 'none';
                     input.required = false;
@@ -451,6 +447,115 @@
                 }
             }
         }
+        
+        // Weekend Validation & Duration Calculation Script
+        const pinjamInput = document.getElementById('tgl_pinjam');
+        const kembaliInput = document.getElementById('tgl_kembali_rencana');
+        const durationText = document.getElementById('calculated-duration');
+
+        function isWeekend(date) {
+            const day = date.getDay();
+            return day === 0 || day === 6; // 0=Sunday, 6=Saturday
+        }
+
+        function countWorkingDays(startDate, endDate) {
+            let count = 0;
+            let curDate = new Date(startDate.getTime());
+            
+            // Loop from start to end
+            while (curDate < endDate) {
+                const dayOfWeek = curDate.getDay();
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) count++;
+                curDate.setDate(curDate.getDate() + 1);
+            }
+            // Include end day? usually diff doesn't. 
+            // "Lama Pinjam" logic: Fri -> Mon. Working days: Fri (1), Mon (1)? 
+            // If simple diff: Fri to Mon is 3 days. Working days: 1 (Fri). 
+            // Previous carbon addWeekdays logic: Fri + 1 = Mon.
+            return count;
+        }
+
+        function validateDateInput(input) {
+            if (!input.value) return;
+            const date = new Date(input.value);
+            if (isWeekend(date)) {
+                alert('Tidak boleh memilih hari Sabtu atau Minggu!');
+                input.value = ''; // Reset
+                durationText.textContent = '-';
+                return false;
+            }
+            return true;
+        }
+
+        function updateDuration() {
+            if (!pinjamInput.value || !kembaliInput.value) {
+                durationText.textContent = '-';
+                return;
+            }
+
+            const start = new Date(pinjamInput.value);
+            const end = new Date(kembaliInput.value);
+
+            // Validation: End must be >= Setart
+            if (end < start) {
+                // alert('Tanggal kembali tidak boleh sebelum tanggal pinjam');
+                // kembaliInput.value = '';
+                durationText.textContent = '-';
+                return;
+            }
+            
+            // Calculate working days
+            // We use a simple loop logic to calculate weekdays between start and end
+            let count = 0;
+            let current = new Date(start);
+            
+            // We iterate from Start (inclusive) to End (exclusive of calculation? or inclusive?)
+            // If I borrow on Friday and Return on Friday -> 0 days? or 1 day?
+            // Usually "Return Date" implies the day I bring it back.
+            // If I borrow Friday 8AM, Return Friday 5PM -> 1 Day?
+            // Let's assume standard 'diff' for now, but skipping weekends.
+            
+            // Replicating Carbon `diffInWeekdays` logic roughly:
+            // It counts full days between.
+            
+            while (current < end) {
+                 // 0=Sun, 6=Sat
+                 if (current.getDay() !== 0 && current.getDay() !== 6) {
+                     count++;
+                 }
+                 current.setDate(current.getDate() + 1);
+            }
+            
+            // If start and end same day? count is 0. 
+            // Maybe we want a minimum of 0? Or 1?
+            // If count is 0, user means same day return.
+            
+            durationText.textContent = count;
+            
+            if (count > 7) {
+                durationText.classList.remove('text-blue-600');
+                durationText.classList.add('text-red-600');
+                alert('Maksimal peminjaman adalah 7 hari kerja!');
+                kembaliInput.value = ''; // Reset input
+                durationText.textContent = '-'; // Reset duration display
+            } else {
+                durationText.classList.remove('text-red-600');
+                durationText.classList.add('text-blue-600');
+            }
+        }
+
+        pinjamInput.addEventListener('change', function() {
+            validateDateInput(this);
+            // Update min date for kembali
+            kembaliInput.min = this.value;
+            updateDuration();
+        });
+
+        kembaliInput.addEventListener('change', function() {
+            validateDateInput(this);
+            updateDuration();
+        });
+
 
         // Update badge on each group header
         function updateGroupBadges() {

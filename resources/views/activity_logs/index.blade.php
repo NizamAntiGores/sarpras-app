@@ -89,6 +89,7 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Waktu</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Address</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deskripsi</th>
@@ -100,13 +101,16 @@
                                         <td class="px-4 py-2 text-sm text-gray-500 whitespace-nowrap">
                                             {{ $log->created_at->format('d M Y H:i:s') }}
                                         </td>
+                                        <td class="px-4 py-2 text-sm text-gray-600 font-mono">
+                                            {{ $log->ip_address ?? '-' }}
+                                        </td>
                                         <td class="px-4 py-2 text-sm text-gray-900">
                                             <div class="font-medium">{{ $log->user->name ?? 'System/Guest' }}</div>
                                             <div class="text-xs text-gray-500">{{ $log->user->role ?? '-' }}</div>
                                         </td>
                                         <td class="px-4 py-2">
                                             @php
-                                                $colors = [
+                                                $actionColors = [
                                                     'login' => 'blue',
                                                     'logout' => 'gray',
                                                     'create' => 'green',
@@ -115,7 +119,7 @@
                                                     'approve' => 'teal',
                                                     'reject' => 'pink',
                                                 ];
-                                                $color = $colors[$log->action] ?? 'gray';
+                                                $color = $actionColors[$log->action] ?? 'gray';
                                             @endphp
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-{{ $color }}-100 text-{{ $color }}-800 uppercase">
                                                 {{ $log->action }}
@@ -123,12 +127,34 @@
                                         </td>
                                         <td class="px-4 py-2 text-sm text-gray-700">
                                             {{ $log->description }}
+                                            
+                                            @if(!empty($log->old_values) || !empty($log->new_values))
+                                            <details class="mt-2 text-xs border border-gray-200 rounded p-2 bg-gray-50">
+                                                <summary class="cursor-pointer text-blue-600 hover:text-blue-800 font-medium">
+                                                    Lihat Detail Perubahan
+                                                </summary>
+                                                <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    @if(!empty($log->old_values))
+                                                    <div class="bg-red-50 p-2 rounded border border-red-100 overflow-auto max-h-40">
+                                                        <span class="font-bold text-red-700 block mb-1 border-b border-red-200 pb-1">Sebelum:</span>
+                                                        <pre class="whitespace-pre-wrap text-gray-600 font-mono text-[10px]">{{ json_encode($log->old_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+                                                    </div>
+                                                    @endif
+                                                    
+                                                    @if(!empty($log->new_values))
+                                                    <div class="bg-green-50 p-2 rounded border border-green-100 overflow-auto max-h-40">
+                                                        <span class="font-bold text-green-700 block mb-1 border-b border-green-200 pb-1">Sesudah:</span>
+                                                        <pre class="whitespace-pre-wrap text-gray-600 font-mono text-[10px]">{{ json_encode($log->new_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+                                                    </div>
+                                                    @endif
+                                                </div>
+                                            </details>
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                    <tr>
-                                        <td colspan="4" class="px-4 py-8 text-center text-gray-500">Belum ada aktivitas yang tercatat.</td>
+                                        <td colspan="5" class="px-4 py-8 text-center text-gray-500">Belum ada aktivitas yang tercatat.</td>
                                     </tr>
                                 @endforelse
                             </tbody>

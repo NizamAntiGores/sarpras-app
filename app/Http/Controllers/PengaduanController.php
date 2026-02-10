@@ -61,7 +61,7 @@ class PengaduanController extends Controller
         $validated = $request->validate([
             'jenis' => 'required|in:tempat,barang',
             'judul' => 'required|string|max:255',
-            'deskripsi' => 'required|string',
+            'deskripsi' => 'required|string|min:20',
             'lokasi_id' => 'nullable|exists:lokasi,id',
             'lokasi_lainnya' => 'nullable|string|max:255',
             'sarpras_id' => 'nullable|exists:sarpras,id',
@@ -115,6 +115,8 @@ class PengaduanController extends Controller
             abort(403);
         }
 
+        $pengaduan->load(['user', 'sarpras', 'lokasi', 'responses.user']);
+
         return view('pengaduan.show', compact('pengaduan'));
     }
 
@@ -132,42 +134,94 @@ class PengaduanController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified resource in storage (Add Response).
      */
     public function update(Request $request, \App\Models\Pengaduan $pengaduan)
     {
-        if (auth()->user()->role === 'peminjam') {
-            abort(403);
+        $user = auth()->user();
+
+        // Authorization: Admin/Petugas OR The Owner of the complaint
+        if ($user->role === 'peminjam' || $user->role === 'siswa' || $user->role === 'guru') {
+             if ($pengaduan->user_id !== $user->id) {
+                 abort(403);
+             }
+        }
+
+        // Check if locked
+        if (in_array($pengaduan->status, ['selesai', 'ditutup', 'ditolak'])) {
+            return back()->with('error', 'Laporan sudah ditutup. Tidak dapat menambahkan respon.');
         }
 
         $validated = $request->validate([
-            'status' => 'required|in:belum_ditindaklanjuti,sedang_diproses,selesai,ditutup',
-            'catatan_petugas' => 'nullable|string',
+            'status' => 'required|in:belum_ditindaklanjuti,sedang_diproses,selesai,ditutup,chat',
+            'response' => 'required|string|min:5',
         ]);
 
-        $pengaduan->update([
-            'status' => $validated['status'],
-            'catatan_petugas' => $validated['catatan_petugas'],
-            'petugas_id' => auth()->id(),
+        $inputStatus = $validated['status'];
+        $responseMessage = $validated['response'];
+
+        // Determine if this is a status change or just a chat
+        $isStatusChange = ($inputStatus !== 'chat' && $inputStatus !== $pengaduan->status);
+        
+        // If user is not admin/petugas, force 'chat' mode (cannot change status)
+        if (!in_array($user->role, ['admin', 'petugas'])) {
+            $inputStatus = 'chat';
+            $isStatusChange = false;
+        }
+
+        // Record Response
+        // We set 'status' in response ONLY if there is a meaningful status change/action
+        // If it's just 'chat', we store NULL validly
+        \App\Models\PengaduanResponse::create([
+            'pengaduan_id' => $pengaduan->id,
+            'user_id' => $user->id,
+            'status' => $isStatusChange ? $inputStatus : null, // Null means "Just Chat/No Status Change"
+            'response' => $responseMessage,
         ]);
 
-        // Send notification to user
-        $statusLabels = [
-            'sedang_diproses' => 'Sedang Diproses',
-            'selesai' => 'Selesai',
-            'ditutup' => 'Ditutup',
-        ];
+        // Update Parent Status and Petugas Note Only if Changed/Admin
+        if ($isStatusChange) {
+            $pengaduan->update([
+                'status' => $inputStatus,
+                'petugas_id' => $user->id,
+                'catatan_petugas' => $responseMessage, 
+            ]);
 
-        if (isset($statusLabels[$validated['status']])) {
+            // Notification for Status Change
+            $statusLabels = [
+                'sedang_diproses' => 'Sedang Diproses',
+                'selesai' => 'Selesai',
+                'ditutup' => 'Ditutup',
+                'belum_ditindaklanjuti' => 'Belum Ditindaklanjuti'
+            ];
+
             \App\Models\Notification::send(
                 $pengaduan->user_id,
                 \App\Models\Notification::TYPE_PENGADUAN_UPDATED,
-                'Pengaduan Diperbarui 📢',
-                'Pengaduan "'.$pengaduan->judul.'" telah diubah ke status: '.$statusLabels[$validated['status']],
+                'Status Pengaduan Diperbarui',
+                "Status pengaduan Anda berubah menjadi: " . ($statusLabels[$inputStatus] ?? $inputStatus),
                 route('pengaduan.show', $pengaduan)
             );
+        } else {
+             // Notification for Chat Reply
+             // If Admin replies -> Notify User
+             // If User replies -> Notify Admin (optional, or just silent)
+             if (in_array($user->role, ['admin', 'petugas'])) {
+                 $pengaduan->update(['petugas_id' => $user->id]); // Claim ownership if replying?
+                 
+                 \App\Models\Notification::send(
+                    $pengaduan->user_id,
+                    \App\Models\Notification::TYPE_PENGADUAN_UPDATED,
+                    'Tanggapan Baru dari Admin',
+                    "Admin menanggapi pengaduan Anda: \"{$responseMessage}\"",
+                    route('pengaduan.show', $pengaduan)
+                );
+             }
         }
+        
+        // Activity Log
+        // ... (Keep existing log logic or simplify)
 
-        return redirect()->route('pengaduan.index')->with('success', 'Status pengaduan diperbarui.');
+        return redirect()->route('pengaduan.show', $pengaduan)->with('success', 'Respon berhasil dikirim.');
     }
 }

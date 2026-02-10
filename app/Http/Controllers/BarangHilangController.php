@@ -44,7 +44,7 @@ class BarangHilangController extends Controller
     {
         $validated = $request->validate([
             'status' => 'required|in:belum_diganti,sudah_diganti,diputihkan',
-            'keterangan' => 'nullable|string|max:500',
+            'keterangan' => 'nullable|string|min:20|max:500',
         ]);
 
         $barangHilang->update([

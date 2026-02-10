@@ -132,6 +132,7 @@ Route::middleware('auth')->group(function () {
         // =============================================
 // LOKASI ROUTES (Admin only)
 // =============================================
+        Route::post('/lokasi/bulk-update', [LokasiController::class, 'bulkUpdate'])->name('lokasi.bulk-update');
         Route::get('/lokasi', [LokasiController::class, 'index'])->name('lokasi.index');
         Route::get('/lokasi/create', [LokasiController::class, 'create'])->name('lokasi.create');
         Route::post('/lokasi', [LokasiController::class, 'store'])->name('lokasi.store');
@@ -152,6 +153,10 @@ Route::middleware('auth')->group(function () {
         // =============================================
 // LAPORAN ROUTES
 // =============================================
+        Route::get('/laporan/executive', [
+            App\Http\Controllers\LaporanController::class,
+            'executive'
+        ])->name('laporan.executive');
         Route::get('/laporan/asset-health', [
             App\Http\Controllers\LaporanController::class,
             'assetHealth'
@@ -226,12 +231,12 @@ Route::middleware('auth')->group(function () {
     // Edit & Update: Admin & Petugas Only
     Route::middleware('role:admin,petugas')->group(function () {
         Route::get('/pengaduan/{pengaduan}/edit', [PengaduanController::class, 'edit'])->name('pengaduan.edit');
-        Route::put('/pengaduan/{pengaduan}', [PengaduanController::class, 'update'])->name('pengaduan.update');
     });
 
-    // Index & Show: Semua user
+    // Index, Show & Update (Chat): Semua user (Auth di Controller)
     Route::get('/pengaduan', [PengaduanController::class, 'index'])->name('pengaduan.index');
     Route::get('/pengaduan/{pengaduan}', [PengaduanController::class, 'show'])->name('pengaduan.show');
+    Route::put('/pengaduan/{pengaduan}', [PengaduanController::class, 'update'])->name('pengaduan.update');
 
     // =============================================
 // USER MANAGEMENT ROUTES (Admin only)

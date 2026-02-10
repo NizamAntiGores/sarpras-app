@@ -211,13 +211,31 @@ class PeminjamanController extends Controller
             'consumables.*.item_id' => 'exists:sarpras,id',
             'consumables.*.qty' => 'integer|min:1',
 
-            'tgl_pinjam' => 'required|date|after_or_equal:today',
-            'keterangan' => 'required|string|max:500',
+            'tgl_pinjam' => [
+                'required', 
+                'date', 
+                'after_or_equal:today',
+                function ($attribute, $value, $fail) {
+                    if (\Carbon\Carbon::parse($value)->isWeekend()) {
+                        $fail('Tanggal peminjaman tidak boleh hari Sabtu atau Minggu.');
+                    }
+                },
+            ],
+            'keterangan' => 'required|string|min:20|max:500',
         ];
 
         // Conditional Validation: Return Date only required if borrowing Assets (Units)
         if (!$isConsumableOnly) {
-            $rules['tgl_kembali_rencana'] = 'required|date|after:tgl_pinjam';
+            $rules['tgl_kembali_rencana'] = [
+                'required',
+                'date',
+                'after_or_equal:tgl_pinjam',
+                function ($attribute, $value, $fail) {
+                    if (\Carbon\Carbon::parse($value)->isWeekend()) {
+                        $fail('Tanggal kembali tidak boleh hari Sabtu atau Minggu.');
+                    }
+                },
+            ];
         } else {
             $rules['tgl_kembali_rencana'] = 'nullable|date';
         }
@@ -233,12 +251,21 @@ class PeminjamanController extends Controller
             $validated['tgl_kembali_rencana'] = $validated['tgl_pinjam'];
         }
 
-        // Custom Validation: Batas Peminjaman Maksimal 7 Hari (Only for Assets)
         $tglPinjam = \Carbon\Carbon::parse($validated['tgl_pinjam']);
         $tglKembali = \Carbon\Carbon::parse($validated['tgl_kembali_rencana']);
 
-        if (!$isConsumableOnly && $tglPinjam->diffInDays($tglKembali) > 7) {
-            return redirect()->back()->withInput()->with('error', 'Peminjaman aset tidak boleh lebih dari 7 hari.');
+        // Check Max Duration (7 Business Days) using diffInWeekdays
+        // diffInWeekdays counts start date? No, usually distinct days. 
+        // Mon -> Tue = 1 day.
+        if (!$isConsumableOnly) {
+            // Kita hitung selisih hari kerja
+            $businessDays = $tglPinjam->diffInWeekdays($tglKembali);
+            // Tambah 1 jika ingin inklusif hari pertama (opsional, tapi diffInWeekdays cukup standar)
+            // Jika pinjam Jumat, Kembali Senin. Diff = 1.
+            // Jika max 7 hari kerja.
+            if ($businessDays > 7) {
+                return redirect()->back()->withInput()->with('error', 'Peminjaman aset melebihi batas maksimal 7 hari kerja.');
+            }
         }
 
         DB::beginTransaction();
@@ -430,11 +457,12 @@ class PeminjamanController extends Controller
 
         $validated = $request->validate([
             'status' => 'required|in:menunggu,disetujui,selesai,ditolak',
-            'catatan_petugas' => 'required_if:status,ditolak|nullable|string|max:500',
+            'catatan_petugas' => 'required_if:status,ditolak|nullable|string|min:20|max:500',
         ], [
             'status.required' => 'Status wajib dipilih.',
             'status.in' => 'Status tidak valid.',
-            'catatan_petugas.required_if' => 'Catatan/alasan penolakan wajib diisi jika menolak peminjaman.',
+            'catatan_petugas.required_if' => 'Catatan/alasan penolakan wajib diisi jika menolak peminjaman (min. 20 karakter).',
+            'catatan_petugas.min' => 'Catatan petugas minimal 20 karakter.',
         ]);
 
         $oldStatus = $peminjaman->status;
@@ -561,15 +589,25 @@ class PeminjamanController extends Controller
                 $peminjaman->qr_code = null;
             }
 
+            // Prepare logging data
+            $oldData = $peminjaman->only(['status', 'catatan_petugas', 'petugas_id', 'qr_code']);
+
             // Update peminjaman
             $peminjaman->update([
                 'status' => $newStatus,
                 'petugas_id' => $user->id,
                 'catatan_petugas' => $validated['catatan_petugas'] ?? $peminjaman->catatan_petugas,
-                'qr_code' => $peminjaman->qr_code,
+                'qr_code' => $peminjaman->qr_code, // Calculated above
             ]);
 
-            \App\Helpers\LogHelper::record('update', "Mengubah status peminjaman (ID: {$peminjaman->id}) menjadi: {$newStatus} oleh " . auth()->user()->name);
+            $newData = $peminjaman->only(['status', 'catatan_petugas', 'petugas_id', 'qr_code']);
+
+            \App\Helpers\LogHelper::record(
+                'update', 
+                "Mengubah status peminjaman (ID: {$peminjaman->id}) menjadi: {$newStatus} oleh " . auth()->user()->name,
+                $oldData,
+                $newData
+            );
 
             // Send notification/email to user
             if ($newStatus === 'disetujui') {
